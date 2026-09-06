@@ -1,0 +1,176 @@
+.stock-container {
+  padding: 20px;
+  background-color: #f4f6f9;
+  min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.stock-header h2 {
+  margin: 0;
+  color: #1a252f;
+}
+
+.stock-header p {
+  margin-top: 5px;
+  color: #7f8c8d;
+}
+
+/* KPI Summary Cards */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.card {
+  background: #ffffff;
+  padding: 18px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-left: 5px solid #3498db;
+}
+
+.profit-card {
+  border-left-color: #2ecc71;
+}
+
+.sales-card {
+  border-left-color: #3498db;
+}
+
+.stock-val-card {
+  border-left-color: #f39c12;
+}
+
+.items-card {
+  border-left-color: #9b59b6;
+}
+
+.card h4 {
+  margin: 0 0 10px 0;
+  color: #7f8c8d;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #2c3e50;
+}
+
+/* Filter Card */
+.filter-card {
+  background: #ffffff;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.filter-grid {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.filter-item label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #34495e;
+}
+
+.filter-item input,
+.filter-item select {
+  padding: 8px 12px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  outline: none;
+  font-size: 14px;
+}
+
+.btn-box {
+  flex: 0 0 auto;
+}
+
+.reset-btn {
+  padding: 9px 16px;
+  background-color: #e74c3c;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.reset-btn:hover {
+  background-color: #c0392b;
+}
+
+/* Table Section */
+.table-wrapper {
+  overflow-x: auto;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stock-table th,
+.stock-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #ecf0f1;
+  font-size: 14px;
+}
+
+.stock-table th {
+  background-color: #2c3e50;
+  color: #ffffff;
+  text-align: left;
+}
+
+.stock-table tfoot {
+  background-color: #eaeded;
+}
+
+/* Color Helpers */
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.bold {
+  font-weight: 600;
+}
+.text-success {
+  color: #27ae60 !important;
+}
+.text-danger {
+  color: #e74c3c !important;
+}
+.text-primary {
+  color: #2980b9 !important;
+}
+.loading-state,
+.error-state,
+.no-data {
+  padding: 20px;
+  text-align: center;
+  font-weight: 500;
+}

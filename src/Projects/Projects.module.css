@@ -1,0 +1,38 @@
+.container {
+  display: grid;
+  grid-template-columns: 1fr 6fr;
+  grid-template-rows: auto;
+}
+.aside {
+  margin: 0;
+  padding: 0;
+  margin-right: 2px;
+  display: flex;
+  flex-direction: column;
+  background-color: #333;
+}
+.active {
+  color: #ac1a1a;
+  padding: 10px 0px;
+  font-size: 14px;
+  text-decoration: none;
+  padding: 10px 0 10px 25px;
+  border: 1px solid #fff;
+}
+.asidLink {
+  padding: 10px 0px;
+  font-size: 14px;
+  text-decoration: none;
+  padding: 10px 0 10px 25px;
+  color: #fff;
+  border: 1px solid #fff;
+}
+.asidLink:hover {
+  color: #ac1a1a;
+  transition: 1s all;
+}
+.content {
+  background-color: #d0d0d0;
+  padding-right: 25px;
+  min-height: 80vh;
+}

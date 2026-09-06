@@ -1,0 +1,212 @@
+/* ==========================================
+   ১. Dropdown Filter Section (Modern Card)
+   ========================================== */
+.challan-search-card {
+  margin: 15px auto 25px auto;
+  padding: 20px 25px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  max-width: 210mm;
+  box-sizing: border-box;
+}
+
+.dropdown-filter-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.select-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.select-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.select-dropdown {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.select-dropdown:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.select-dropdown:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.download-box {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-download-challan {
+  padding: 10px 20px;
+  background-color: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.2);
+  transition: background-color 0.2s;
+}
+
+.btn-download-challan:hover {
+  background-color: #15803d;
+}
+
+/* ==========================================
+   ২. Challan Pad & A4 PDF Alignment Fix
+   ========================================== */
+.invoice-container {
+  width: 210mm;
+  height: 296mm; /* Exactly A4 height to prevent 2nd page overflow */
+  padding: 15mm;
+  margin: 0 auto 30px auto;
+  background: #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* অটোমেটিক ফুটারকে একদম নিচে রাখবে */
+  position: relative;
+}
+
+.challan-content-wrap {
+  width: 100%;
+}
+
+/* Footer Section - Fixed at Bottom */
+.footer-section-wrap {
+  width: 100%;
+  margin-top: auto; /* ফুটারকে টেনে একদম নিচে বসাবে */
+  padding-top: 10px;
+}
+
+.invoice-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.signature-title {
+  border-top: 1.5px solid #000000;
+  width: 220px;
+  text-align: center;
+  padding-top: 6px;
+  font-size: 13px;
+  color: #000;
+}
+
+.bottom-contact {
+  text-align: center;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+  font-size: 11px;
+  color: #475569;
+}
+
+.bottom-contact p {
+  margin: 2px 0;
+}
+
+/* ==========================================
+   ৩. Editable Table Styles
+   ========================================== */
+.challan-table-wrapper {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.challan-table-wrapper th,
+.challan-table-wrapper td {
+  border: 1px solid #000000;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.table-input {
+  width: 100%;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.table-input:focus {
+  border-color: #2563eb;
+  background-color: #f8fafc;
+}
+
+.btn-delete-item {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-delete-item:hover {
+  background-color: #fecaca;
+}
+
+.no-data-placeholder {
+  text-align: center;
+  padding: 50px 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 2px dashed #cbd5e1;
+  color: #64748b;
+  max-width: 210mm;
+  margin: 20px auto;
+}
+
+/* ==========================================
+   ৪. Print / PDF Export Utility Classes
+   ========================================== */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+.pdf-mode {
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 12mm !important;
+}
+
+.pdf-mode .no-print {
+  display: none !important;
+}

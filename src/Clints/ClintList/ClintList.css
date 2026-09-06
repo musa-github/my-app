@@ -1,0 +1,133 @@
+.client-list-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.filter-wrapper {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.status-select {
+  padding: 10px 14px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background-color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #007bff;
+}
+
+.card h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.card p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #212529;
+}
+
+.offer-card {
+  border-left-color: #17a2b8;
+}
+.bill-card {
+  border-left-color: #007bff;
+}
+.received-card {
+  border-left-color: #28a745;
+}
+.due-card {
+  border-left-color: #dc3545;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.client-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.client-table th,
+.client-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 14px;
+}
+
+.client-table th {
+  background-color: #f1f3f5;
+  color: #495057;
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 600;
+}
+
+.text-success {
+  color: #28a745;
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-due {
+  background-color: #ffe3e3;
+  color: #dc3545;
+}
+
+.badge-paid {
+  background-color: #d3f9d8;
+  color: #2b8a3e;
+}
+
+.no-data {
+  text-align: center;
+  color: #868e96;
+  padding: 20px;
+}

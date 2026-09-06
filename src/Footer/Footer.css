@@ -1,0 +1,23 @@
+.footer {
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 25px;
+}
+.footer div {
+  display: flex;
+  align-items: center;
+}
+.footer div img {
+  padding: 0 5px;
+  width: 40px;
+}
+.footer div span,
+a {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-family: sans-serif;
+}

@@ -1,0 +1,49 @@
+.header {
+  background-color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 25px;
+}
+
+.Logo {
+  width: 70px;
+}
+
+.menu {
+  display: flex;
+}
+.active {
+  color: #e50c7a;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+.link {
+  color: #fff;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.link:hover {
+  color: #e50c7a;
+  transition: 1s all;
+}
+.loginContainer {
+  display: flex;
+}
+.loginContainer span {
+  padding: 5px 10px;
+  background-color: #fff;
+  color: #e91a6f;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 2px;
+  border-radius: 3px;
+}
+.loginContainer span:hover {
+  background: #e50c7a;
+  color: #fff;
+  transition: 1s all;
+}

@@ -1,0 +1,345 @@
+/* Card Filter */
+.invoice-search-card {
+  margin: 15px auto 25px auto;
+  padding: 20px 25px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  max-width: 210mm;
+  box-sizing: border-box;
+}
+
+.dropdown-filter-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.select-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.select-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.select-dropdown {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+  color: #0f172a;
+  outline: none;
+}
+
+.action-buttons-wrap {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-save-bill {
+  padding: 10px 20px;
+  background-color: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
+}
+
+.btn-save-bill:hover {
+  background-color: #047857;
+}
+.btn-save-bill:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-download-pdf {
+  padding: 10px 20px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+
+.btn-download-pdf:hover {
+  background-color: #1d4ed8;
+}
+
+/* Invoice Sheet Layout */
+.invoice-container {
+  width: 210mm;
+  height: 296mm;
+  padding: 15mm;
+  margin: 0 auto 30px auto;
+  background: #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #000000;
+}
+
+.invoice-content-wrap {
+  width: 100%;
+}
+
+.company-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+}
+
+/* Logo Container - Flex properties reset */
+.logo-box {
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0; /* Flex container যেন লোগোকে চাপ দিয়ে বাঁকা না করে */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* ইমেজের অতিরিক্ত অংশ বের হওয়া আটকায় */
+}
+
+/* Logo Image - Aspect ratio fix for html2pdf */
+.logo-img {
+  width: auto; /* ফিক্সড উইড্থ তুলে দেওয়া হয়েছে */
+  height: auto; /* ফিক্সড হাইট তুলে দেওয়া হয়েছে */
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* অরিজিনাল অনুপাত ঠিক রাখবে */
+  display: block;
+  margin: 0 auto;
+}
+.company-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.company-services {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.document-type {
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 12px 0;
+  letter-spacing: 1.5px;
+  text-decoration: underline;
+}
+
+.info-section {
+  margin-bottom: 12px;
+}
+.meta-info-grid {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.to-address,
+.subject-line,
+.salutation {
+  margin-bottom: 6px;
+}
+
+.bold {
+  font-weight: bold;
+}
+.no-margin {
+  margin: 0;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+
+/* Table Section */
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+.invoice-table th,
+.invoice-table td {
+  border: 1px solid #000000;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.invoice-table th {
+  background-color: #f1f5f9;
+  text-align: center;
+}
+
+.table-input {
+  width: 100%;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.add-row-container {
+  margin-top: 6px;
+}
+
+.btn-add-row,
+.btn-add-note {
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.btn-delete {
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.in-words-section {
+  margin-top: 10px;
+  border-top: 1px solid #cbd5e1;
+  padding-top: 6px;
+}
+.notes-section {
+  margin-top: 8px;
+}
+.note-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.inline-input {
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.note-input {
+  width: 80%;
+  margin-left: 4px;
+}
+.payment-mode {
+  margin-top: 8px;
+}
+
+.footer-section-wrap {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.invoice-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 15px;
+}
+
+.seal-circle {
+  border: 2px dashed #2563eb;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: #2563eb;
+  margin-bottom: 4px;
+}
+
+.signature-line {
+  border-top: 1.5px solid #000;
+  width: 160px;
+  margin-bottom: 4px;
+}
+
+.bottom-contact {
+  text-align: center;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+  font-size: 11px;
+  color: #475569;
+}
+
+.bottom-contact p {
+  margin: 2px 0;
+}
+
+.no-data-placeholder {
+  text-align: center;
+  padding: 50px 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 2px dashed #cbd5e1;
+  color: #64748b;
+  max-width: 210mm;
+  margin: 20px auto;
+}
+
+.page-break-avoid {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+.pdf-mode {
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 12mm !important;
+}
+
+.pdf-mode .no-print {
+  display: none !important;
+}
+.error-text {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 8px;
+}

@@ -1,0 +1,427 @@
+/* ==========================================
+   Action Bar & Base Layout
+   ========================================== */
+.action-bar {
+  max-width: 210mm;
+  margin: 0 auto 10px auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-action {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 12px;
+  background-color: #0d6efd;
+  color: #ffffff;
+}
+
+.btn-action:hover {
+  opacity: 0.9;
+}
+
+.btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Dynamic Page Container */
+.invoice-container {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 10mm 15mm;
+  box-sizing: border-box;
+  color: #000000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  line-height: 1.4;
+  position: relative;
+}
+
+/* Company Header Section */
+.company-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+}
+
+.logo-box {
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.company-info {
+  flex-grow: 1;
+}
+
+.company-title {
+  margin: 0;
+  font-size: 38px;
+  letter-spacing: 1px;
+  color: #1a2d38;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.company-services {
+  margin: 6px 0 0 0;
+  font-size: 11px;
+  color: #000;
+  font-weight: 700;
+}
+
+.document-type {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin: 10px 0 6px 0;
+  letter-spacing: 2px;
+}
+
+/* Document Info & Inputs */
+.info-section {
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.info-row,
+.subject-line,
+.to-address {
+  margin-bottom: 4px;
+}
+
+input {
+  border: 1px solid transparent;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 2px 4px;
+  margin: 0;
+  box-sizing: border-box;
+  line-height: 1.3;
+}
+
+input:hover,
+input:focus {
+  border: 1px solid #0d6efd;
+  background-color: #f8f9fa;
+  border-radius: 2px;
+}
+
+.table-textarea {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid transparent;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.table-textarea:hover,
+.table-textarea:focus {
+  border: 1px solid #0d6efd;
+  background-color: #f8f9fa;
+  border-radius: 2px;
+}
+
+.table-input {
+  width: 100%;
+}
+.inline-input {
+  display: inline-block;
+}
+.block-input {
+  display: block;
+  width: 100%;
+}
+.bold {
+  font-weight: bold;
+}
+.no-margin {
+  margin: 0;
+}
+
+/* Invoice Table */
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  table-layout: fixed;
+  box-sizing: border-box;
+}
+
+.invoice-table th,
+.invoice-table td {
+  border: 1px solid #000000;
+  padding: 6px;
+  font-size: 11px;
+  vertical-align: middle;
+  word-wrap: break-word;
+}
+
+.invoice-table th {
+  background-color: #f0f0f0;
+  text-align: center;
+  font-weight: bold;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.cell-total {
+  white-space: nowrap;
+}
+
+/* Controls & Buttons */
+.add-row-container {
+  margin-top: 6px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.btn-add-row,
+.btn-add-note {
+  background-color: #198754;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 3px 7px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.in-words-section {
+  margin-top: 10px;
+  font-size: 12px;
+  border-top: 1px solid #ccc;
+  padding-top: 6px;
+}
+
+.notes-section {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.note-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.note-label {
+  flex-shrink: 0;
+}
+.note-input {
+  width: 80%;
+}
+.inline-delete {
+  margin-left: 8px;
+}
+.add-note-box {
+  margin: 4px 0;
+}
+.payment-mode {
+  margin-top: 8px;
+}
+.payment-line {
+  margin-bottom: 2px;
+}
+
+/* Footer Section */
+.invoice-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 35px;
+}
+
+.seal-circle {
+  border: 2px dashed #0d6efd;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: #0d6efd;
+  margin-bottom: 4px;
+}
+
+.signature-line {
+  border-top: 1px solid #000;
+  width: 140px;
+  margin-bottom: 4px;
+}
+
+.bottom-contact {
+  border-top: 1px solid #ddd;
+  padding-top: 6px;
+  text-align: center;
+  font-size: 10px;
+  color: #333;
+  font-weight: 500;
+  margin-top: 15px;
+}
+
+/* Suggestions Dropdown */
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #0d6efd;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 5px 0;
+  text-align: left;
+}
+
+.suggestion-category {
+  padding: 4px 8px;
+  font-size: 10px;
+  background-color: #e9ecef;
+  color: #333;
+}
+
+.suggestion-item {
+  padding: 6px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.suggestion-item:hover {
+  background-color: #0d6efd;
+  color: #ffffff;
+}
+
+.page-break-avoid {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* ==========================================
+   PERFECT PDF MODE & TEXT CUTTING FIX
+   ========================================== */
+.pdf-mode {
+  width: 210mm !important;
+  min-height: 297mm !important;
+  margin: 0 auto !important;
+  padding: 10mm 15mm !important; /* বাম, ডান, উপর ও নিচে নিরাপদ মার্জিন */
+  background: #ffffff !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  transform: none !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pdf-mode .no-print {
+  display: none !important;
+}
+
+.pdf-mode * {
+  box-sizing: border-box !important;
+}
+
+/* PDF মোডে সকল ইনপুট ফিল্ড ও টেক্সটের নিচে কাটিং রোধ */
+.pdf-mode input,
+.pdf-mode textarea {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-top: 2px !important;
+  padding-bottom: 4px !important; /* g, y, p অক্ষরের নিচের অংশ কাটিং আটকাবে */
+  margin: 0 !important;
+  line-height: 1.4 !important;
+  height: auto !important;
+  overflow: visible !important;
+  display: inline-block !important;
+  box-sizing: content-box !important;
+}
+
+/* টেবিল সেল ও সাধারণ টেক্সট কাট-অফ প্রতিরোধ */
+.pdf-mode .invoice-table td,
+.pdf-mode .invoice-table th,
+.pdf-mode .note-row,
+.pdf-mode .payment-line,
+.pdf-mode .info-row {
+  line-height: 1.4 !important;
+  vertical-align: middle !important;
+  padding-bottom: 4px !important;
+  word-break: break-word !important;
+  overflow: visible !important;
+}
+
+.pdf-mode .company-header,
+.pdf-mode .info-section,
+.pdf-mode .notes-section {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: none;
+    padding: 0;
+  }
+  .invoice-container {
+    box-shadow: none;
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

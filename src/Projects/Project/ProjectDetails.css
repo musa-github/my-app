@@ -1,0 +1,202 @@
+/* Printable Area Default Hidden on Screen */
+.invoice-print-area {
+  display: none;
+}
+
+/* Print CSS Settings */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-hide,
+  .details-header,
+  .table-wrapper,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  .invoice-print-area,
+  .invoice-print-area * {
+    visibility: visible;
+  }
+
+  .invoice-print-area {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: #111;
+    font-family: Arial, sans-serif;
+    background: #fff;
+  }
+
+  /* Header Section */
+  .invoice-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .brand-logo-circle {
+    border: 3px double #0d5c75;
+    border-radius: 50%;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4px;
+  }
+
+  .brand-title {
+    font-size: 10px;
+    font-weight: 900;
+    color: #0d5c75;
+  }
+
+  .brand-tagline {
+    font-size: 6px;
+    color: #444;
+  }
+
+  .company-title-section {
+    text-align: right;
+  }
+
+  .company-name {
+    margin: 0;
+    font-size: 26px;
+    font-weight: bold;
+    color: #0d5c75;
+    letter-spacing: 1px;
+  }
+
+  .company-services {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    color: #555;
+    font-weight: 600;
+  }
+
+  .header-divider {
+    border: none;
+    border-top: 2px solid #0d5c75;
+    margin: 10px 0 15px 0;
+  }
+
+  /* Meta Section */
+  .invoice-meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+  }
+
+  .to-address p,
+  .invoice-info p {
+    margin: 2px 0;
+  }
+
+  .invoice-title-banner {
+    text-align: center;
+    margin: 15px 0;
+  }
+
+  .invoice-title-banner h2 {
+    display: inline-block;
+    border: 2px solid #0d5c75;
+    padding: 4px 20px;
+    margin: 0;
+    font-size: 16px;
+    color: #0d5c75;
+    letter-spacing: 1.5px;
+  }
+
+  /* Invoice Table Styling */
+  .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+  }
+
+  .invoice-table th,
+  .invoice-table td {
+    border: 1px solid #111;
+    padding: 8px 10px;
+  }
+
+  .invoice-table th {
+    background-color: #f2f2f2 !important;
+    -webkit-print-color-adjust: exact;
+    text-align: center;
+  }
+
+  .in-words-box {
+    margin-top: 12px;
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* Signature & Seal Section */
+  .invoice-signatures {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 80px;
+    padding: 0 20px;
+  }
+
+  .sig-box {
+    text-align: center;
+    width: 200px;
+  }
+
+  .sig-line {
+    border-top: 1px dashed #111;
+    margin-bottom: 5px;
+  }
+
+  .seal-placeholder {
+    width: 90px;
+    height: 90px;
+    border: 2px dashed #0d5c75;
+    border-radius: 50%;
+    margin: 0 auto 10px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #0d5c75;
+    font-size: 8px;
+    font-weight: bold;
+  }
+
+  /* Footer Section */
+  .invoice-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+    font-size: 11px;
+    color: #333;
+  }
+
+  .invoice-footer p {
+    margin: 2px 0;
+  }
+}
