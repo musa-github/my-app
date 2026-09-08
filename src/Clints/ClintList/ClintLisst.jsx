@@ -94,7 +94,7 @@ function ClintList() {
                 <tr key={client.clientName || index}>
                   <td>{index + 1}</td>
                   <td className="font-bold">
-                    <NavLink to={`/Clints/ClientDetails/${encodeURIComponent(client.clientName)}`}>
+                    <NavLink to={`/Clints/ClientDetails/${encodeURIComponent(client.clientName)}`} style={{color:"#333",fontSize:"14px"}}>
                       {client.clientName}
                     </NavLink>
                   </td>

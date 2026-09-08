@@ -1,108 +1,171 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import html2pdf from 'html2pdf.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import logo from "../../assets/main-logo.png";
-import { fetchAllCompanies, fetchOffersByCompany, fetchSpecificOfferFromDb } from '../../Fetures/Inventory/ChallanSlice';
-import { deleteBillFromFirebase, resetInvoiceData, resetSaveStatus, saveBillToFirebase, updateBillInFirebase } from '../../Fetures/Inventory/InvoiceSlice';
+
+// Separate Constant & Helper Utility Imports
+import {
+  DEFAULT_NOTES,
+  DEFAULT_PAYMENT_MODE,
+  convertToWords
+} from './invoiceConstants.js';
+
+import {
+  deleteBillFromFirebase,
+  fetchAllCompanies,
+  fetchOffersByCompany,
+  fetchSpecificOfferFromDb,
+  resetInvoiceData,
+  resetSaveStatus,
+  saveBillToFirebase,
+  setFilterMode,
+  updateBillInFirebase
+} from '../../Fetures/Inventory/InvoiceSlice.js';
+import { downloadInvoicePDF } from '../../HndlePDF/HndlePDF.js';
+import InvoiceFooter from '../../Pad/InvoiceFooter.jsx';
+import InvoiceHeader from '../../Pad/InvoiceHeader.jsx';
 import './InvoiceComponent.css';
 
 const InvoiceComponent = () => {
   const invoiceRef = useRef(null);
   const dispatch = useDispatch();
 
-  // Redux States
-  const { companiesList, offersList, challanData, loadingCompanies, loadingOffers, loadingChallan } = useSelector((state) => state.challan);
-  const { savingBill, updatingBill, deletingBill, saveSuccess, updateSuccess, deleteSuccess, savedBillIds: reduxSavedBillIds, error: invoiceError } = useSelector((state) => state.invoice);
+  const { 
+    companiesList = [], 
+    offersList = [], 
+    challanData = null, 
+    loadingCompanies = false, 
+    loadingOffers = false, 
+    loadingChallan = false,
+    savingBill = false, 
+    updatingBill = false, 
+    deletingBill = false, 
+    saveSuccess = false, 
+    updateSuccess = false, 
+    deleteSuccess = false, 
+    savedBillIds: reduxSavedBillIds = null, 
+    error: invoiceError = null 
+  } = useSelector((state) => state.invoice || state.challan || {});
 
-  // Local States
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedOfferId, setSelectedOfferId] = useState('');
   const [isPdfPrinting, setIsPdfPrinting] = useState(false);
   const [manualInvoice, setManualInvoice] = useState(null);
 
-  // Existing document database IDs tracking
   const [existingBillIds, setExistingBillIds] = useState(null);
-
-  // Paid Amount State
   const [paidAmount, setPaidAmount] = useState(0);
 
-  // Header State
   const [editableHeader, setEditableHeader] = useState({
     invoiceNo: '',
     date: new Date().toLocaleDateString('en-GB'),
-    toCompany: 'Client / Company Name',
-    address: 'Address Details',
+    toCompany: '',
+    address: '',
     subject: 'Bill / Invoice for Goods & Services'
   });
 
-  // Dynamic Editable Data
   const [editableItems, setEditableItems] = useState([]);
-  const [notes, setNotes] = useState([
-    'This offer excludes VAT, Tax, and AIT.',
-    'One-year warranty on all electrical equipment (excluding high voltage, earthquake, water damage).',
-    'There is no warranty for the door motor.'
-  ]);
-  const [paymentMode, setPaymentMode] = useState({
-    mode: 'Payment by cash.',
-    advance: '80% advance.',
-    handover: '20% handover date.'
-  });
+  const [notes, setNotes] = useState(DEFAULT_NOTES);
+  const [paymentMode, setPaymentMode] = useState(DEFAULT_PAYMENT_MODE);
+  const [localFilterType, setLocalFilterType] = useState('all');
 
-  // Load Companies List on Mount
   useEffect(() => {
-    dispatch(fetchAllCompanies());
-  }, [dispatch]);
+    dispatch(fetchAllCompanies(localFilterType));
+  }, [dispatch, localFilterType]);
 
-  // Sync Data when challanData is fetched from Firebase
+  const mapChallanToState = useCallback((data, docId) => {
+    if (!data) return;
+
+    const matchedBill = data.matchedBill;
+    const targetData = matchedBill || data;
+    
+    const headerInfo = targetData.headerData || data.headerData || {};
+
+    const extractedInvoiceNo = 
+      targetData.billNo || 
+      targetData.offerNo || 
+      headerInfo.offerNo || 
+      headerInfo.billNo || 
+      `INV-${Date.now().toString().slice(-6)}`;
+
+    const extractedDate = 
+      targetData.date || 
+      headerInfo.date || 
+      new Date().toLocaleDateString('en-GB');
+
+    const extractedCompany = 
+      targetData.toCompany || 
+      targetData.companyName || 
+      headerInfo.toCompany || 
+      headerInfo.companyName || 
+      '';
+
+    const extractedAddress = 
+      targetData.address || 
+      headerInfo.address || 
+      '';
+
+    const extractedSubject = 
+      targetData.subject || 
+      headerInfo.subject || 
+      'Bill / Invoice for Goods & Services';
+
+    setEditableHeader({
+      invoiceNo: extractedInvoiceNo,
+      date: extractedDate,
+      toCompany: extractedCompany,
+      address: extractedAddress,
+      subject: extractedSubject
+    });
+
+    const sourceItems = targetData.items || targetData.products || [];
+    const formattedItems = sourceItems.map((item) => ({
+      name: item.name || item.itemName || item.description || item.productName || '',
+      quantity: parseFloat(item.quantity || item.qty || item.count) || 1,
+      unit: item.unit || 'Pcs',
+      price: parseFloat(item.price ?? item.unitPrice ?? item.rate ?? item.amount) || 0
+    }));
+
+    setEditableItems(formattedItems);
+    setPaidAmount(parseFloat(targetData.paidAmount || targetData.receivedAmount) || 0);
+
+    if (Array.isArray(targetData.notes) && targetData.notes.length > 0) {
+      setNotes(targetData.notes);
+    } else {
+      setNotes(DEFAULT_NOTES);
+    }
+
+    if (targetData.paymentMode) {
+      setPaymentMode(targetData.paymentMode);
+    } else {
+      setPaymentMode(DEFAULT_PAYMENT_MODE);
+    }
+
+    if (matchedBill || targetData.billNo || targetData.sourceType === 'bill') {
+      setExistingBillIds({
+        billId: targetData.id || docId,
+        salesId: targetData.salesId || targetData.id || docId
+      });
+    } else {
+      setExistingBillIds(null);
+    }
+  }, []);
+
   useEffect(() => {
     if (challanData && !manualInvoice) {
-      setEditableHeader({
-        invoiceNo: challanData.offerNo || selectedOfferId || `INV-${Date.now().toString().slice(-6)}`,
-        date: challanData.date || new Date().toLocaleDateString('en-GB'),
-        toCompany: challanData.toCompany || challanData.headerData?.toCompany || '',
-        address: challanData.address || challanData.headerData?.address || '',
-        subject: challanData.subject || challanData.headerData?.subject || 'Bill / Invoice for Goods & Services'
-      });
-
-      const sourceItems = challanData.items || challanData.products || [];
-      const formattedItems = sourceItems.map((item) => ({
-        name: item.name || item.itemName || item.description || '',
-        quantity: parseFloat(item.quantity || item.qty) || 1,
-        unit: item.unit || 'Pcs',
-        price: parseFloat(item.price ?? item.unitPrice ?? item.rate ?? item.amount) || 0
-      }));
-      setEditableItems(formattedItems);
-
-      // Paid Amount sync
-      setPaidAmount(parseFloat(challanData.paidAmount || challanData.receivedAmount) || 0);
-
-      // Notes sync
-      if (Array.isArray(challanData.notes) && challanData.notes.length > 0) {
-        setNotes(challanData.notes);
-      }
-
-      // Payment mode sync
-      if (challanData.paymentMode) {
-        setPaymentMode(challanData.paymentMode);
-      }
-
-      // Track existing document IDs for Update/Delete
-      if (challanData.isFromBill) {
-        setExistingBillIds({
-          billId: challanData.id || selectedOfferId,
-          salesId: challanData.salesId || challanData.id || selectedOfferId
-        });
-      } else {
-        setExistingBillIds(null);
-      }
+      mapChallanToState(challanData, selectedOfferId);
     }
-  }, [challanData, manualInvoice, selectedOfferId]);
+  }, [challanData, manualInvoice, selectedOfferId, mapChallanToState]);
 
-  // Combined Active IDs
   const activeBillIds = reduxSavedBillIds || existingBillIds;
 
-  // Dropdown Handlers
+  const handleFilterTypeChange = (mode) => {
+    setLocalFilterType(mode);
+    dispatch(setFilterMode(mode));
+    setSelectedCompany('');
+    setSelectedOfferId('');
+    setManualInvoice(null);
+    dispatch(resetInvoiceData());
+  };
+
   const handleCompanyChange = (e) => {
     const companyDocId = e.target.value;
     setSelectedCompany(companyDocId);
@@ -111,8 +174,9 @@ const InvoiceComponent = () => {
     setEditableItems([]);
     setExistingBillIds(null);
     setPaidAmount(0);
+    dispatch(resetInvoiceData());
     if (companyDocId) {
-      dispatch(fetchOffersByCompany(companyDocId));
+      dispatch(fetchOffersByCompany({ companyDocId, filterMode: localFilterType }));
     }
   };
 
@@ -122,11 +186,14 @@ const InvoiceComponent = () => {
     setManualInvoice(null);
     setExistingBillIds(null);
     if (selectedCompany && offerId) {
-      dispatch(fetchSpecificOfferFromDb({ companyDocId: selectedCompany, offerId }));
+      dispatch(fetchSpecificOfferFromDb({ 
+        companyDocId: selectedCompany, 
+        offerId, 
+        filterMode: localFilterType 
+      }));
     }
   };
 
-  // Reset Invoice
   const handleReset = useCallback(() => {
     setSelectedCompany('');
     setSelectedOfferId('');
@@ -134,6 +201,8 @@ const InvoiceComponent = () => {
     setExistingBillIds(null);
     setPaidAmount(0);
     setEditableItems([]);
+    setNotes(DEFAULT_NOTES);
+    setPaymentMode(DEFAULT_PAYMENT_MODE);
     setEditableHeader({
       invoiceNo: '',
       date: new Date().toLocaleDateString('en-GB'),
@@ -144,49 +213,49 @@ const InvoiceComponent = () => {
     dispatch(resetInvoiceData());
   }, [dispatch]);
 
-  // Create Blank / Manual Invoice
   const handleCreateBlankInvoice = () => {
     setSelectedCompany('');
     setSelectedOfferId('');
     setManualInvoice(true);
     setExistingBillIds(null);
     setPaidAmount(0);
+    setNotes(DEFAULT_NOTES);
+    setPaymentMode(DEFAULT_PAYMENT_MODE);
     setEditableHeader({
       invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
       date: new Date().toLocaleDateString('en-GB'),
-      toCompany: 'Client / Company Name',
-      address: 'Address Details',
+      toCompany: '',
+      address: '',
       subject: 'Bill / Invoice for Goods & Services'
     });
     setEditableItems([{ name: 'Sample Item Name', quantity: 1, unit: 'Pcs', price: 0 }]);
     dispatch(resetInvoiceData());
   };
 
-  // Header Change Handler
-  const handleHeaderChange = (field, value) => {
-    setEditableHeader((prev) => ({ ...prev, [field]: value }));
-  };
+  const handleHeaderChange = (field, value) => setEditableHeader((prev) => ({ ...prev, [field]: value }));
 
-  // Table Handlers
   const handleItemChange = (index, field, value) => {
-    const updated = [...editableItems];
-    updated[index][field] = value;
-    setEditableItems(updated);
+    setEditableItems((prevItems) => {
+      const updated = [...prevItems];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
-  const handleAddRow = () => setEditableItems([...editableItems, { name: '', quantity: 1, unit: 'Pcs', price: 0 }]);
-  const handleRemoveRow = (index) => setEditableItems(editableItems.filter((_, i) => i !== index));
 
-  // Notes & Payment Handlers
+  const handleAddRow = () => setEditableItems((prev) => [...prev, { name: '', quantity: 1, unit: 'Pcs', price: 0 }]);
+  const handleRemoveRow = (index) => setEditableItems((prev) => prev.filter((_, i) => i !== index));
+
   const handleNoteChange = (index, value) => {
-    const updated = [...notes];
-    updated[index] = value;
-    setNotes(updated);
+    setNotes((prevNotes) => {
+      const updated = [...prevNotes];
+      updated[index] = value;
+      return updated;
+    });
   };
-  const handleAddNote = () => setNotes([...notes, 'New condition note...']);
-  const handleRemoveNote = (index) => setNotes(notes.filter((_, i) => i !== index));
-  const handlePaymentChange = (e) => setPaymentMode({ ...paymentMode, [e.target.name]: e.target.value });
+  const handleAddNote = () => setNotes((prev) => [...prev, 'New condition note...']);
+  const handleRemoveNote = (index) => setNotes((prev) => prev.filter((_, i) => i !== index));
+  const handlePaymentChange = (e) => setPaymentMode((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // Calculations
   const grandTotal = editableItems.reduce(
     (sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
     0
@@ -195,99 +264,75 @@ const InvoiceComponent = () => {
   const currentPaid = parseFloat(paidAmount) || 0;
   const dueAmount = grandTotal - currentPaid;
 
-  const numberToWords = (num) => {
-    if (!num || num === 0) return 'Zero Taka Only';
-    const [integerPart, decimalPart] = num.toFixed(2).split('.');
-    return parseInt(decimalPart) > 0
-      ? `${integerPart} Taka and ${decimalPart} Paisa Only`
-      : `${integerPart} Taka Only`;
+  const getTargetCompanyId = () => {
+    if (selectedCompany) return selectedCompany;
+    if (editableHeader.toCompany && editableHeader.toCompany.trim() !== '') {
+      return editableHeader.toCompany.trim().replace(/\s+/g, '_');
+    }
+    return 'general_clients';
   };
 
-  // Save Bill Handler (selectedOfferId যুক্ত করা হয়েছে)
-  const handleSaveBill = () => {
-    const targetCompanyId = selectedCompany || 'general_clients';
+  const buildBillPayload = () => {
     const safePaid = Number(paidAmount) || 0;
     const safeGrandTotal = Number(grandTotal) || 0;
-    const safeDue = safeGrandTotal - safePaid;
-
-    const billPayload = {
+    const targetCompanyId = getTargetCompanyId();
+    return {
       billNo: editableHeader.invoiceNo,
-      offerId: selectedOfferId || 'MANUAL',
-      companyName: editableHeader.toCompany,
+      companyName: editableHeader.toCompany || targetCompanyId,
+      toCompany: editableHeader.toCompany,
+      companyDocId: targetCompanyId,
       address: editableHeader.address,
       subject: editableHeader.subject,
       date: editableHeader.date,
       items: editableItems,
       grandTotal: safeGrandTotal,
       paidAmount: safePaid,
-      dueAmount: safeDue,
+      dueAmount: safeGrandTotal - safePaid,
       notes,
       paymentMode,
+      isBlankCreated: manualInvoice ? true : false,
+      createdAt: new Date().toISOString()
     };
+  };
 
+  const handleSaveBill = () => {
+    const targetCompanyId = getTargetCompanyId();
     dispatch(saveBillToFirebase({ 
       companyDocId: targetCompanyId, 
-      billData: billPayload,
-      selectedOfferId: selectedOfferId // <--- Offer ID সঠিক ভাবে ডিসপ্যাচ করা হলো
+      billData: buildBillPayload()
     }));
   };
 
-  // Update Bill Handler
   const handleUpdateBill = () => {
     if (!activeBillIds?.billId) {
-      alert("ডকুমেন্ট আইডি পাওয়া যায়নি! অনুগ্রহ করে প্রথমে 'Save Bill' করুন।");
+      alert("Document ID not found. Save bill first.");
       return;
     }
-
-    const targetCompanyId = selectedCompany || 'general_clients';
-    const safePaid = Number(paidAmount) || 0;
-    const safeGrandTotal = Number(grandTotal) || 0;
-    const safeDue = safeGrandTotal - safePaid;
-
-    const billPayload = {
-      billNo: editableHeader.invoiceNo,
-      offerId: selectedOfferId || 'MANUAL',
-      companyName: editableHeader.toCompany,
-      address: editableHeader.address,
-      subject: editableHeader.subject,
-      date: editableHeader.date,
-      items: editableItems,
-      grandTotal: safeGrandTotal,
-      paidAmount: safePaid,
-      dueAmount: safeDue,
-      notes,
-      paymentMode,
-    };
-
+    const targetCompanyId = getTargetCompanyId();
     dispatch(updateBillInFirebase({
       companyDocId: targetCompanyId,
       billId: activeBillIds.billId,
-      salesId: activeBillIds.salesId,
-      billData: billPayload
+      billData: buildBillPayload()
     }));
   };
 
-  // Delete Bill Handler
   const handleDeleteBill = () => {
-    if (!activeBillIds) {
-      alert("This bill hasn't been saved yet or can't be found in the database.");
+    if (!activeBillIds?.billId) {
+      alert("This bill hasn't been saved yet.");
       return;
     }
-
-    if (window.confirm("Are you sure you want to delete this bill from the database?")) {
-      const targetCompanyId = selectedCompany || 'general_clients';
+    if (window.confirm("Are you sure you want to delete this bill?")) {
+      const targetCompanyId = getTargetCompanyId();
       dispatch(deleteBillFromFirebase({
         companyDocId: targetCompanyId,
-        billId: activeBillIds.billId,
-        salesId: activeBillIds.salesId
+        billId: activeBillIds.billId
       }));
     }
   };
 
-  // Notification Handler
   useEffect(() => {
     if (saveSuccess) {
-      alert('Bill & Sales data successfully saved to Firebase!');
+      alert('Bill successfully saved to Firebase!');
       dispatch(resetSaveStatus());
     } else if (updateSuccess) {
       alert('Bill successfully updated in Firebase!');
@@ -299,61 +344,83 @@ const InvoiceComponent = () => {
     }
   }, [saveSuccess, updateSuccess, deleteSuccess, dispatch, handleReset]);
 
-  // PDF Export
   const handleDownloadPDF = () => {
-    setIsPdfPrinting(true);
-
-    setTimeout(() => {
-      const element = invoiceRef.current;
-      const options = {
-        margin: 0,
-        filename: `Invoice_Bill_${editableHeader.invoiceNo || 'Draft'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(options).from(element).save().then(() => {
-        setIsPdfPrinting(false);
-      });
-    }, 150);
+    downloadInvoicePDF({
+      elementRef: invoiceRef,
+      fileName: `Invoice_Bill_${editableHeader.invoiceNo || 'Draft'}`,
+      setIsPdfPrinting
+    });
   };
 
   const currentActiveData = challanData || manualInvoice;
 
   return (
     <div className="main-wrapper">
-      {/* Search Filters & Actions */}
       <div className="invoice-search-card no-print">
+        {/* Filter Radio Controls */}
+        <div className="filter-container">
+          <strong className="filter-title">🔍 Filter Category:</strong>
+          <label className="filter-label">
+            <input 
+              type="radio" 
+              name="filterType" 
+              value="all" 
+              checked={localFilterType === 'all'} 
+              onChange={() => handleFilterTypeChange('all')} 
+            />
+            <span>All Data</span>
+          </label>
+          <label className="filter-label">
+            <input 
+              type="radio" 
+              name="filterType" 
+              value="offer" 
+              checked={localFilterType === 'offer'} 
+              onChange={() => handleFilterTypeChange('offer')} 
+            />
+            <span>🏷️ Offers Only</span>
+          </label>
+          <label className="filter-label">
+            <input 
+              type="radio" 
+              name="filterType" 
+              value="bill" 
+              checked={localFilterType === 'bill'} 
+              onChange={() => handleFilterTypeChange('bill')} 
+            />
+            <span>🧾 Bills Only</span>
+          </label>
+        </div>
+
         <div className="dropdown-filter-group">
           <div className="select-box">
             <label className="select-label">🏢 Select Company Name</label>
             <select value={selectedCompany} onChange={handleCompanyChange} className="select-dropdown" disabled={loadingCompanies}>
               <option value="">{loadingCompanies ? "Loading..." : "-- Choose Company --"}</option>
               {companiesList.map((comp) => (
-                <option key={comp.id} value={comp.id}>{comp.displayName}</option>
+                <option key={comp.id} value={comp.id}>{comp.displayName || comp.id}</option>
               ))}
             </select>
           </div>
 
           <div className="select-box">
-            <label className="select-label">📄 Select Offer ID</label>
+            <label className="select-label">📄 Select Offer / Bill ID</label>
             <select value={selectedOfferId} onChange={handleOfferChange} className="select-dropdown" disabled={!selectedCompany || loadingOffers}>
-              <option value="">{loadingOffers ? "Loading..." : "-- Choose Offer ID --"}</option>
+              <option value="">{loadingOffers ? "Loading..." : "-- Choose Offer / Bill ID --"}</option>
               {offersList.map((offer) => (
-                <option key={offer.id} value={offer.id}>{offer.id} ({offer.date})</option>
+                <option key={offer.id} value={offer.id}>
+                  {offer.displayLabel || offer.billNo || offer.id}
+                </option>
               ))}
             </select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="select-box" style={{ justifyContent: 'flex-end' }}>
+          <div className="select-box quick-actions-box">
             <label className="select-label">Quick Actions:</label>
-            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+            <div className="quick-actions-buttons">
               <button 
                 type="button" 
-                className="btn-save-bill" 
-                style={{ backgroundColor: '#28a745', marginTop: 0 }}
+                className="btn-save-bill btn-create-blank" 
                 onClick={handleCreateBlankInvoice}
               >
                 ➕ Create Blank
@@ -361,8 +428,7 @@ const InvoiceComponent = () => {
 
               <button 
                 type="button" 
-                className="btn-save-bill" 
-                style={{ backgroundColor: '#6c757d', marginTop: 0 }}
+                className="btn-save-bill btn-reset-action" 
                 onClick={handleReset}
               >
                 🔄 Reset
@@ -371,10 +437,10 @@ const InvoiceComponent = () => {
           </div>
         </div>
 
-        {invoiceError && <p className="error-text">{invoiceError}</p>}
+        {invoiceError && <p className="error-text invoice-error-text">{invoiceError}</p>}
 
         {currentActiveData && (
-          <div className="action-buttons-wrap" style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="action-buttons-wrap">
             {!activeBillIds && (
               <button className="btn-save-bill" onClick={handleSaveBill} disabled={savingBill}>
                 {savingBill ? "💾 Saving ..." : "💾 Save Bill"}
@@ -383,8 +449,7 @@ const InvoiceComponent = () => {
 
             {activeBillIds && (
               <button 
-                className="btn-save-bill" 
-                style={{ backgroundColor: '#ffc107', color: '#000' }} 
+                className="btn-save-bill btn-update-bill" 
                 onClick={handleUpdateBill} 
                 disabled={updatingBill}
               >
@@ -394,8 +459,7 @@ const InvoiceComponent = () => {
 
             {activeBillIds && (
               <button 
-                className="btn-save-bill" 
-                style={{ backgroundColor: '#dc3545' }} 
+                className="btn-save-bill btn-delete-bill" 
                 onClick={handleDeleteBill} 
                 disabled={deletingBill}
               >
@@ -410,105 +474,28 @@ const InvoiceComponent = () => {
         )}
       </div>
 
-      {/* Invoice Document */}
       {loadingChallan ? (
-        <div className="no-data-placeholder">Loading Offer Details....</div>
+        <div className="no-data-placeholder">Loading Details....</div>
       ) : currentActiveData ? (
         <div className={`invoice-container ${isPdfPrinting ? 'pdf-mode' : ''}`} ref={invoiceRef}>
           <div className="invoice-content-wrap">
-            <div className="company-header">
-              <div className="logo-box">
-                <img src={logo} alt="Company Logo" className="logo-img" />
-              </div>
-              <div className="company-info">
-                <h1 className="company-title">H.R.ENGINEERS</h1>
-                <p className="company-services">■ Lift ■ ARD ■ Generator ■ Escalator ■ Service & Maintenance ■ Spare Parts</p>
-              </div>
-            </div>
-
-            <div className="document-type">BILL / INVOICE</div>
-
-            <div className="info-section">
-              <div className="meta-info-grid">
-                <div>
-                  <strong>Invoice No: </strong>
-                  {isPdfPrinting ? editableHeader.invoiceNo : (
-                    <input 
-                      type="text" 
-                      className="table-input bold" 
-                      value={editableHeader.invoiceNo} 
-                      onChange={(e) => handleHeaderChange('invoiceNo', e.target.value)} 
-                    />
-                  )}
-                </div>
-                <div>
-                  <strong>Date: </strong>
-                  {isPdfPrinting ? editableHeader.date : (
-                    <input 
-                      type="text" 
-                      className="table-input" 
-                      value={editableHeader.date} 
-                      onChange={(e) => handleHeaderChange('date', e.target.value)} 
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="to-address">
-                <p className="no-margin"><strong>To,</strong></p>
-                {isPdfPrinting ? (
-                  <>
-                    <div className="bold">{editableHeader.toCompany}</div>
-                    <div>{editableHeader.address}</div>
-                  </>
-                ) : (
-                  <>
-                    <input 
-                      type="text" 
-                      className="table-input bold" 
-                      value={editableHeader.toCompany} 
-                      placeholder="Company Name"
-                      onChange={(e) => handleHeaderChange('toCompany', e.target.value)} 
-                    />
-                    <input 
-                      type="text" 
-                      className="table-input" 
-                      value={editableHeader.address} 
-                      placeholder="Address"
-                      onChange={(e) => handleHeaderChange('address', e.target.value)} 
-                    />
-                  </>
-                )}
-              </div>
-
-              <div className="subject-line">
-                <strong>Sub: </strong>
-                {isPdfPrinting ? <span className="bold">{editableHeader.subject}</span> : (
-                  <input 
-                    type="text" 
-                    className="table-input bold" 
-                    value={editableHeader.subject} 
-                    onChange={(e) => handleHeaderChange('subject', e.target.value)} 
-                  />
-                )}
-              </div>
-
-              <div className="salutation">
-                Dear Sir,<br />
-                We would like to submit our bill as per the following basis:
-              </div>
-            </div>
+            {/* Reusable Header Component */}
+            <InvoiceHeader 
+              isPdfPrinting={isPdfPrinting}
+              editableHeader={editableHeader}
+              handleHeaderChange={handleHeaderChange}
+            />
 
             <table className="invoice-table">
               <thead>
                 <tr>
-                  <th style={{ width: '7%' }}>S.l No.</th>
-                  <th style={{ width: '43%' }}>Items Description</th>
-                  <th style={{ width: '8%' }}>Qty</th>
-                  <th style={{ width: '8%' }}>Unit</th>
-                  <th style={{ width: '14%' }}>Price (BDT)</th>
-                  <th style={{ width: '14%' }}>Total (BDT)</th>
-                  {!isPdfPrinting && <th className="no-print" style={{ width: '6%' }}>Action</th>}
+                  <th className="table-col-sl">S.l No.</th>
+                  <th className="table-col-desc">Items Description</th>
+                  <th className="table-col-qty">Qty</th>
+                  <th className="table-col-unit">Unit</th>
+                  <th className="table-col-price">Price (BDT)</th>
+                  <th className="table-col-total">Total (BDT)</th>
+                  {!isPdfPrinting && <th className="no-print table-col-action">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -543,7 +530,7 @@ const InvoiceComponent = () => {
                         </td>
                         {!isPdfPrinting && (
                           <td className="text-center no-print">
-                            <button type="button" className="btn-delete" onClick={() => handleRemoveRow(index)}>✖</button>
+                            <button type="button" className="btn-delete" onClick={() => handleRemoveRow(index)}>✕</button>
                           </td>
                         )}
                       </tr>
@@ -551,14 +538,13 @@ const InvoiceComponent = () => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={isPdfPrinting ? "6" : "7"} className="text-center" style={{ color: 'red', padding: '15px' }}>
-                      No items available for this Offer.
+                    <td colSpan={isPdfPrinting ? "6" : "7"} className="text-center empty-items-cell">
+                      No items available.
                     </td>
                   </tr>
                 )}
               </tbody>
               <tfoot>
-                {/* Grand Total Row */}
                 <tr className="page-break-avoid">
                   <td colSpan="5" className="text-right bold">Grand Total:</td>
                   <td className="text-center bold">
@@ -567,17 +553,15 @@ const InvoiceComponent = () => {
                   {!isPdfPrinting && <td className="no-print"></td>}
                 </tr>
 
-                {/* Paid Amount Row */}
                 <tr className="page-break-avoid">
-                  <td colSpan="5" className="text-right bold" style={{ color: '#28a745' }}>Paid / Advance Amount:</td>
+                  <td colSpan="5" className="text-right bold paid-amount-title">Paid / Advance Amount:</td>
                   <td className="text-center bold">
                     {isPdfPrinting ? (
                       currentPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                     ) : (
                       <input 
                         type="number" 
-                        className="table-input text-center bold" 
-                        style={{ color: '#28a745' }}
+                        className="table-input text-center bold paid-amount-input" 
                         value={paidAmount} 
                         onChange={(e) => setPaidAmount(e.target.value === '' ? 0 : parseFloat(e.target.value))} 
                         step="0.01"
@@ -587,10 +571,9 @@ const InvoiceComponent = () => {
                   {!isPdfPrinting && <td className="no-print"></td>}
                 </tr>
 
-                {/* Due Amount Row */}
                 <tr className="page-break-avoid">
-                  <td colSpan="5" className="text-right bold" style={{ color: '#dc3545' }}>Net Due Amount:</td>
-                  <td className="text-center bold" style={{ color: '#dc3545' }}>
+                  <td colSpan="5" className="text-right bold due-amount-title">Net Due Amount:</td>
+                  <td className="text-center bold due-amount-value">
                     {dueAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   {!isPdfPrinting && <td className="no-print"></td>}
@@ -606,7 +589,7 @@ const InvoiceComponent = () => {
 
             <div className="page-break-avoid">
               <div className="in-words-section">
-                <strong>In Words: </strong> {numberToWords(grandTotal)}
+                <strong>In Words: </strong> {convertToWords(grandTotal)}
               </div>
 
               <div className="notes-section">
@@ -651,27 +634,12 @@ const InvoiceComponent = () => {
             </div>
           </div>
 
-          <div className="page-break-avoid footer-section-wrap">
-            <div className="invoice-footer">
-              <div className="footer-left">
-                <div className="seal-circle">H.R.E</div>
-                <p>Thanking You. Yours Truly</p>
-              </div>
-              <div className="footer-center">
-                <div className="signature-line"></div>
-                <p>Receiver's Signature & Seal</p>
-              </div>
-            </div>
-
-            <div className="bottom-contact">
-              <p>📞 01711131536, 01407000021 | ✉️ hrengineers@gmail.com</p>
-              <p>📍 Dhaka, Bangladesh</p>
-            </div>
-          </div>
+          {/* Reusable Footer Component */}
+          <InvoiceFooter />
         </div>
       ) : (
         <div className="no-data-placeholder">
-          <p>Please select a <strong>Company Name</strong> and an <strong>Offer ID</strong>, or click <strong>"Create Blank"</strong> to make a manual invoice.</p>
+          <p>Please select a <strong>Company Name</strong> and an <strong>Offer / Bill ID</strong>, or click <strong>"Create Blank"</strong> to make a manual invoice.</p>
         </div>
       )}
     </div>

@@ -4,6 +4,29 @@ import { useNavigate, useParams } from 'react-router';
 import { selectClientDetailsByName } from '../../Fetures/Inventory/clientSlice';
 import './ClintDetails.css';
 
+// ডেট ফরম্যাটকে সব জায়গায় একই (YYYY-MM-DD) করার জন্য হেলপার ফাংশন
+const formatDateStandard = (dateVal) => {
+  if (!dateVal || dateVal === 'N/A' || dateVal === '-') return '-';
+
+  // Firestore Timestamp হলে
+  if (typeof dateVal === 'object' && dateVal.seconds) {
+    dateVal = new Date(dateVal.seconds * 1000);
+  }
+
+  const parsedDate = new Date(dateVal);
+  if (isNaN(parsedDate.getTime())) {
+    // যদি সাধারণ স্ট্রাকচার্ড String হয় (যেমন: YYYY-MM-DD)
+    return String(dateVal).split('T')[0];
+  }
+
+  // YYYY-MM-DD ফরম্যাটে কনভার্ট
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(parsedDate.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
 function ClientDetails() {
   const { clientName } = useParams();
   const navigate = useNavigate();
@@ -18,17 +41,114 @@ function ClientDetails() {
   const [selectedItem, setSelectedItem] = useState('');
   const [activeTab, setActiveTab] = useState('ALL'); // ALL, OFFERS, SALES
 
-  // Filter Logic
-  const filteredData = useMemo(() => {
-    if (!clientData) return { offers: [], sales: [] };
+ // Merge Offers and Sales by Unique Document ID
+  const mergedTransactions = useMemo(() => {
+    if (!clientData) return [];
 
-    const filterRecord = (record) => {
-      const recordDateStr = record.date || record.updatedAt || '';
-      const recordDate = recordDateStr ? new Date(recordDateStr) : null;
+    const map = new Map();
+
+    // 1. Process Sales / Bills First (Prevent Duplicates for Same ID)
+    (clientData.sales || []).forEach((sale) => {
+      // Primary Unique Identifier (Ensure ID clean string)
+      const rawId = sale.id || sale.billNo || sale.offerNo || sale.offerId;
+      if (!rawId) return;
+
+      const docId = String(rawId).trim();
+      const billAmt = Number(sale.grandTotal || sale.totalBill || sale.billAmount || 0);
+
+      // Safe Received Amount extraction
+      let rawRecAmt = sale.paidAmount ?? sale.receivedAmount ?? sale.totalReceived ?? 0;
+      if (Array.isArray(sale.paymentHistory)) {
+        rawRecAmt = sale.paymentHistory.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+      }
+      const recAmt = parseFloat(String(rawRecAmt).replace(/,/g, '')) || 0;
+
+      const rawBillDate = sale.billDate || sale.date || sale.createdAt || 'N/A';
+      const rawRecDate =
+        sale.receivedDate ||
+        sale.paymentDate ||
+        sale.updatedAt ||
+        (recAmt > 0 ? sale.billDate || sale.date : '-');
+
+      // If document ID already exists in map, update/merge values instead of creating new row
+      if (map.has(docId)) {
+        const existing = map.get(docId);
+        // Keep maximum values if duplicated
+        existing.billedAmount = Math.max(existing.billedAmount, billAmt);
+        existing.receivedAmount = Math.max(existing.receivedAmount, recAmt);
+        if (existing.receivedDate === '-' && rawRecDate !== '-') {
+          existing.receivedDate = formatDateStandard(rawRecDate);
+        }
+      } else {
+        map.set(docId, {
+          id: docId,
+          offerDate: '-',
+          billDate: formatDateStandard(rawBillDate),
+          receivedDate: formatDateStandard(rawRecDate),
+          items: sale.items || sale.products || [],
+          offerAmount: 0,
+          billedAmount: billAmt,
+          receivedAmount: recAmt,
+          hasSale: true,
+          hasOffer: false,
+        });
+      }
+    });
+
+    // 2. Process Offers and Merge with matching ID
+    (clientData.offers || []).forEach((offer) => {
+      const rawId = offer.id || offer.offerNo || offer.billNo;
+      if (!rawId) return;
+
+      const docId = String(rawId).trim();
+      const offerAmt = Number(offer.grandTotal || offer.totalAmount || offer.totalBill || 0);
+      const rawOfferDate = offer.offerDate || offer.date || offer.createdAt || 'N/A';
+      const formattedOfferDate = formatDateStandard(rawOfferDate);
+
+      if (map.has(docId)) {
+        const existing = map.get(docId);
+        existing.offerAmount = offerAmt;
+        existing.offerDate = formattedOfferDate;
+        existing.hasOffer = true;
+
+        if (!existing.items || existing.items.length === 0) {
+          existing.items = offer.items || offer.products || [];
+        }
+      } else {
+        map.set(docId, {
+          id: docId,
+          offerDate: formattedOfferDate,
+          billDate: '-',
+          receivedDate: '-',
+          items: offer.items || offer.products || [],
+          offerAmount: offerAmt,
+          billedAmount: 0,
+          receivedAmount: 0,
+          hasSale: false,
+          hasOffer: true,
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [clientData]);
+  // Filter Logic
+  const filteredTransactions = useMemo(() => {
+    return mergedTransactions.filter((record) => {
+      // Tab Filtering
+      if (activeTab === 'SALES' && !record.hasSale) return false;
+      if (activeTab === 'OFFERS' && !record.hasOffer) return false;
+
+      // Primary Date for filtering (Prefer Bill Date, fallback to Offer Date)
+      const primaryDateStr = record.billDate !== '-' && record.billDate !== 'N/A' 
+        ? record.billDate 
+        : (record.offerDate !== '-' && record.offerDate !== 'N/A' ? record.offerDate : '');
+        
+      const recordDate = primaryDateStr && primaryDateStr !== '-' ? new Date(primaryDateStr) : null;
 
       // 1. Month Filter (YYYY-MM)
-      if (filterMonth && recordDateStr) {
-        if (!recordDateStr.startsWith(filterMonth)) return false;
+      if (filterMonth && primaryDateStr) {
+        if (!primaryDateStr.startsWith(filterMonth)) return false;
       }
 
       // 2. Custom Date Range Filter
@@ -43,7 +163,7 @@ function ClientDetails() {
 
       // 3. Item Name Filter
       if (selectedItem) {
-        const items = record.items || record.products || [];
+        const items = record.items || [];
         const hasItem = items.some((item) => {
           const name = item.name || item.itemName || item.description || '';
           return name.trim().toLowerCase() === selectedItem.toLowerCase();
@@ -52,23 +172,12 @@ function ClientDetails() {
       }
 
       return true;
-    };
-
-    return {
-      offers: clientData.offers.filter(filterRecord),
-      sales: clientData.sales.filter(filterRecord),
-    };
-  }, [clientData, filterMonth, startDate, endDate, selectedItem]);
+    });
+  }, [mergedTransactions, activeTab, filterMonth, startDate, endDate, selectedItem]);
 
   // Calculations
-  const totalBilled = filteredData.sales.reduce(
-    (sum, s) => sum + Number(s.grandTotal || s.totalBill || 0),
-    0
-  );
-  const totalReceived = filteredData.sales.reduce(
-    (sum, s) => sum + Number(s.receivedAmount || s.paidAmount || 0),
-    0
-  );
+  const totalBilled = filteredTransactions.reduce((sum, t) => sum + t.billedAmount, 0);
+  const totalReceived = filteredTransactions.reduce((sum, t) => sum + t.receivedAmount, 0);
   const totalDue = totalBilled - totalReceived;
 
   // Reset Filters
@@ -168,7 +277,7 @@ function ClientDetails() {
           <label>📦 Filter by Item:</label>
           <select value={selectedItem} onChange={(e) => setSelectedItem(e.target.value)}>
             <option value="">All Items</option>
-            {clientData.itemList.map((item, idx) => (
+            {(clientData.itemList || []).map((item, idx) => (
               <option key={idx} value={item}>
                 {item}
               </option>
@@ -187,19 +296,19 @@ function ClientDetails() {
           className={activeTab === 'ALL' ? 'active' : ''}
           onClick={() => setActiveTab('ALL')}
         >
-          All Transactions
+          All Transactions ({mergedTransactions.length})
         </button>
         <button
           className={activeTab === 'SALES' ? 'active' : ''}
           onClick={() => setActiveTab('SALES')}
         >
-          Sales & Bills ({filteredData.sales.length})
+          Sales & Bills ({mergedTransactions.filter((t) => t.hasSale).length})
         </button>
         <button
           className={activeTab === 'OFFERS' ? 'active' : ''}
           onClick={() => setActiveTab('OFFERS')}
         >
-          Offers / Quotations ({filteredData.offers.length})
+          Offers / Quotations ({mergedTransactions.filter((t) => t.hasOffer).length})
         </button>
       </div>
 
@@ -210,74 +319,64 @@ function ClientDetails() {
             <tr>
               <th>Type</th>
               <th>Doc No / ID</th>
-              <th>Date</th>
+              <th>Offer Date</th>
+              <th>Bill Date</th>
+              <th>Receive Date</th>
               <th>Items Included</th>
-              <th>Total Amount</th>
+              <th>Offer Amount</th>
+              <th>Billed Amount</th>
               <th>Received</th>
               <th>Due</th>
             </tr>
           </thead>
           <tbody>
-            {/* Sales Rows */}
-            {(activeTab === 'ALL' || activeTab === 'SALES') &&
-              filteredData.sales.map((sale) => {
-                const bill = Number(sale.grandTotal || sale.totalBill || 0);
-                const rec = Number(sale.receivedAmount || sale.paidAmount || 0);
-                const items = sale.items || sale.products || [];
-                return (
-                  <tr key={sale.id} className="row-sale">
-                    <td>
+            {filteredTransactions.map((tx) => {
+              const dueAmt = tx.billedAmount - tx.receivedAmount;
+              return (
+                <tr key={tx.id} className="row-sale">
+                  <td>
+                    {tx.hasSale && tx.hasOffer && (
+                      <span className="badge badge-sale">OFFER & BILL</span>
+                    )}
+                    {tx.hasSale && !tx.hasOffer && (
                       <span className="badge badge-sale">BILL/SALE</span>
-                    </td>
-                    <td>{sale.billNo || sale.id}</td>
-                    <td>{sale.date || 'N/A'}</td>
-                    <td>
-                      <ul className="item-list">
-                        {items.map((it, i) => (
-                          <li key={i}>
-                            {it.name || it.itemName} ({it.quantity || 1} {it.unit || 'pcs'})
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td>৳ {bill.toLocaleString('en-IN')}</td>
-                    <td className="text-success">৳ {rec.toLocaleString('en-IN')}</td>
-                    <td className="text-danger">৳ {(bill - rec).toLocaleString('en-IN')}</td>
-                  </tr>
-                );
-              })}
+                    )}
+                    {!tx.hasSale && tx.hasOffer && (
+                      <span className="badge badge-offer">OFFER ONLY</span>
+                    )}
+                  </td>
+                  <td>{tx.id}</td>
+                  <td>{tx.offerDate}</td>
+                  <td>{tx.billDate}</td>
+                  <td>{tx.receivedDate}</td>
+                  <td>
+                    <ul className="item-list">
+                      {tx.items.map((it, i) => (
+                        <li key={i}>
+                          {it.name || it.itemName || it.description} ({it.quantity || 1} {it.unit || 'Pcs'})
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                  <td>
+                    {tx.hasOffer ? `৳ ${tx.offerAmount.toLocaleString('en-IN')}` : '-'}
+                  </td>
+                  <td>
+                    {tx.hasSale ? `৳ ${tx.billedAmount.toLocaleString('en-IN')}` : '-'}
+                  </td>
+                  <td className="text-success">
+                    {tx.hasSale ? `৳ ${tx.receivedAmount.toLocaleString('en-IN')}` : '-'}
+                  </td>
+                  <td className="text-danger">
+                    {tx.hasSale ? `৳ ${(dueAmt > 0 ? dueAmt : 0).toLocaleString('en-IN')}` : '-'}
+                  </td>
+                </tr>
+              );
+            })}
 
-            {/* Offer Rows */}
-            {(activeTab === 'ALL' || activeTab === 'OFFERS') &&
-              filteredData.offers.map((offer) => {
-                const offerAmt = Number(offer.grandTotal || offer.totalAmount || 0);
-                const items = offer.items || offer.products || [];
-                return (
-                  <tr key={offer.id} className="row-offer">
-                    <td>
-                      <span className="badge badge-offer">OFFER</span>
-                    </td>
-                    <td>{offer.offerNo || offer.id}</td>
-                    <td>{offer.date || 'N/A'}</td>
-                    <td>
-                      <ul className="item-list">
-                        {items.map((it, i) => (
-                          <li key={i}>
-                            {it.name || it.itemName} ({it.quantity || 1} {it.unit || 'pcs'})
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td>৳ {offerAmt.toLocaleString('en-IN')}</td>
-                    <td>-</td>
-                    <td>-</td>
-                  </tr>
-                );
-              })}
-
-            {filteredData.sales.length === 0 && filteredData.offers.length === 0 && (
+            {filteredTransactions.length === 0 && (
               <tr>
-                <td colSpan="7" className="no-data">
+                <td colSpan="10" className="no-data">
                   No transaction records found matching the filters.
                 </td>
               </tr>

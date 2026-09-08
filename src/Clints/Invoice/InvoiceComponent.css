@@ -343,3 +343,108 @@
   font-size: 13px;
   margin-top: 8px;
 }
+/* Filter Options Header */
+.filter-container {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.filter-title {
+  font-size: 14px;
+  color: #495057;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+/* Quick Actions Button Container */
+.quick-actions-box {
+  justify-content: flex-end;
+}
+
+.quick-actions-buttons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-create-blank {
+  background-color: #28a745 !important;
+  margin-top: 0 !important;
+}
+
+.btn-reset-action {
+  background-color: #6c757d !important;
+  margin-top: 0 !important;
+}
+
+/* Error Text Styling */
+.invoice-error-text {
+  color: #dc3545;
+  margin-top: 10px;
+}
+
+/* Action Buttons Wrap */
+.action-buttons-wrap {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-update-bill {
+  background-color: #ffc107 !important;
+  color: #000000 !important;
+}
+
+.btn-delete-bill {
+  background-color: #dc3545 !important;
+}
+
+/* Table Specific Cell Styles */
+.table-col-sl {
+  width: 7%;
+}
+.table-col-desc {
+  width: 43%;
+}
+.table-col-qty {
+  width: 8%;
+}
+.table-col-unit {
+  width: 8%;
+}
+.table-col-price {
+  width: 14%;
+}
+.table-col-total {
+  width: 14%;
+}
+.table-col-action {
+  width: 6%;
+}
+
+.empty-items-cell {
+  color: #dc3545;
+  padding: 15px;
+}
+
+.paid-amount-title,
+.paid-amount-input {
+  color: #28a745 !important;
+}
+
+.due-amount-title,
+.due-amount-value {
+  color: #dc3545 !important;
+}
