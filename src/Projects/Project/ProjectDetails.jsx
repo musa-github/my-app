@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router';
@@ -12,17 +11,17 @@ import {
 
 import './ProjectDetails.css';
 
-const monthsList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthsList = [
+  'January', 'February', 'March', 'April', 'May', 'June', 
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Redux Store থেকে Projects অ্যারে এক্সট্র্যাক্ট করা (Fallback সহ)
   const projects = useSelector((state) => state.project?.projects || state.projectDetails?.projects || []);
-  
-  // String এবং Number উভয় টাইপ মেলাতে Loose check বা String conversion ব্যবহার করা হলো
   const project = projects.find((p) => String(p.id) === String(id));
 
   const [showBillModal, setShowBillModal] = useState(false);
@@ -43,9 +42,13 @@ const ProjectDetails = () => {
   if (!project) {
     return (
       <div className="details-container">
-        <h2>Project Not Found</h2>
-        <p>Project ID: {id}</p>
-        <button className="btn btn-back" onClick={() => navigate(-1)}>Back</button>
+        <div className="not-found-card">
+          <h2>Project Not Found</h2>
+          <p>Project ID: <strong>{id}</strong></p>
+          <button className="btn btn-back" onClick={() => navigate(-1)}>
+            ← Back to Projects
+          </button>
+        </div>
       </div>
     );
   }
@@ -110,40 +113,54 @@ const ProjectDetails = () => {
 
   return (
     <div className="details-container">
+      {/* Header Banner Section */}
       <div className="details-header">
-        <div>
-          <h2>Project Details: {project.projectName}</h2>
-          <p><strong>Whose Project:</strong> {project.whoseProjects || '-'} | <strong>Address:</strong> {project.address || '-'} | <strong>Phone:</strong> {project.phoneNo || '-'}</p>
+        <div className="header-info">
+          <h2>{project.projectName}</h2>
+          <div className="meta-badges">
+            <span className="meta-item"><strong>Client:</strong> {project.whoseProjects || 'N/A'}</span>
+            <span className="meta-divider">•</span>
+            <span className="meta-item"><strong>Address:</strong> {project.address || 'N/A'}</span>
+            <span className="meta-divider">•</span>
+            <span className="meta-item"><strong>Phone:</strong> {project.phoneNo || 'N/A'}</span>
+          </div>
         </div>
         <div className="header-actions">
-          <button className="btn btn-make-bill" onClick={() => handleOpenMakeBill()}>➕ Make Bill</button>
-          <button className="btn btn-back" onClick={() => navigate(-1)}>🔙 Back</button>
+          <button className="btn btn-make-bill" onClick={() => handleOpenMakeBill()}>
+            <span>＋</span> Create Bill
+          </button>
+          <button className="btn btn-back" onClick={() => navigate(-1)}>
+            ← Back
+          </button>
         </div>
       </div>
 
+      {/* Main Billing Table */}
       <div className="table-wrapper">
         <table className="project-table">
           <thead>
             <tr>
               <th>Month</th>
-              <th>Servicing Date</th>
+              <th>Date</th>
               <th>Status</th>
-              <th>Servicing Bill</th>
+              <th>Servicing</th>
               <th>Spare Parts</th>
               <th>Last Due</th>
               <th>Total Bill</th>
               <th>Collected</th>
-              <th>Customer Due</th>
+              <th>Due</th>
               <th>Collected By</th>
               <th>Approved By</th>
               <th>Serviced By</th>
-              <th>Actions</th>
+              <th className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {billList.length === 0 ? (
               <tr>
-                <td colSpan="13" className="text-center">No monthly bills created yet.</td>
+                <td colSpan="13" className="no-data">
+                  No monthly bills created for this project yet.
+                </td>
               </tr>
             ) : (
               billList.map((bill, index) => {
@@ -157,26 +174,32 @@ const ProjectDetails = () => {
 
                 return (
                   <tr key={index}>
-                    <td className="text-center bold">{bill.month}</td>
-                    <td className="text-center">{bill.lastServicingDate || bill.servicingDate || '-'}</td>
-                    <td className="text-center">
+                    <td className="font-bold month-col">{bill.month}</td>
+                    <td>{bill.lastServicingDate || bill.servicingDate || '-'}</td>
+                    <td>
                       <span className={`status-badge ${status.toLowerCase() === 'complete' ? 'badge-complete' : 'badge-pending'}`}>
                         {status}
                       </span>
                     </td>
-                    <td className="text-center">{sBill.toLocaleString()}</td>
-                    <td className="text-center">{pBill.toLocaleString()}</td>
-                    <td className="text-center">{lDue.toLocaleString()}</td>
-                    <td className="text-center bold">{tBill.toLocaleString()}</td>
-                    <td className="text-center">{cBill.toLocaleString()}</td>
-                    <td className="text-center bold text-danger">{due.toLocaleString()}</td>
-                    <td className="text-center">{bill.collectedBy || '-'}</td>
-                    <td className="text-center">{bill.approvedBy || '-'}</td>
-                    <td className="text-center">{bill.servicedBy || '-'}</td>
-                    <td className="text-center action-buttons">
-                      <button className="btn-print" onClick={() => handleGenerateBill(bill)}>📄 Generate Bill</button>
-                      <button className="btn-edit" onClick={() => handleOpenMakeBill(bill)}>Edit</button>
-                      <button className="btn-delete" onClick={() => handleDeleteBill(bill.month)}>Delete</button>
+                    <td>৳ {sBill.toLocaleString('en-IN')}</td>
+                    <td>৳ {pBill.toLocaleString('en-IN')}</td>
+                    <td>৳ {lDue.toLocaleString('en-IN')}</td>
+                    <td className="font-bold">৳ {tBill.toLocaleString('en-IN')}</td>
+                    <td className="text-success font-bold">৳ {cBill.toLocaleString('en-IN')}</td>
+                    <td className={due > 0 ? 'text-danger font-bold' : ''}>৳ {due.toLocaleString('en-IN')}</td>
+                    <td>{bill.collectedBy || '-'}</td>
+                    <td>{bill.approvedBy || '-'}</td>
+                    <td>{bill.servicedBy || '-'}</td>
+                    <td className="action-buttons">
+                      <button className="btn-action btn-print" title="Generate Bill" onClick={() => handleGenerateBill(bill)}>
+                        📄 Bill
+                      </button>
+                      <button className="btn-action btn-edit" title="Edit Bill" onClick={() => handleOpenMakeBill(bill)}>
+                        ✏️ Edit
+                      </button>
+                      <button className="btn-action btn-delete" title="Delete Bill" onClick={() => handleDeleteBill(bill.month)}>
+                        🗑️
+                      </button>
                     </td>
                   </tr>
                 );
@@ -186,61 +209,76 @@ const ProjectDetails = () => {
         </table>
       </div>
 
+      {/* Modern Modal Overlay */}
       {showBillModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Make / Update Monthly Bill</h3>
+            <div className="modal-header">
+              <h3>Monthly Bill Setup</h3>
+              <button className="close-btn" onClick={() => setShowBillModal(false)}>✕</button>
+            </div>
+            
             <form onSubmit={handleBillSubmit}>
               <div className="form-grid">
                 <div className="input-field">
-                  <label>Select Month:</label>
+                  <label>Select Month</label>
                   <select name="month" value={billForm.month} onChange={handleBillInputChange}>
                     {monthsList.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
+                
                 <div className="input-field">
-                  <label>Servicing Date:</label>
+                  <label>Servicing Date</label>
                   <input type="date" name="lastServicingDate" value={billForm.lastServicingDate} onChange={handleBillInputChange} />
                 </div>
+                
                 <div className="input-field">
-                  <label>Servicing Status:</label>
+                  <label>Servicing Status</label>
                   <select name="servicingStatus" value={billForm.servicingStatus} onChange={handleBillInputChange}>
                     <option value="Pending">Pending</option>
                     <option value="Complete">Complete</option>
                   </select>
                 </div>
+
                 <div className="input-field">
-                  <label>Servicing Bill:</label>
-                  <input type="number" name="servicingBill" value={billForm.servicingBill} onChange={handleBillInputChange} />
+                  <label>Servicing Bill (৳)</label>
+                  <input type="number" placeholder="0.00" name="servicingBill" value={billForm.servicingBill} onChange={handleBillInputChange} />
                 </div>
+
                 <div className="input-field">
-                  <label>Spare Parts Bill:</label>
-                  <input type="number" name="sparePartsBill" value={billForm.sparePartsBill} onChange={handleBillInputChange} />
+                  <label>Spare Parts Bill (৳)</label>
+                  <input type="number" placeholder="0.00" name="sparePartsBill" value={billForm.sparePartsBill} onChange={handleBillInputChange} />
                 </div>
+
                 <div className="input-field">
-                  <label>Last Month Due:</label>
-                  <input type="number" name="lastMonthDue" value={billForm.lastMonthDue} onChange={handleBillInputChange} />
+                  <label>Last Month Due (৳)</label>
+                  <input type="number" placeholder="0.00" name="lastMonthDue" value={billForm.lastMonthDue} onChange={handleBillInputChange} />
                 </div>
+
                 <div className="input-field">
-                  <label>Collected Bill Amount:</label>
-                  <input type="number" name="collectedBill" value={billForm.collectedBill} onChange={handleBillInputChange} />
+                  <label>Collected Amount (৳)</label>
+                  <input type="number" placeholder="0.00" name="collectedBill" value={billForm.collectedBill} onChange={handleBillInputChange} />
                 </div>
+
                 <div className="input-field">
-                  <label>Collected By:</label>
-                  <input type="text" name="collectedBy" value={billForm.collectedBy} onChange={handleBillInputChange} />
+                  <label>Collected By</label>
+                  <input type="text" placeholder="Name" name="collectedBy" value={billForm.collectedBy} onChange={handleBillInputChange} />
                 </div>
+
                 <div className="input-field">
-                  <label>Approved By:</label>
-                  <input type="text" name="approvedBy" value={billForm.approvedBy} onChange={handleBillInputChange} />
+                  <label>Approved By</label>
+                  <input type="text" placeholder="Name" name="approvedBy" value={billForm.approvedBy} onChange={handleBillInputChange} />
                 </div>
+
                 <div className="input-field">
-                  <label>Serviced By:</label>
-                  <input type="text" name="servicedBy" value={billForm.servicedBy} onChange={handleBillInputChange} />
+                  <label>Serviced By</label>
+                  <input type="text" placeholder="Technician Name" name="servicedBy" value={billForm.servicedBy} onChange={handleBillInputChange} />
                 </div>
               </div>
+
               <div className="modal-actions">
-                <button type="submit" className="btn btn-save">Save Bill</button>
                 <button type="button" className="btn btn-cancel" onClick={() => setShowBillModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-save">Save & Sync</button>
               </div>
             </form>
           </div>

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-    addNewProjectLocal,
-    deleteProjectFromFirebase,
-    fetchProjects,
-    saveAllProjectsToFirebase,
-    setSelectedMonth,
-    setSelectedWhoseProject,
-    updateProjectLocal
+  addNewProjectLocal,
+  deleteProjectFromFirebase,
+  fetchProjects,
+  saveAllProjectsToFirebase,
+  setSelectedMonth,
+  setSelectedWhoseProject,
+  updateProjectLocal
 } from '../Fetures/Inventory/ProjectsSlice';
 import './Summery.css';
 
@@ -30,7 +30,7 @@ const Summery = () => {
     projectName: '',
     liftQty: '', 
     whoseProjects: '',
-    servicingDate: '', // Month ড্রপডাউনের পরিবর্তে Date ফিল্ড
+    servicingDate: '',
     servicingBill: '',
     sparePartsBill: '',
     lastMonthDue: '',
@@ -84,7 +84,6 @@ const Summery = () => {
       return;
     }
 
-    // তারিখ সিলেক্ট করা থাকলে সেখান থেকে মাসের নাম বের করা
     let calculatedMonth = selectedMonth !== 'All' ? selectedMonth : 'August';
     if (formData.servicingDate) {
       const dateObj = new Date(formData.servicingDate);
@@ -95,7 +94,7 @@ const Summery = () => {
 
     const payload = {
       ...formData,
-      month: calculatedMonth // রিডক্সের জন্য মাসের নাম পাঠানো হচ্ছে
+      month: calculatedMonth
     };
 
     if (editingId) {
@@ -225,21 +224,21 @@ const Summery = () => {
 
         <div className="action-group">
           <div className="filter-box">
-            <label>Filter Month: </label>
+            <label>Filter Month:</label>
             <select value={selectedMonth} onChange={(e) => dispatch(setSelectedMonth(e.target.value))}>
               {monthsList.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
 
           <div className="filter-box">
-            <label>Whose Project: </label>
+            <label>Whose Project:</label>
             <select value={selectedWhoseProject} onChange={(e) => dispatch(setSelectedWhoseProject(e.target.value))}>
               {availableWhoseProjects.map(wp => <option key={wp} value={wp}>{wp}</option>)}
             </select>
           </div>
 
           <div className="filter-box">
-            <label>Due Status: </label>
+            <label>Due Status:</label>
             <select value={dueFilter} onChange={(e) => setDueFilter(e.target.value)}>
               <option value="All">All Projects</option>
               <option value="WithDue">With Due Only</option>
@@ -293,24 +292,24 @@ const Summery = () => {
         <table className="project-table">
           <thead>
             <tr>
-              <th>Sl</th>
+              <th className="text-center">Sl</th>
               <th>Project Name</th>
-              <th>Whose</th>
-              <th>Lift Qty</th>
-              <th>Servicing Bill</th>
-              <th>Spare Parts</th>
-              <th>Last Due</th>
-              <th>Total Bill</th>
-              <th>Collected</th>
-              <th>Total Due</th>
-              <th>Collected By</th>
-              <th>Approved By</th>
-              <th>Actions</th>
+              <th className="text-center">Whose</th>
+              <th className="text-center">Lift Qty</th>
+              <th className="text-right">Servicing Bill</th>
+              <th className="text-right">Spare Parts</th>
+              <th className="text-right">Last Due</th>
+              <th className="text-right">Total Bill</th>
+              <th className="text-right">Collected</th>
+              <th className="text-right">Total Due</th>
+              <th className="text-center">Collected By</th>
+              <th className="text-center">Approved By</th>
+              <th className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredProjects.length === 0 ? (
-              <tr><td colSpan="13" className="text-center">No projects found.</td></tr>
+              <tr><td colSpan="13" className="text-center" style={{ padding: '30px', color: '#64748b' }}>No projects found.</td></tr>
             ) : (
               filteredProjects.map((proj, idx) => {
                 const filteredBills = (proj.billList || []).filter(
@@ -328,7 +327,7 @@ const Summery = () => {
                 return (
                   <tr key={proj.id || idx}>
                     <td className="text-center">{idx + 1}</td>
-                    <td><strong>{proj.projectName}</strong></td>
+                    <td><strong style={{ color: '#f8fafc' }}>{proj.projectName}</strong></td>
                     <td className="text-center">{proj.whoseProjects || '-'}</td>
                     <td className="text-center">{proj.liftQty}</td>
                     <td className="text-right">{servicingBill.toLocaleString()}</td>
@@ -395,9 +394,8 @@ const Summery = () => {
                   onChange={handleInputChange} 
                 />
 
-                {/* Month ড্রপডাউনের জায়গায় Date Calender Input */}
                 <div className="input-group" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '12px', marginBottom: '2px', color: '#555' }}>Servicing Date / Month:</label>
+                  <label style={{ fontSize: '11px', marginBottom: '4px', color: '#94a3b8' }}>Servicing Date / Month:</label>
                   <input 
                     type="date" 
                     name="servicingDate" 
@@ -457,7 +455,7 @@ const Summery = () => {
                 />
               </div>
               <div className="modal-actions">
-                <button type="submit" className="btn btn-save">{editingId ? 'Update Project' : 'Add Project'}</button>
+                <button type="submit" className="btn btn-add">{editingId ? 'Update Project' : 'Add Project'}</button>
                 <button type="button" className="btn btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
               </div>
             </form>

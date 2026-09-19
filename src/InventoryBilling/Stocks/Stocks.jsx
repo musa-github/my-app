@@ -1,10 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllSalesData } from '../../Fetures/Inventory/SalesSlice';
 import { fetchTotalPurchase } from '../../Fetures/Inventory/TotalPurchaseSlice';
-import './Stocks.css';
+import styles from './Stocks.module.css';
 
 function Stocks() {
   const dispatch = useDispatch();
@@ -157,45 +156,45 @@ function Stocks() {
     setSelectedDate('');
   };
 
-  if (loading) return <div className="loading-state">Loading Stock & Profit Analytics...</div>;
-  if (error) return <div className="error-state">Error: {error}</div>;
+  if (loading) return <div className={styles.loadingState}>⏳ Loading Stock & Profit Analytics...</div>;
+  if (error) return <div className={styles.errorState}>⚠️ Error: {error}</div>;
 
   return (
-    <div className="stock-container">
-      <div className="stock-header">
+    <div className={styles.stockContainer}>
+      <div className={styles.stockHeader}>
         <h2>📦 Stock & Profit Analytics Dashboard</h2>
         <p>Monitor current stock levels, inventory values, and real-time profit/loss</p>
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="summary-cards">
-        <div className="card profit-card">
+      <div className={styles.summaryCards}>
+        <div className={`${styles.card} ${styles.profitCard}`}>
           <h4>Total Estimated Profit</h4>
-          <h3 className={totals.totalProfit >= 0 ? 'text-success' : 'text-danger'}>
+          <h3 className={totals.totalProfit >= 0 ? styles.textSuccess : styles.textDanger}>
             BDT {totals.totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </h3>
         </div>
 
-        <div className="card sales-card">
+        <div className={`${styles.card} ${styles.salesCard}`}>
           <h4>Total Sales Revenue</h4>
           <h3>BDT {totals.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h3>
         </div>
 
-        <div className="card stock-val-card">
+        <div className={`${styles.card} ${styles.stockValCard}`}>
           <h4>Current Stock Value</h4>
           <h3>BDT {totals.totalStockValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h3>
         </div>
 
-        <div className="card items-card">
+        <div className={`${styles.card} ${styles.itemsCard}`}>
           <h4>Available Stock Items</h4>
           <h3>{totals.totalStock.toLocaleString()} Pcs</h3>
         </div>
       </div>
 
       {/* Multi-Filter Bar */}
-      <div className="filter-card">
-        <div className="filter-grid">
-          <div className="filter-item">
+      <div className={styles.filterCard}>
+        <div className={styles.filterGrid}>
+          <div className={styles.filterItem}>
             <label>🔍 Item Name:</label>
             <input
               type="text"
@@ -205,7 +204,7 @@ function Stocks() {
             />
           </div>
 
-          <div className="filter-item">
+          <div className={styles.filterItem}>
             <label>🏢 Client / Company:</label>
             <select value={selectedCompany} onChange={(e) => setSelectedCompany(e.target.value)}>
               <option value="ALL">All Clients</option>
@@ -217,7 +216,7 @@ function Stocks() {
             </select>
           </div>
 
-          <div className="filter-item">
+          <div className={styles.filterItem}>
             <label>🗓️ Month:</label>
             <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
               <option value="">All Months</option>
@@ -236,13 +235,13 @@ function Stocks() {
             </select>
           </div>
 
-          <div className="filter-item">
+          <div className={styles.filterItem}>
             <label>📅 Specific Date:</label>
             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
           </div>
 
-          <div className="filter-item btn-box">
-            <button className="reset-btn" onClick={resetFilters}>
+          <div className={`${styles.filterItem} ${styles.btnBox}`}>
+            <button className={styles.resetBtn} onClick={resetFilters}>
               Reset Filters
             </button>
           </div>
@@ -250,41 +249,51 @@ function Stocks() {
       </div>
 
       {/* Stock & Profit Table */}
-      <div className="table-wrapper">
-        <table className="stock-table">
+      <div className={styles.tableWrapper}>
+        <table className={styles.stockTable}>
           <thead>
             <tr>
-              <th>S.L</th>
+              <th className={styles.textCenter} style={{ width: '60px' }}>S.L</th>
               <th>Item Description</th>
-              <th className="text-center">Purchased Qty</th>
-              <th className="text-center">Sold Qty</th>
-              <th className="text-center">Stock In Hand</th>
-              <th className="text-right">Avg Purchase Price</th>
-              <th className="text-right">Sales Revenue</th>
-              <th className="text-right">Profit / Loss</th>
+              <th className={styles.textCenter}>Purchased Qty</th>
+              <th className={styles.textCenter}>Sold Qty</th>
+              <th className={styles.textCenter}>Stock In Hand</th>
+              <th className={styles.textRight}>Avg Purchase Price</th>
+              <th className={styles.textRight}>Sales Revenue</th>
+              <th className={styles.textRight}>Profit / Loss</th>
             </tr>
           </thead>
           <tbody>
             {stockData.length > 0 ? (
               stockData.map((item, index) => (
                 <tr key={index}>
-                  <td className="text-center">{index + 1}</td>
-                  <td className="bold">{item.name}</td>
-                  <td className="text-center">{item.purchasedQty}</td>
-                  <td className="text-center">{item.soldQty}</td>
-                  <td className={`text-center bold ${item.currentStock < 0 ? 'text-danger' : 'text-primary'}`}>
-                    {item.currentStock}
+                  <td className={`${styles.textCenter} ${styles.bold}`}>{index + 1}</td>
+                  <td className={styles.bold}>{item.name}</td>
+                  <td className={styles.textCenter}>{item.purchasedQty}</td>
+                  <td className={styles.textCenter}>{item.soldQty}</td>
+                  <td className={styles.textCenter}>
+                    <span
+                      className={`${styles.badgeStock} ${
+                        item.currentStock < 0 ? styles.badgeNegative : styles.badgePositive
+                      }`}
+                    >
+                      {item.currentStock}
+                    </span>
                   </td>
-                  <td className="text-right">BDT {item.avgPurchasePrice.toFixed(2)}</td>
-                  <td className="text-right">BDT {item.totalSalesRevenue.toFixed(2)}</td>
-                  <td className={`text-right bold ${item.profit >= 0 ? 'text-success' : 'text-danger'}`}>
+                  <td className={styles.textRight}>BDT {item.avgPurchasePrice.toFixed(2)}</td>
+                  <td className={styles.textRight}>BDT {item.totalSalesRevenue.toFixed(2)}</td>
+                  <td
+                    className={`${styles.textRight} ${styles.bold} ${
+                      item.profit >= 0 ? styles.textSuccess : styles.textDanger
+                    }`}
+                  >
                     BDT {item.profit.toFixed(2)}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center no-data">
+                <td colSpan="8" className={`${styles.textCenter} ${styles.noData}`}>
                   No inventory records matched your filters.
                 </td>
               </tr>
@@ -292,19 +301,19 @@ function Stocks() {
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan="2" className="text-right bold">
-                Total:
+              <td colSpan="2" className={`${styles.textRight} ${styles.bold}`}>
+                Total Summary:
               </td>
-              <td className="text-center bold">{totals.totalPurchasedQty}</td>
-              <td className="text-center bold">{totals.totalSoldQty}</td>
-              <td className="text-center bold text-primary">{totals.totalStock}</td>
+              <td className={`${styles.textCenter} ${styles.bold}`}>{totals.totalPurchasedQty}</td>
+              <td className={`${styles.textCenter} ${styles.bold}`}>{totals.totalSoldQty}</td>
+              <td className={`${styles.textCenter} ${styles.bold} ${styles.textPrimary}`}>{totals.totalStock}</td>
               <td></td>
-              <td className="text-right bold">
+              <td className={`${styles.textRight} ${styles.bold}`}>
                 BDT {totals.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </td>
               <td
-                className={`text-right bold ${
-                  totals.totalProfit >= 0 ? 'text-success' : 'text-danger'
+                className={`${styles.textRight} ${styles.bold} ${
+                  totals.totalProfit >= 0 ? styles.textSuccess : styles.textDanger
                 }`}
               >
                 BDT {totals.totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}

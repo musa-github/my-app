@@ -6,7 +6,11 @@ import projectReducer from '../Fetures/Inventory/ProjectsSlice';
 import purchaseReducer from '../Fetures/Inventory/PurchaseSlice';
 import salesReducer from '../Fetures/Inventory/SalesSlice';
 import totalPurchaseReducer from '../Fetures/Inventory/TotalPurchaseSlice';
+import { default as authReducer } from '../Fetures/Inventory/authSlice';
 import clientReducer from '../Fetures/Inventory/clientSlice';
+import payrollReducer from '../Fetures/Inventory/payrollSlice';
+
+
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +22,8 @@ export const store = configureStore({
     sales: salesReducer,
     project: projectReducer,
     client: clientReducer,
+  payroll: payrollReducer,
+    auth: authReducer,
     
     
   }

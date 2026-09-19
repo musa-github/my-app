@@ -1,0 +1,29 @@
+.avatarWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatarImg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #38bdf8;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.userRole {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}

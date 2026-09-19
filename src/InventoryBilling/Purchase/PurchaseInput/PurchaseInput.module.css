@@ -1,134 +1,224 @@
-/* Container Layout */
-.PurchaseInputContainer {
-  max-width: 1000px;
-  margin: 20px auto;
-  padding: 24px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-    Cantarell, sans-serif;
-}
-.headingContainer {
-  display: grid;
-  grid-template-columns: auto 70px;
+/* ==========================================
+   Modern Purchase Input Stylesheet
+   ========================================== */
+
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg-main: #f8fafc;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --success: #10b981;
 }
 
-/* Heading */
+.PurchaseInputContainer {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 32px;
+  background-color: var(--card-bg);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  color: var(--text-main);
+}
+
+/* Header Section */
+.headingContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border-color);
+}
+
 .heading_3 {
   font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 10px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+  margin: 0;
 }
-.resetBtn {
-  padding: 5px 10px !important;
-  height: 40px;
+
+/* Table Card Wrapper */
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background-color: #ffffff;
+  margin-bottom: 24px;
 }
-/* Table Design */
+
 .table {
   width: 100%;
   border-collapse: collapse;
-  text-align: center;
-  margin-bottom: 20px;
+  text-align: left;
 }
 
-.PurchaseInputContainer th {
-  background-color: #f8fafc;
-  color: #475569;
-  font-size: 0.875rem;
-  font-weight: 600;
+.table th {
+  background-color: #f1f5f9;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 12px 5px;
-  border-bottom: 2px solid #e2e8f0;
+  letter-spacing: 0.06em;
+  padding: 14px 10px;
+  border-bottom: 2px solid var(--border-color);
 }
 
-.PurchaseInputContainer td {
-  padding: 2px 6px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-/* Input Styles */
-.PurchaseInputContainer input[type="text"] {
-  width: 100%;
+.table td {
   padding: 8px 10px;
-  font-size: 0.9rem;
-  color: #1e293b;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  outline: none;
-  box-sizing: border-box;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
 }
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Form Inputs */
+.PurchaseInputContainer input[type="text"],
 .PurchaseInputContainer input[type="number"] {
   width: 100%;
-  padding: 8px 10px;
-  font-size: 0.9rem;
-  color: #1e293b;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-main);
   background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   outline: none;
   box-sizing: border-box;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-.narrow {
-  width: 70px;
-}
-.midium {
-  width: 100px;
-}
-.PurchaseInputContainer input[type="text"]:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-.PurchaseInputContainer input[type="number"]:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  transition: all 0.2s ease;
 }
 
-.PurchaseInputContainer input[type="text"]:hover {
-  border-color: #94a3b8;
+.PurchaseInputContainer input[type="text"]:focus,
+.PurchaseInputContainer input[type="number"]:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  background-color: #ffffff;
 }
+
+.PurchaseInputContainer input[type="text"]:hover,
 .PurchaseInputContainer input[type="number"]:hover {
   border-color: #94a3b8;
 }
 
-/* Button Styling */
-.PurchaseInputContainer button {
-  background-color: #2563eb;
-  color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    transform 0.1s ease;
+/* Readonly Inputs */
+.readOnlyInput {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+  font-weight: 700 !important;
+  border-color: #e2e8f0 !important;
+  cursor: not-allowed;
 }
 
-.PurchaseInputContainer button:hover {
-  background-color: #1d4ed8;
+/* Column Utilities */
+.narrow {
+  width: 65px;
+  text-align: center;
 }
 
-.PurchaseInputContainer button:active {
-  transform: scale(0.98);
+.medium {
+  width: 120px;
 }
+
+/* Action Buttons */
 .buttonGroup {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
 }
+
+.leftButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.addBtn {
+  background-color: #eff6ff;
+  color: var(--primary);
+  border: 1px solid #bfdbfe;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addBtn:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.resetBtn {
+  background-color: #fef2f2;
+  color: var(--danger);
+  border: 1px solid #fecaca;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetBtn:hover {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
+.submitBtn {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s ease;
+}
+
+.submitBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .deleteBtn {
-  background-color: red !important;
+  background-color: #fee2e2;
+  color: var(--danger);
+  border: 1px solid #fca5a5;
+  padding: 7px 12px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteBtn:hover {
+  background-color: var(--danger);
+  color: #ffffff;
 }

@@ -1,81 +1,137 @@
+/* ==========================================
+   Client List & Ledger Modern Layout
+   ========================================== */
 .client-list-container {
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 28px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  max-width: 1280px;
+  margin: 20px auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: #1e293b; /* টেক্সট স্পষ্ট করার জন্য ডার্ক কালার */
 }
 
+.client-list-container h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 0;
+  margin-bottom: 24px;
+  letter-spacing: -0.3px;
+}
+
+/* Filter and Search Bar */
 .filter-wrapper {
   display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .search-input {
   flex: 1;
-  padding: 10px 14px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
   font-size: 14px;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .status-select {
-  padding: 10px 14px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  background-color: #fff;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
   font-size: 14px;
+  color: #0f172a;
   cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease-in-out;
 }
 
+.status-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Summary Cards */
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
 }
 
 .card {
-  background: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border-left: 4px solid #007bff;
+  background: #ffffff;
+  padding: 20px 22px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  border-left: 5px solid #2563eb;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }
 
 .card h4 {
-  margin: 0 0 8px 0;
-  font-size: 13px;
-  color: #6c757d;
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
   text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
 
 .card p {
   margin: 0;
-  font-size: 18px;
-  font-weight: bold;
-  color: #212529;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .offer-card {
-  border-left-color: #17a2b8;
-}
-.bill-card {
-  border-left-color: #007bff;
-}
-.received-card {
-  border-left-color: #28a745;
-}
-.due-card {
-  border-left-color: #dc3545;
+  border-left-color: #0d9488;
 }
 
+.bill-card {
+  border-left-color: #2563eb;
+}
+
+.received-card {
+  border-left-color: #16a34a;
+}
+
+.due-card {
+  border-left-color: #dc2626;
+}
+
+/* Table Design */
 .table-responsive {
   overflow-x: auto;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
 }
 
 .client-table {
@@ -86,48 +142,82 @@
 
 .client-table th,
 .client-table td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #dee2e6;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e2e8f0;
   font-size: 14px;
+  color: #0f172a; /* ডার্ক টেক্সট কালার নিশ্চিত করার জন্য */
 }
 
 .client-table th {
-  background-color: #f1f3f5;
-  color: #495057;
-  font-weight: 600;
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.client-table tbody tr {
+  transition: background-color 0.15s ease-in-out;
+}
+
+.client-table tbody tr:hover {
+  background-color: #f1f5f9;
 }
 
 .font-bold {
   font-weight: 600;
 }
 
+.client-link {
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.client-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Specific Column Colors */
 .text-success {
-  color: #28a745;
-}
-
-.text-danger {
-  color: #dc3545;
-}
-
-.status-badge {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
+  color: #16a34a !important;
   font-weight: 600;
 }
 
+.text-danger {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
 .badge-due {
-  background-color: #ffe3e3;
-  color: #dc3545;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .badge-paid {
-  background-color: #d3f9d8;
-  color: #2b8a3e;
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 
 .no-data {
   text-align: center;
-  color: #868e96;
-  padding: 20px;
+  color: #64748b;
+  padding: 30px;
+  font-size: 15px;
+  font-weight: 500;
 }

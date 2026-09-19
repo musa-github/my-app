@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTotalPurchase } from '../../Fetures/Inventory/TotalPurchaseSlice';
+import styles from './TotalPurchase.module.css';
 
 function TotalPurchase() {
   const dispatch = useDispatch();
-  
-  // 🟢 এখানে state.purchase এর বদলে state.totalPurchase হবে
+
   const purchaseState = useSelector((state) => state.totalPurchase);
-  
+
   const items = purchaseState?.items || [];
   const loading = purchaseState?.loading;
   const error = purchaseState?.error;
@@ -68,116 +68,147 @@ function TotalPurchase() {
     0
   );
 
-  if (loading) return <h3 style={{ padding: '20px' }}>Loading...</h3>;
-  if (error) return <h3 style={{ color: 'red', padding: '20px' }}>Error: {error}</h3>;
+  if (loading) return <div className={styles.loadingState}>⏳ Loading Purchase Inventory...</div>;
+  if (error) return <div className={styles.errorState}>⚠️ Error: {error}</div>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Total Purchase Inventory</h2>
-
-      {/* Filter Section */}
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px', padding: '15px', background: '#f5f5f5', borderRadius: '5px' }}>
-        <div>
-          <label>Search Name: </label>
-          <input
-            type="text"
-            placeholder="Item name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label>Date: </label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label>Month: </label>
-          <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
-            <option value="">All Months</option>
-            <option value="1">January</option>
-            <option value="2">February</option>
-            <option value="3">March</option>
-            <option value="4">April</option>
-            <option value="5">May</option>
-            <option value="6">June</option>
-            <option value="7">July</option>
-            <option value="8">August</option>
-            <option value="9">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Day: </label>
-          <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)}>
-            <option value="">All Days</option>
-            <option value="Sunday">Sunday</option>
-            <option value="Monday">Monday</option>
-            <option value="Tuesday">Tuesday</option>
-            <option value="Wednesday">Wednesday</option>
-            <option value="Thursday">Thursday</option>
-            <option value="Friday">Friday</option>
-            <option value="Saturday">Saturday</option>
-          </select>
-        </div>
-
-        <button onClick={() => { setSearchTerm(''); setSelectedDate(''); setSelectedMonth(''); setSelectedDay(''); }}>
-          Reset Filters
-        </button>
+    <div className={styles.purchaseContainer}>
+      <div className={styles.purchaseHeader}>
+        <h2>🛍️ Total Purchase Inventory</h2>
+        <p>Track purchased inventory items, filter by date/month, and monitor total expenditure</p>
       </div>
 
-      {/* Table Section */}
-      <table border="1" cellPadding="10" cellSpacing="0" style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#e2e2e2' }}>
-            <th>Date</th>
-            <th>Item Name</th>
-            <th>Quantity</th>
-            <th>Unit Price</th>
-            <th>Total Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item) => {
-              const dateObj = getItemDateObject(item.date || item.createdAt);
-              const formattedDate = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString() : 'N/A';
-              const unitPrice = Number(item.UnitPrice || item.price) || 0;
-              const qty = Number(item.QTY || item.quantity) || 0;
+      {/* KPI Card */}
+      <div className={styles.summaryCards}>
+        <div className={styles.card}>
+          <h4>Total Purchase Cost</h4>
+          <h3>BDT {totalPurchaseAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h3>
+        </div>
+      </div>
 
-              return (
-                <tr key={item.id}>
-                  <td>{formattedDate}</td>
-                  <td>{item.ItemsName || item.itemName || item.name || 'Unnamed Item'}</td>
-                  <td>{qty}</td>
-                  <td>${unitPrice}</td>
-                  <td>${unitPrice * qty}</td>
-                </tr>
-              );
-            })
-          ) : (
+      {/* Filter Bar Section */}
+      <div className={styles.filterCard}>
+        <div className={styles.filterGrid}>
+          <div className={styles.filterItem}>
+            <label>🔍 Search Item:</label>
+            <input
+              type="text"
+              placeholder="Item name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label>📅 Specific Date:</label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label>🗓️ Month:</label>
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+              <option value="">All Months</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+
+          <div className={styles.filterItem}>
+            <label>📆 Day:</label>
+            <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)}>
+              <option value="">All Days</option>
+              <option value="Sunday">Sunday</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+            </select>
+          </div>
+
+          <div className={`${styles.filterItem} ${styles.btnBox}`}>
+            <button
+              className={styles.resetBtn}
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedDate('');
+                setSelectedMonth('');
+                setSelectedDay('');
+              }}
+            >
+              Reset Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Modern Data Table */}
+      <div className={styles.tableWrapper}>
+        <table className={styles.purchaseTable}>
+          <thead>
             <tr>
-              <td colSpan="5" style={{ textAlign: 'center' }}>No matching items found</td>
+              <th className={styles.textCenter} style={{ width: '120px' }}>Date</th>
+              <th>Item Description</th>
+              <th className={styles.textCenter}>Quantity</th>
+              <th className={styles.textRight}>Unit Price</th>
+              <th className={styles.textRight}>Total Cost</th>
             </tr>
+          </thead>
+          <tbody>
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item, index) => {
+                const dateObj = getItemDateObject(item.date || item.createdAt);
+                const formattedDate = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString() : 'N/A';
+                const unitPrice = Number(item.UnitPrice || item.price) || 0;
+                const qty = Number(item.QTY || item.quantity) || 0;
+
+                return (
+                  <tr key={item.id || index}>
+                    <td className={`${styles.textCenter} ${styles.bold}`}>{formattedDate}</td>
+                    <td className={styles.bold}>{item.ItemsName || item.itemName || item.name || 'Unnamed Item'}</td>
+                    <td className={styles.textCenter}>{qty}</td>
+                    <td className={styles.textRight}>BDT {unitPrice.toFixed(2)}</td>
+                    <td className={`${styles.textRight} ${styles.bold}`}>BDT {(unitPrice * qty).toFixed(2)}</td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="5" className={styles.noData}>
+                  No purchase records matched your filters.
+                </td>
+              </tr>
+            )}
+          </tbody>
+          {filteredItems.length > 0 && (
+            <tfoot>
+              <tr>
+                <td colSpan="4" className={`${styles.textRight} ${styles.bold}`}>
+                  Grand Total Purchase:
+                </td>
+                <td className={`${styles.textRight} ${styles.bold} ${styles.textPrimary}`}>
+                  BDT {totalPurchaseAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+            </tfoot>
           )}
-        </tbody>
-        {filteredItems.length > 0 && (
-          <tfoot>
-            <tr style={{ fontWeight: 'bold', backgroundColor: '#f9f9f9' }}>
-              <td colSpan="4" style={{ textAlign: 'right' }}>Grand Total Purchase:</td>
-              <td>${totalPurchaseAmount}</td>
-            </tr>
-          </tfoot>
-        )}
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

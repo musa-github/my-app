@@ -1,0 +1,224 @@
+.container {
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.heading {
+  text-align: center;
+  color: #1e293b;
+  margin-bottom: 20px;
+}
+
+.loader {
+  text-align: center;
+  padding: 40px;
+  color: #64748b;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #cbd5e1;
+}
+
+.name {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #0f172a;
+}
+
+.designation {
+  margin: 4px 0;
+  color: #2563eb;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.email {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.dateBox {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #334155;
+  border: 1px dashed #cbd5e1;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 12px;
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submitBtn:hover {
+  background-color: #15803d;
+}
+
+.submitBtn:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.alert {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.success {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.warning {
+  background-color: #fef9c3;
+  color: #a16207;
+  border: 1px solid #fef08a;
+}
+
+.error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.unauthorized {
+  text-align: center;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.btnGroup {
+  display: flex;
+  gap: 12px;
+}
+
+.inBtn {
+  background-color: #16a34a;
+}
+.inBtn:hover {
+  background-color: #15803d;
+}
+
+.outBtn {
+  background-color: #ea580c;
+}
+.outBtn:hover {
+  background-color: #c2410c;
+}
+.btnGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.leaveBtn {
+  background-color: #8b5cf6;
+}
+.leaveBtn:hover {
+  background-color: #7c3aed;
+}
+
+.advanceBtn {
+  background-color: #0284c7;
+}
+.advanceBtn:hover {
+  background-color: #0369a1;
+}
+
+/* Modal Styling */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.modal label {
+  display: block;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.modal input,
+.modal textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.modalBtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.saveBtn {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  background: #64748b;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}

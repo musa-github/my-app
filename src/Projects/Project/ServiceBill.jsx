@@ -2,7 +2,7 @@
 import html2pdf from 'html2pdf.js';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import logo from "../../assets/main-logo.png"; // আপনার প্রোজেক্টের লোগো পাথ অনুযায়ী চেক করুন
+import logo from "../../assets/main-logo.png"; // আপনার প্রোজেক্টের লোগো পাথ অনুযায়ী চেক করুন
 import './ServiceBill.css';
 
 const ServiceBill = () => {
@@ -10,7 +10,7 @@ const ServiceBill = () => {
   const navigate = useNavigate();
   const invoiceRef = useRef(null);
 
-  // Router Location State থেকে ডাটা নেওয়া
+  // Router Location State থেকে ডাটা নেওয়া
   const { projectInfo, billInfo } = location.state || {};
 
   const [isPdfPrinting, setIsPdfPrinting] = useState(false);

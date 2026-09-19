@@ -1,5 +1,5 @@
-
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth"; // firebase/auth ইমপোর্ট করা হলো
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -12,7 +12,9 @@ const firebaseConfig = {
   measurementId: "G-FW5TM7D389"
 };
 
-
 const app = initializeApp(firebaseConfig);
-export default app;
+
+export const auth = getAuth(app); // auth এক্সপোর্ট করা হলো
 export const db = getFirestore(app);
+
+export default app;

@@ -5,11 +5,11 @@ import { db } from '../../Firebase/Firebase'; // আপনার ফায়ার
 
 // ফায়ারবেসের 'salesList' (collection group) থেকে সমস্ত সেলস ডাটা ফেচ করার থাঙ্ক
 export const fetchAllSalesData = createAsyncThunk(
-  'sales/fetchAllSalesData',
+  'bill/fetchAllSalesData',
   async (_, { rejectWithValue }) => {
     try {
       // collectionGroup ব্যবহার করে যেকোনো কোম্পানির ভেতরের 'salesList' থেকে ডাটা আনবে
-      const querySnapshot = await getDocs(collectionGroup(db, 'salesList'));
+      const querySnapshot = await getDocs(collectionGroup(db, 'bill_lists'));
       const allSales = [];
 
       querySnapshot.forEach((docSnap) => {

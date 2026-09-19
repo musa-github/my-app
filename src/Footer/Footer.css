@@ -1,23 +1,122 @@
-.footer {
-  background-color: #333;
+/* =========================================
+   FOOTER CONTAINER
+========================================= */
+.footer-wrapper {
+  background: linear-gradient(180deg, #0f172a 0%, #0b0f17 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    sans-serif;
+  padding: 40px 0 20px;
+}
+
+.footer-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 30px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  align-items: center;
+}
+
+/* =========================================
+   FOOTER ITEM CARD
+========================================= */
+.footer-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 25px;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.footer div {
+
+.footer-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Icon Box */
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  flex-shrink: 0;
 }
-.footer div img {
-  padding: 0 5px;
-  width: 40px;
+
+.icon-wrapper img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
-.footer div span,
-a {
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  font-family: sans-serif;
+
+/* Info Typography */
+.info-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-text .label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #38bdf8;
+  margin-bottom: 2px;
+}
+
+.info-text .value {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.3px;
+  transition: color 0.2s ease;
+}
+
+.info-text a.value:hover {
+  color: #38bdf8;
+}
+
+.address-text {
+  line-height: 1.4;
+  font-size: 0.85rem !important;
+  color: #cbd5e1 !important;
+}
+
+/* =========================================
+   FOOTER BOTTOM
+========================================= */
+.footer-bottom {
+  margin-top: 35px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.footer-bottom p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+@media (max-width: 992px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }

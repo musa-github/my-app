@@ -1,0 +1,99 @@
+.pageLayout {
+  max-width: 850px;
+  margin: 20px auto;
+  padding: 0 15px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.compactCard {
+  background: #ffffff;
+  padding: 18px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.profileRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.smallAvatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #0284c7;
+}
+
+.profileMeta {
+  flex: 1;
+}
+
+.profileMeta h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #0f172a;
+}
+
+.badge {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin: 4px 0 8px 0;
+}
+
+.metaInfo {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.compactEditBtn {
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid #0284c7;
+  color: #0284c7;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.compactEditBtn:hover {
+  background: #0284c7;
+  color: #fff;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.formActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.formActions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #0284c7;
+  color: white;
+}
+
+.loader {
+  text-align: center;
+  padding: 40px;
+}

@@ -1,8 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-// Separate Constant & Helper Utility Imports
 import {
   DEFAULT_NOTES,
   DEFAULT_PAYMENT_MODE,
@@ -18,6 +17,7 @@ import {
   resetSaveStatus,
   saveBillToFirebase,
   setFilterMode,
+  setSubSourceFilter,
   updateBillInFirebase
 } from '../../Fetures/Inventory/InvoiceSlice.js';
 import { downloadInvoicePDF } from '../../HndlePDF/HndlePDF.js';
@@ -43,7 +43,8 @@ const InvoiceComponent = () => {
     updateSuccess = false, 
     deleteSuccess = false, 
     savedBillIds: reduxSavedBillIds = null, 
-    error: invoiceError = null 
+    error: invoiceError = null,
+    subSourceFilter = 'offers_only'
   } = useSelector((state) => state.invoice || state.challan || {});
 
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -166,6 +167,20 @@ const InvoiceComponent = () => {
     dispatch(resetInvoiceData());
   };
 
+  const handleSubSourceChange = (subSource) => {
+    dispatch(setSubSourceFilter(subSource));
+    setSelectedOfferId('');
+    setManualInvoice(null);
+    dispatch(resetInvoiceData());
+    if (selectedCompany) {
+      dispatch(fetchOffersByCompany({ 
+        companyDocId: selectedCompany, 
+        filterMode: localFilterType,
+        subSourceFilter: subSource 
+      }));
+    }
+  };
+
   const handleCompanyChange = (e) => {
     const companyDocId = e.target.value;
     setSelectedCompany(companyDocId);
@@ -176,7 +191,11 @@ const InvoiceComponent = () => {
     setPaidAmount(0);
     dispatch(resetInvoiceData());
     if (companyDocId) {
-      dispatch(fetchOffersByCompany({ companyDocId, filterMode: localFilterType }));
+      dispatch(fetchOffersByCompany({ 
+        companyDocId, 
+        filterMode: localFilterType,
+        subSourceFilter 
+      }));
     }
   };
 
@@ -186,10 +205,13 @@ const InvoiceComponent = () => {
     setManualInvoice(null);
     setExistingBillIds(null);
     if (selectedCompany && offerId) {
+      const selectedItem = offersList.find((item) => item.id === offerId);
+      const sourceType = selectedItem?.sourceType || 'offer';
+
       dispatch(fetchSpecificOfferFromDb({ 
         companyDocId: selectedCompany, 
         offerId, 
-        filterMode: localFilterType 
+        sourceType
       }));
     }
   };
@@ -256,26 +278,33 @@ const InvoiceComponent = () => {
   const handleRemoveNote = (index) => setNotes((prev) => prev.filter((_, i) => i !== index));
   const handlePaymentChange = (e) => setPaymentMode((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const grandTotal = editableItems.reduce(
-    (sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
-    0
-  );
+  // Calculations
+  const grandTotal = useMemo(() => {
+    return editableItems.reduce(
+      (sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
+      0
+    );
+  }, [editableItems]);
 
   const currentPaid = parseFloat(paidAmount) || 0;
   const dueAmount = grandTotal - currentPaid;
 
-  const getTargetCompanyId = () => {
+  const getTargetCompanyId = useCallback(() => {
     if (selectedCompany) return selectedCompany;
     if (editableHeader.toCompany && editableHeader.toCompany.trim() !== '') {
       return editableHeader.toCompany.trim().replace(/\s+/g, '_');
     }
     return 'general_clients';
-  };
+  }, [selectedCompany, editableHeader.toCompany]);
 
-  const buildBillPayload = () => {
+  const buildBillPayload = useCallback(() => {
     const safePaid = Number(paidAmount) || 0;
     const safeGrandTotal = Number(grandTotal) || 0;
     const targetCompanyId = getTargetCompanyId();
+    
+    // Save to Firestore with proper createdType tag
+    const createdType = manualInvoice ? 'General' : 'offer_based';
+
     return {
       billNo: editableHeader.invoiceNo,
       companyName: editableHeader.toCompany || targetCompanyId,
@@ -290,10 +319,12 @@ const InvoiceComponent = () => {
       dueAmount: safeGrandTotal - safePaid,
       notes,
       paymentMode,
-      isBlankCreated: manualInvoice ? true : false,
+      isBlankCreated: Boolean(manualInvoice),
+      createdType: createdType,
+      offerId: selectedOfferId || null,
       createdAt: new Date().toISOString()
     };
-  };
+  }, [paidAmount, grandTotal, getTargetCompanyId, manualInvoice, editableHeader, editableItems, notes, paymentMode, selectedOfferId]);
 
   const handleSaveBill = () => {
     const targetCompanyId = getTargetCompanyId();
@@ -357,10 +388,11 @@ const InvoiceComponent = () => {
   return (
     <div className="main-wrapper">
       <div className="invoice-search-card no-print">
-        {/* Filter Radio Controls */}
+        {/* Main Filter Category */}
         <div className="filter-container">
-          <strong className="filter-title">🔍 Filter Category:</strong>
-          <label className="filter-label">
+          <span className="filter-title">🔍 Filter Category:</span>
+
+          <label className={`filter-label ${localFilterType === 'all' ? 'active' : ''}`}>
             <input 
               type="radio" 
               name="filterType" 
@@ -370,27 +402,58 @@ const InvoiceComponent = () => {
             />
             <span>All Data</span>
           </label>
-          <label className="filter-label">
+
+          <label className={`filter-label ${localFilterType === 'offer_based' ? 'active' : ''}`}>
             <input 
               type="radio" 
               name="filterType" 
-              value="offer" 
-              checked={localFilterType === 'offer'} 
-              onChange={() => handleFilterTypeChange('offer')} 
+              value="offer_based" 
+              checked={localFilterType === 'offer_based'} 
+              onChange={() => handleFilterTypeChange('offer_based')} 
             />
-            <span>🏷️ Offers Only</span>
+            <span>🏷️ Offer Based</span>
           </label>
-          <label className="filter-label">
+
+          <label className={`filter-label ${localFilterType === 'general' ? 'active' : ''}`}>
             <input 
               type="radio" 
               name="filterType" 
-              value="bill" 
-              checked={localFilterType === 'bill'} 
-              onChange={() => handleFilterTypeChange('bill')} 
+              value="general" 
+              checked={localFilterType === 'general'} 
+              onChange={() => handleFilterTypeChange('general')} 
             />
-            <span>🧾 Bills Only</span>
+            <span>📄 General (Blank)</span>
           </label>
         </div>
+
+        {/* Sub-source Selection for Offer Based */}
+        {localFilterType === 'offer_based' && (
+          <div className="filter-container sub-filter-container">
+            <span className="filter-title">📑 Select Source:</span>
+
+            <label className={`filter-label ${subSourceFilter === 'offers_only' ? 'active' : ''}`}>
+              <input 
+                type="radio" 
+                name="subSourceFilter" 
+                value="offers_only" 
+                checked={subSourceFilter === 'offers_only'} 
+                onChange={() => handleSubSourceChange('offers_only')} 
+              />
+              <span>🏷️ Raw Offers</span>
+            </label>
+
+            <label className={`filter-label ${subSourceFilter === 'bills_only' ? 'active' : ''}`}>
+              <input 
+                type="radio" 
+                name="subSourceFilter" 
+                value="bills_only" 
+                checked={subSourceFilter === 'bills_only'} 
+                onChange={() => handleSubSourceChange('bills_only')} 
+              />
+              <span>🧾 Saved Offer Bills</span>
+            </label>
+          </div>
+        )}
 
         <div className="dropdown-filter-group">
           <div className="select-box">
@@ -479,7 +542,6 @@ const InvoiceComponent = () => {
       ) : currentActiveData ? (
         <div className={`invoice-container ${isPdfPrinting ? 'pdf-mode' : ''}`} ref={invoiceRef}>
           <div className="invoice-content-wrap">
-            {/* Reusable Header Component */}
             <InvoiceHeader 
               isPdfPrinting={isPdfPrinting}
               editableHeader={editableHeader}
@@ -634,7 +696,6 @@ const InvoiceComponent = () => {
             </div>
           </div>
 
-          {/* Reusable Footer Component */}
           <InvoiceFooter />
         </div>
       ) : (

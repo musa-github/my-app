@@ -1,0 +1,254 @@
+.container {
+  padding: 24px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin: 20px;
+  color: #1e293b;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.5rem;
+}
+
+.header h3 {
+  margin: 5px 0 0 0;
+  color: #64748b;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.filterSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.filterGroup label {
+  font-weight: 600;
+  color: #334155;
+  margin-right: 8px;
+}
+
+.selectInput {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.tableResponsive {
+  overflow-x: auto;
+}
+
+.salaryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.salaryTable th {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  padding: 8px 6px;
+  font-weight: 600;
+  white-space: nowrap;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.salaryTable td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #090909;
+  color: #000000 !important;
+}
+
+.empName {
+  font-weight: 600;
+  color: #000000 !important;
+  text-align: left;
+}
+
+.designation {
+  color: #000000 !important;
+  font-weight: 500;
+}
+
+.absentText {
+  color: #000000 !important;
+  font-weight: 600;
+}
+
+.totalSalary {
+  font-weight: 700;
+  color: #000000 !important;
+}
+
+.inlineInput {
+  width: 75px;
+  padding: 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.editBtn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.saveBtn {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.signatureBox {
+  height: 30px;
+  border-bottom: 1px dashed #000000;
+}
+
+.printFooter {
+  display: flex;
+  margin-top: 40px;
+  justify-content: space-between;
+}
+
+.signBlock {
+  text-align: center;
+  width: 200px;
+}
+
+.signBlock .line {
+  border-top: 1px solid #000;
+  margin-bottom: 5px;
+}
+
+.loading,
+.noData {
+  text-align: center;
+  padding: 30px;
+  color: #64748b;
+}
+
+.pdfArea {
+  padding: 10px;
+  background: #ffffff;
+}
+
+.btnGroup {
+  display: flex;
+  gap: 10px;
+}
+
+.downloadBtn {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.downloadBtn:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+/* --- PDF Export Specific Overrides --- */
+
+/* Action Column removal when generating PDF */
+:global(.is-pdf-exporting) .actionCol {
+  display: none !important;
+}
+
+:global(.is-pdf-exporting) .tableResponsive {
+  overflow: visible !important;
+}
+
+:global(.is-pdf-exporting) .salaryTable {
+  width: 100% !important;
+  table-layout: auto;
+  font-size: 8px !important;
+}
+
+:global(.is-pdf-exporting) .salaryTable th {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+:global(.is-pdf-exporting) .salaryTable td,
+:global(.is-pdf-exporting) .salaryTable td * {
+  color: #000000 !important;
+  padding: 4px 2px !important;
+  word-wrap: break-word;
+}
+
+/* Print Styles */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body {
+    width: 100%;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .filterSection,
+  .actionCol {
+    display: none !important;
+  }
+
+  .container {
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .salaryTable {
+    font-size: 10px;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .salaryTable th {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+  }
+
+  .salaryTable td,
+  .salaryTable td * {
+    border-bottom: 1px solid #010101;
+    color: #000000 !important;
+  }
+
+  .printFooter {
+    display: flex !important;
+  }
+}

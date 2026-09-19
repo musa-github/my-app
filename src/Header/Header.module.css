@@ -1,49 +1,184 @@
+/* =========================================
+   HEADER WRAPPER (FIXED POSITION & GLASSMORPHISM)
+========================================= */
+.headerWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.85); /* Modern Dark Slate with Opacity */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
 .header {
-  background-color: #333;
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 25px;
+  padding: 12px 30px;
+  height: 70px;
+}
+
+/* =========================================
+   LOGO
+========================================= */
+.logoLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .Logo {
-  width: 70px;
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.logoLink:hover .Logo {
+  transform: scale(1.05);
+}
+
+/* =========================================
+   NAV MENU
+========================================= */
 .menu {
   display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+.link,
 .active {
-  color: #e50c7a;
+  position: relative;
+  font-size: 0.95rem;
+  font-weight: 500;
   text-decoration: none;
-  padding: 5px 10px;
-  border-radius: 5px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.25s ease;
+  letter-spacing: 0.3px;
 }
+
+/* Inactive Link */
 .link {
-  color: #fff;
-  text-decoration: none;
-  padding: 5px 10px;
-  border-radius: 5px;
+  color: #cbd5e1;
 }
 
 .link:hover {
-  color: #e50c7a;
-  transition: 1s all;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
 }
+
+/* Active Link */
+.active {
+  color: #e50c7a;
+  font-weight: 600;
+  background: rgba(229, 12, 122, 0.08);
+}
+
+/* Active Bottom Accent Bar */
+.active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: #e50c7a;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #e50c7a;
+}
+
+/* =========================================
+   AUTH BUTTONS
+========================================= */
 .loginContainer {
   display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.loginContainer span {
-  padding: 5px 10px;
-  background-color: #fff;
-  color: #e91a6f;
-  font-size: 18px;
-  font-weight: 700;
-  margin: 0 2px;
-  border-radius: 3px;
+
+.signupBtn,
+.loginBtn {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
 }
-.loginContainer span:hover {
-  background: #e50c7a;
-  color: #fff;
-  transition: 1s all;
+
+/* Signup Button (Outline Style) */
+.signupBtn {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.signupBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Login Button (Accent Gradient) */
+.loginBtn {
+  background: linear-gradient(135deg, #e50c7a 0%, #be123c 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 15px rgba(229, 12, 122, 0.35);
+}
+
+.loginBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(229, 12, 122, 0.5);
+  background: linear-gradient(135deg, #f43f5e 0%, #e50c7a 100%);
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+@media (max-width: 900px) {
+  .header {
+    padding: 10px 16px;
+  }
+
+  .menu {
+    gap: 2px;
+  }
+
+  .link,
+  .active {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}
+.userProfileGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoutBtn {
+  background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.logoutBtn:hover {
+  background-color: #dc2626;
 }

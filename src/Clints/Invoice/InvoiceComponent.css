@@ -10,6 +10,65 @@
   box-sizing: border-box;
 }
 
+/* Filter Options Header (Updated & Enhanced) */
+.filter-container {
+  margin-bottom: 18px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background-color: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.filter-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+}
+
+.filter-label:hover {
+  border-color: #94a3b8;
+  background-color: #f1f5f9;
+}
+
+.filter-label.active,
+.filter-label:has(input[type="radio"]:checked) {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.filter-label input[type="radio"] {
+  cursor: pointer;
+  accent-color: #2563eb;
+  margin: 0;
+  width: 15px;
+  height: 15px;
+}
+
 .dropdown-filter-group {
   display: flex;
   gap: 20px;
@@ -42,11 +101,34 @@
   outline: none;
 }
 
+/* Quick Actions Button Container */
+.quick-actions-box {
+  justify-content: flex-end;
+}
+
+.quick-actions-buttons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-create-blank {
+  background-color: #28a745 !important;
+  margin-top: 0 !important;
+}
+
+.btn-reset-action {
+  background-color: #6c757d !important;
+  margin-top: 0 !important;
+}
+
+/* Action Buttons Wrap */
 .action-buttons-wrap {
   margin-top: 15px;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .btn-save-bill {
@@ -64,9 +146,19 @@
 .btn-save-bill:hover {
   background-color: #047857;
 }
+
 .btn-save-bill:disabled {
   background-color: #9ca3af;
   cursor: not-allowed;
+}
+
+.btn-update-bill {
+  background-color: #ffc107 !important;
+  color: #000000 !important;
+}
+
+.btn-delete-bill {
+  background-color: #dc3545 !important;
 }
 
 .btn-download-pdf {
@@ -83,6 +175,14 @@
 
 .btn-download-pdf:hover {
   background-color: #1d4ed8;
+}
+
+/* Error Text Styling */
+.error-text,
+.invoice-error-text {
+  color: #dc3545;
+  font-size: 13px;
+  margin-top: 10px;
 }
 
 /* Invoice Sheet Layout */
@@ -117,29 +217,31 @@
 .logo-box {
   width: 90px;
   height: 90px;
-  flex-shrink: 0; /* Flex container যেন লোগোকে চাপ দিয়ে বাঁকা না করে */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden; /* ইমেজের অতিরিক্ত অংশ বের হওয়া আটকায় */
+  overflow: hidden;
 }
 
 /* Logo Image - Aspect ratio fix for html2pdf */
 .logo-img {
-  width: auto; /* ফিক্সড উইড্থ তুলে দেওয়া হয়েছে */
-  height: auto; /* ফিক্সড হাইট তুলে দেওয়া হয়েছে */
+  width: auto;
+  height: auto;
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* অরিজিনাল অনুপাত ঠিক রাখবে */
+  object-fit: contain;
   display: block;
   margin: 0 auto;
 }
+
 .company-title {
   margin: 0;
   font-size: 20px;
   font-weight: 800;
   color: #0f172a;
 }
+
 .company-services {
   margin: 4px 0 0 0;
   font-size: 11px;
@@ -158,11 +260,13 @@
 .info-section {
   margin-bottom: 12px;
 }
+
 .meta-info-grid {
   display: flex;
   justify-content: space-between;
   margin-bottom: 6px;
 }
+
 .to-address,
 .subject-line,
 .salutation {
@@ -172,12 +276,15 @@
 .bold {
   font-weight: bold;
 }
+
 .no-margin {
   margin: 0;
 }
+
 .text-center {
   text-align: center;
 }
+
 .text-right {
   text-align: right;
 }
@@ -188,12 +295,14 @@
   border-collapse: collapse;
   margin-top: 10px;
 }
+
 .invoice-table th,
 .invoice-table td {
   border: 1px solid #000000;
   padding: 6px 8px;
   font-size: 12px;
 }
+
 .invoice-table th {
   background-color: #f1f5f9;
   text-align: center;
@@ -206,6 +315,44 @@
   padding: 4px 6px;
   font-size: 12px;
   box-sizing: border-box;
+}
+
+/* Table Specific Cell Styles */
+.table-col-sl {
+  width: 7%;
+}
+.table-col-desc {
+  width: 43%;
+}
+.table-col-qty {
+  width: 8%;
+}
+.table-col-unit {
+  width: 8%;
+}
+.table-col-price {
+  width: 14%;
+}
+.table-col-total {
+  width: 14%;
+}
+.table-col-action {
+  width: 6%;
+}
+
+.empty-items-cell {
+  color: #dc3545;
+  padding: 15px;
+}
+
+.paid-amount-title,
+.paid-amount-input {
+  color: #28a745 !important;
+}
+
+.due-amount-title,
+.due-amount-value {
+  color: #dc3545 !important;
 }
 
 .add-row-container {
@@ -239,9 +386,11 @@
   border-top: 1px solid #cbd5e1;
   padding-top: 6px;
 }
+
 .notes-section {
   margin-top: 8px;
 }
+
 .note-row {
   display: flex;
   align-items: center;
@@ -259,6 +408,7 @@
   width: 80%;
   margin-left: 4px;
 }
+
 .payment-mode {
   margin-top: 8px;
 }
@@ -268,6 +418,7 @@
   margin-top: auto;
   padding-top: 10px;
 }
+
 .invoice-footer {
   display: flex;
   justify-content: space-between;
@@ -337,114 +488,4 @@
 
 .pdf-mode .no-print {
   display: none !important;
-}
-.error-text {
-  color: #dc2626;
-  font-size: 13px;
-  margin-top: 8px;
-}
-/* Filter Options Header */
-.filter-container {
-  margin-bottom: 15px;
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  background-color: #f8f9fa;
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
-
-.filter-title {
-  font-size: 14px;
-  color: #495057;
-}
-
-.filter-label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-}
-
-/* Quick Actions Button Container */
-.quick-actions-box {
-  justify-content: flex-end;
-}
-
-.quick-actions-buttons {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.btn-create-blank {
-  background-color: #28a745 !important;
-  margin-top: 0 !important;
-}
-
-.btn-reset-action {
-  background-color: #6c757d !important;
-  margin-top: 0 !important;
-}
-
-/* Error Text Styling */
-.invoice-error-text {
-  color: #dc3545;
-  margin-top: 10px;
-}
-
-/* Action Buttons Wrap */
-.action-buttons-wrap {
-  margin-top: 15px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.btn-update-bill {
-  background-color: #ffc107 !important;
-  color: #000000 !important;
-}
-
-.btn-delete-bill {
-  background-color: #dc3545 !important;
-}
-
-/* Table Specific Cell Styles */
-.table-col-sl {
-  width: 7%;
-}
-.table-col-desc {
-  width: 43%;
-}
-.table-col-qty {
-  width: 8%;
-}
-.table-col-unit {
-  width: 8%;
-}
-.table-col-price {
-  width: 14%;
-}
-.table-col-total {
-  width: 14%;
-}
-.table-col-action {
-  width: 6%;
-}
-
-.empty-items-cell {
-  color: #dc3545;
-  padding: 15px;
-}
-
-.paid-amount-title,
-.paid-amount-input {
-  color: #28a745 !important;
-}
-
-.due-amount-title,
-.due-amount-value {
-  color: #dc3545 !important;
 }

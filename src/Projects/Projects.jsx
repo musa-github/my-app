@@ -1,27 +1,38 @@
-// 
-
-
-
-
-
-import { NavLink, Outlet } from 'react-router'
-import Style from "./Projects.module.css"
+import { NavLink, Outlet } from "react-router";
+import Style from "./Projects.module.css";
 
 function Projects() {
   return (
-    <div className={Style.container}>
-      <div className={Style.aside}>
-        <NavLink to="Summery" className={({isActive})=>(isActive?Style.active:Style.asidLink)}> Summery</NavLink>
-        <NavLink to="Serviced_and_Schedule" className={({isActive})=>(isActive?Style.active:Style.asidLink)}> Serviced and Schedule</NavLink>
+    <div className={Style.projectsContainer}>
+      <aside className={Style.aside}>
+        <div className={Style.asideHeader}>
+          <span>Projects Portal</span>
+        </div>
+        <nav className={Style.asideNav}>
+          <NavLink
+            to="Summery"
+            className={({ isActive }) =>
+              isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
+            }
+          >
+            Summary
+          </NavLink>
+          <NavLink
+            to="Serviced_and_Schedule"
+            className={({ isActive }) =>
+              isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
+            }
+          >
+            Serviced and Schedule
+          </NavLink>
+        </nav>
+      </aside>
 
-      </div>
-      <div className={Style.content}>
-        <Outlet/>
-
-      </div>
-      
+      <main className={Style.content}>
+        <Outlet />
+      </main>
     </div>
-  )
+  );
 }
 
-export default Projects
+export default Projects;

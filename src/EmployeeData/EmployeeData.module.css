@@ -1,0 +1,133 @@
+/* =========================================
+   MAIN CONTAINER
+========================================= */
+.employeeContainer {
+  display: flex;
+  height: calc(100vh - 70px); /* স্ক্রিনের পুরো হাইট লক করে দেওয়া হয়েছে */
+  background-color: #0b0f17;
+  color: #e2e8f0;
+  overflow: hidden; /* মূল কনটেইনার সাইজ বাইরে যাবে না */
+}
+
+/* =========================================
+   SIDEBAR (FIXED - NO SCROLL)
+========================================= */
+.aside {
+  width: 240px;
+  background: rgba(15, 23, 42, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  flex-shrink: 0;
+  height: 100%; /* সম্পূর্ণ হাইট ফিক্সড থাকবে */
+  box-sizing: border-border-box;
+}
+
+.asideHeader {
+  padding: 0 20px 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 12px;
+}
+
+.asideHeader span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #38bdf8;
+}
+
+.asideNav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 10px;
+}
+
+/* Sidebar Links */
+.asideLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #94a3b8;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.3px;
+}
+
+.asideLink:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.active {
+  color: #ffffff !important;
+  background: linear-gradient(
+    90deg,
+    rgba(229, 12, 122, 0.15) 0%,
+    rgba(229, 12, 122, 0.02) 100%
+  ) !important;
+  font-weight: 600;
+}
+
+.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 15%;
+  height: 70%;
+  width: 3.5px;
+  background: #e50c7a;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 10px #e50c7a;
+}
+
+/* =========================================
+   MAIN CONTENT AREA (ONLY THIS WILL SCROLL)
+========================================= */
+.main,
+.formContainer,
+.content,
+.inventoryFormContainer {
+  flex: 1;
+  padding: 30px 10px;
+  background-color: #0f172a;
+  height: 100%; /* মূল হাইট স্ক্রিনের বাকি অংশের সমান */
+  overflow-y: auto; /* কনটেন্ট বেশি হলে শুধু ডানপাস স্ক্রল হবে */
+  box-sizing: border-box;
+}
+
+/* Custom Scrollbar for Main Section */
+.main::-webkit-scrollbar,
+.formContainer::-webkit-scrollbar,
+.content::-webkit-scrollbar,
+.inventoryFormContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main::-webkit-scrollbar-track,
+.formContainer::-webkit-scrollbar-track,
+.content::-webkit-scrollbar-track,
+.inventoryFormContainer::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.main::-webkit-scrollbar-thumb,
+.formContainer::-webkit-scrollbar-thumb,
+.content::-webkit-scrollbar-thumb,
+.inventoryFormContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.main::-webkit-scrollbar-thumb:hover,
+.formContainer::-webkit-scrollbar-thumb:hover,
+.content::-webkit-scrollbar-thumb:hover,
+.inventoryFormContainer::-webkit-scrollbar-thumb:hover {
+  background: #e50c7a;
+}

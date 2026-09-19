@@ -1,15 +1,13 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-
-
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { clearStatus, savePurchaseData } from '../../../Fetures/Inventory/PurchaseSlice'; // পাথ চেক করুন
+import { clearStatus, savePurchaseData } from '../../../Fetures/Inventory/PurchaseSlice';
 import Style from './PurchaseInput.module.css';
 
 function PurchaseInput() {
   const dispatch = useDispatch();
-  
-  // Redux State থেকে loading, error এবং successMessage নিয়ে আসা
+
   const { loading, error, successMessage } = useSelector((state) => state.purchase);
 
   const initialItems = [
@@ -18,18 +16,16 @@ function PurchaseInput() {
 
   const [items, setItems] = useState(initialItems);
 
-  // সফল বা ব্যর্থ সাবমিশনের রেসপন্স হ্যান্ডলিং
   useEffect(() => {
     if (successMessage) {
-      alert("ডাটা সফলভাবে সেভ হয়েছে!");
+      alert("ডাটা সফলভাবে সেভ হয়েছে!");
       setItems(initialItems);
       dispatch(clearStatus());
     }
     if (error) {
-      alert("সমস্যা হয়েছে: " + error);
+      alert("সমস্যা হয়েছে: " + error);
       dispatch(clearStatus());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [successMessage, error, dispatch]);
 
   const handleInput = (index, e) => {
@@ -42,7 +38,7 @@ function PurchaseInput() {
         if (name === 'QTY' || name === 'UnitPrice') {
           const qty = parseFloat(name === 'QTY' ? value : newItem.QTY) || 0;
           const unitPrice = parseFloat(name === 'UnitPrice' ? value : newItem.UnitPrice) || 0;
-          
+
           newItem.TotalPrice = (qty * unitPrice).toFixed(2);
         }
 
@@ -76,34 +72,35 @@ function PurchaseInput() {
     }
   };
 
-  // Redux Action Dispatch করা
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(savePurchaseData(items)); // Redux Thunk-এ ডাটা পাঠানো হলো
+    dispatch(savePurchaseData(items));
   };
 
   return (
     <div className={Style.PurchaseInputContainer}>
-      <div className={Style.heading_3}>Purchase Input</div>
-      
+      <div className={Style.headingContainer}>
+        <h2 className={Style.heading_3}>🛒 Purchase Entry Form</h2>
+      </div>
+
       <form onSubmit={handleSubmit}>
-        <table>
-          <thead>
-            <tr>
-              <th>Sl No</th>
-              <th>Items Name</th>
-              <th>QTY</th>
-              <th>Unit Price</th>
-              <th>Total Price</th>
-              <th>Saling Price</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, index) => {
-              return (
+        <div className={Style.tableWrapper}>
+          <table className={Style.table}>
+            <thead>
+              <tr>
+                <th className={Style.narrow}>Sl</th>
+                <th>Item Name</th>
+                <th className={Style.medium}>QTY</th>
+                <th className={Style.medium}>Unit Price</th>
+                <th className={Style.medium}>Total Price</th>
+                <th className={Style.medium}>Selling Price</th>
+                <th className={Style.narrow}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
                 <tr key={index}>
-                  <td>
+                  <td className={Style.narrow}>
                     <input
                       type="text"
                       name="SlNo"
@@ -116,30 +113,33 @@ function PurchaseInput() {
                     <input
                       type="text"
                       name="ItemsName"
+                      placeholder="Produc Name"
                       value={item.ItemsName}
                       onChange={(e) => handleInput(index, e)}
                       required
                     />
                   </td>
-                  <td>
+                  <td className={Style.medium}>
                     <input
                       type="number"
                       name="QTY"
+                      placeholder="0"
                       value={item.QTY}
                       onChange={(e) => handleInput(index, e)}
                       required
                     />
                   </td>
-                  <td>
+                  <td className={Style.medium}>
                     <input
                       type="number"
                       name="UnitPrice"
+                      placeholder="0.00"
                       value={item.UnitPrice}
                       onChange={(e) => handleInput(index, e)}
                       required
                     />
                   </td>
-                  <td>
+                  <td className={Style.medium}>
                     <input
                       type="text"
                       name="TotalPrice"
@@ -149,15 +149,16 @@ function PurchaseInput() {
                       className={Style.readOnlyInput}
                     />
                   </td>
-                  <td>
+                  <td className={Style.medium}>
                     <input
                       type="number"
                       name="SalingPrice"
+                      placeholder="0.00"
                       value={item.SalingPrice}
                       onChange={(e) => handleInput(index, e)}
                     />
                   </td>
-                  <td>
+                  <td className={Style.narrow}>
                     <button
                       type="button"
                       className={Style.deleteBtn}
@@ -167,20 +168,22 @@ function PurchaseInput() {
                     </button>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className={Style.buttonGroup}>
-          <button type="button" className={Style.addBtn} onClick={handleAddRow}>
-            + Add Row
-          </button>
-          <button type="button" className={Style.resetBtn} onClick={handleReset}>
-            Reset
-          </button>
+          <div className={Style.leftButtons}>
+            <button type="button" className={Style.addBtn} onClick={handleAddRow}>
+              + Add Item Row
+            </button>
+            <button type="button" className={Style.resetBtn} onClick={handleReset}>
+              Reset
+            </button>
+          </div>
           <button type="submit" className={Style.submitBtn} disabled={loading}>
-            {loading ? "Saving via Redux..." : "Submit All Data"}
+            {loading ? "Saving Records..." : "Submit All Purchases"}
           </button>
         </div>
       </form>
