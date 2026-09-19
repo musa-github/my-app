@@ -47,6 +47,9 @@ const InvoiceComponent = () => {
     subSourceFilter = 'offers_only'
   } = useSelector((state) => state.invoice || state.challan || {});
 
+  // Redux Stock lists for suggestion dropdown
+  const { offerList: offerProductList = [], purchaseList: purchaseProductList = [] } = useSelector((state) => state.offer || {});
+
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedOfferId, setSelectedOfferId] = useState('');
   const [isPdfPrinting, setIsPdfPrinting] = useState(false);
@@ -54,6 +57,9 @@ const InvoiceComponent = () => {
 
   const [existingBillIds, setExistingBillIds] = useState(null);
   const [paidAmount, setPaidAmount] = useState(0);
+
+  // Active suggestion row index state
+  const [activeSuggestionRow, setActiveSuggestionRow] = useState(null);
 
   const [editableHeader, setEditableHeader] = useState({
     invoiceNo: '',
@@ -264,6 +270,24 @@ const InvoiceComponent = () => {
     });
   };
 
+  // Helper functions for suggestion items
+  const getProductName = (prod) => prod?.ItemsName || prod?.itemsName || prod?.name || prod?.title || '';
+  const getProductPrice = (prod) => prod?.SalingPrice ?? prod?.salingPrice ?? prod?.SellingPrice ?? prod?.sellingPrice ?? prod?.price ?? 0;
+
+  const handleSelectProduct = (index, selectedProduct) => {
+    setEditableItems((prevItems) => {
+      const updated = [...prevItems];
+      updated[index] = {
+        ...updated[index],
+        name: getProductName(selectedProduct),
+        unit: selectedProduct.unit || selectedProduct.Unit || updated[index]?.unit || 'Pcs',
+        price: parseFloat(getProductPrice(selectedProduct)) || 0
+      };
+      return updated;
+    });
+    setActiveSuggestionRow(null);
+  };
+
   const handleAddRow = () => setEditableItems((prev) => [...prev, { name: '', quantity: 1, unit: 'Pcs', price: 0 }]);
   const handleRemoveRow = (index) => setEditableItems((prev) => prev.filter((_, i) => i !== index));
 
@@ -386,7 +410,7 @@ const InvoiceComponent = () => {
   const currentActiveData = challanData || manualInvoice;
 
   return (
-    <div className="main-wrapper">
+    <div className="main-wrapper" onClick={() => setActiveSuggestionRow(null)}>
       <div className="invoice-search-card no-print">
         {/* Main Filter Category */}
         <div className="filter-container">
@@ -567,9 +591,104 @@ const InvoiceComponent = () => {
                     return (
                       <tr key={index} className="page-break-avoid">
                         <td className="text-center">{index + 1}</td>
-                        <td>
+                        <td style={{ position: 'relative' }}>
                           {isPdfPrinting ? item.name : (
-                            <input type="text" className="table-input" value={item.name} onChange={(e) => handleItemChange(index, 'name', e.target.value)} />
+                            <>
+                              <input 
+                                type="text" 
+                                className="table-input" 
+                                value={item.name} 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveSuggestionRow(index);
+                                }}
+                                onChange={(e) => {
+                                  handleItemChange(index, 'name', e.target.value);
+                                  setActiveSuggestionRow(index);
+                                }} 
+                              />
+
+                              {/* Live Stock Suggestions Dropdown */}
+                              {activeSuggestionRow === index && item.name && item.name.trim().length > 0 && (() => {
+                                const searchTerm = item.name.trim().toLowerCase();
+                                const filteredOfferProds = offerProductList.filter((p) =>
+                                  getProductName(p).toLowerCase().includes(searchTerm)
+                                );
+                                const filteredPurchaseProds = purchaseProductList.filter((p) =>
+                                  getProductName(p).toLowerCase().includes(searchTerm)
+                                );
+
+                                if (filteredOfferProds.length === 0 && filteredPurchaseProds.length === 0) {
+                                  return null;
+                                }
+
+                                return (
+                                  <div
+                                    className="suggestions-dropdown no-print"
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{
+                                      position: 'absolute',
+                                      top: '100%',
+                                      left: 0,
+                                      right: 0,
+                                      backgroundColor: '#ffffff',
+                                      border: '1px solid #ccc',
+                                      borderRadius: '4px',
+                                      boxShadow: '0px 4px 10px rgba(0,0,0,0.15)',
+                                      zIndex: 999,
+                                      maxHeight: '200px',
+                                      overflowY: 'auto'
+                                    }}
+                                  >
+                                    {filteredOfferProds.length > 0 && (
+                                      <div style={{ padding: '4px 6px', borderBottom: '1px solid #eee' }}>
+                                        <strong style={{ fontSize: '11px', color: '#2e7d32' }}>Offer Products</strong>
+                                        {filteredOfferProds.map((prod, pIdx) => (
+                                          <div
+                                            key={`off-${prod.id || pIdx}`}
+                                            style={{
+                                              padding: '6px',
+                                              cursor: 'pointer',
+                                              borderBottom: '1px solid #f9f9f9',
+                                              fontSize: '13px',
+                                              color: '#2e7d32',
+                                              fontWeight: '500',
+                                              textAlign: 'left'
+                                            }}
+                                            onClick={() => handleSelectProduct(index, prod)}
+                                          >
+                                            {getProductName(prod)} ({getProductPrice(prod)} BDT)
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {filteredPurchaseProds.length > 0 && (
+                                      <div style={{ padding: '4px 6px' }}>
+                                        <strong style={{ fontSize: '11px', color: '#1565c0' }}>Purchase Products</strong>
+                                        {filteredPurchaseProds.map((prod, pIdx) => (
+                                          <div
+                                            key={`pur-${prod.id || pIdx}`}
+                                            style={{
+                                              padding: '6px',
+                                              cursor: 'pointer',
+                                              borderBottom: '1px solid #f9f9f9',
+                                              fontSize: '13px',
+                                              color: '#1565c0',
+                                              fontWeight: '500',
+                                              textAlign: 'left'
+                                            }}
+                                            onClick={() => handleSelectProduct(index, prod)}
+                                          >
+                                            {getProductName(prod)} — ({getProductPrice(prod)} BDT)
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </>
                           )}
                         </td>
                         <td className="text-center">

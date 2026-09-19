@@ -62,36 +62,45 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
         let designation = "N/A";
         let fetchedName = employeeName || "";
 
-        // 1. Fetch from 'employees' collection using Email
-        if (employeeEmail) {
-          // Converts "smabumusa98@gmail.com" to "smabumusa98_gmail_com"
-          const cleanDocId = employeeEmail.trim().replace(/[^a-zA-Z0-9]/g, "_");
-          const empRef = doc(db, "employees", cleanDocId);
-          const empSnap = await getDoc(empRef);
-
-          if (empSnap.exists()) {
-            const rawData = empSnap.data();
-            // Firestore-er 'data' nested object target kora
-            const empData = rawData.data || rawData;
-
-            baseSalary = Number(empData.baseSalary || 0);
-            advanceDeduction = Number(empData.advanceDeduction || 0);
-            designation = empData.designation || "N/A";
-            fetchedName = empData.name || employeeName;
-
-            setEmployeeDetails({
-              name: fetchedName,
-              designation,
-              baseSalary,
-              advanceDeduction,
-            });
-          }
+        if (!employeeEmail) {
+          setLoading(false);
+          return;
         }
 
-        // 2. Fetch Attendance Records
-        const cleanNameKey = (fetchedName || employeeName || "").trim().replace(/[^a-zA-Z0-9]/g, "_");
-        const monthAttRef = collection(db, "attendance", cleanNameKey, currentMonth);
-        const attSnap = await getDocs(monthAttRef);
+        const cleanEmailKey = employeeEmail.trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+
+        // 1. Fetch from 'employees' collection using Email Document ID
+        const empRef = doc(db, "employees", cleanEmailKey);
+        const empSnap = await getDoc(empRef);
+
+        if (empSnap.exists()) {
+          const rawData = empSnap.data();
+          const empData = rawData.data || rawData;
+
+          baseSalary = Number(empData.baseSalary || 0);
+          advanceDeduction = Number(empData.advanceDeduction || 0);
+          designation = empData.designation || "N/A";
+          fetchedName = empData.name || employeeName;
+
+          setEmployeeDetails({
+            name: fetchedName,
+            designation,
+            baseSalary,
+            advanceDeduction,
+          });
+        }
+
+        // 2. Fetch Attendance Records using Email Key (NOT Name)
+        // Primary path: attendance/{cleanEmailKey}/{currentMonth}
+        let monthAttRef = collection(db, "attendance", cleanEmailKey, currentMonth);
+        let attSnap = await getDocs(monthAttRef);
+
+        // Fallback for backward compatibility (If data is stored using clean name)
+        if (attSnap.empty && fetchedName) {
+          const cleanNameKey = fetchedName.trim().replace(/[^a-zA-Z0-9]/g, "_");
+          monthAttRef = collection(db, "attendance", cleanNameKey, currentMonth);
+          attSnap = await getDocs(monthAttRef);
+        }
 
         const records = [];
         let sumHours = 0;
@@ -102,6 +111,15 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
 
         attSnap.forEach((docSnap) => {
           const data = docSnap.data();
+
+          // Extra safety check: Email match validation[cite: 2, 3]
+          if (
+            data.employeeEmail &&
+            data.employeeEmail.toLowerCase() !== employeeEmail.toLowerCase()
+          ) {
+            return;
+          }
+
           const inHrs = parseTimeToHours(data.inTime);
           const outHrs = parseTimeToHours(data.outTime);
 
@@ -251,7 +269,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
           </div>
         </div>
 
-        {/* Payroll Breakdown (Loaded dynamically from Firestore) */}
+        {/* Payroll Breakdown */}
         <div className={styles.salaryGrid}>
           <div className={styles.salaryCard}>
             <span>Base Salary</span>

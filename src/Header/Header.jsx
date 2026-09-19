@@ -54,10 +54,10 @@ export const Header = () => {
     dispatch(logoutUser());
   };
 
-  // এডমিন অথবা নির্দিষ্ট পারমিশন থাকলে পেজ দেখাবে
-  const hasAccess = (featureKey) => {
-    if (isAdmin) return true; // এডমিনরা সব মেনু দেখতে পাবেন
-    return Boolean(permissions[featureKey]);
+  // এডমিন অথবা নির্দিষ্ট পারমিশন থাকলে নেভিগেশন লিংক দেখাবে
+  const hasAccess = (newKey, legacyKey) => {
+    if (isAdmin) return true; // এডমিনরা সবসময় সব মেনু দেখতে পাবেন
+    return Boolean(permissions[newKey] || permissions[legacyKey]);
   };
 
   return (
@@ -68,18 +68,16 @@ export const Header = () => {
         </Link>
 
         <div className={Style.menu}>
-          {/* Home Access Control */}
-          {hasAccess("canAccessHome") && (
-            <NavLink
-              className={({ isActive }) => (isActive ? Style.active : Style.link)}
-              to="/"
-            >
-              Home
-            </NavLink>
-          )}
+          {/* Home Navigation: Default visible for everyone */}
+          <NavLink
+            className={({ isActive }) => (isActive ? Style.active : Style.link)}
+            to="/"
+          >
+            Home
+          </NavLink>
 
-          {/* Clients Access Control */}
-          {hasAccess("canAccessClients") && (
+          {/* Clients Navigation */}
+          {hasAccess("nav_clients", "canAccessClients") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/Clints"
@@ -88,8 +86,8 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Projects Access Control */}
-          {hasAccess("canAccessProjects") && (
+          {/* Projects Navigation */}
+          {hasAccess("nav_projects", "canAccessProjects") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/Projects"
@@ -98,8 +96,8 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Inventory & Billing Access Control */}
-          {hasAccess("canAccessInventory") && (
+          {/* Inventory & Billing Navigation */}
+          {hasAccess("nav_inventory", "canAccessInventory") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/InventoryBilling"
@@ -108,8 +106,8 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Employee's Data Access Control */}
-          {hasAccess("canAccessEmployees") && (
+          {/* Employee's Data Navigation */}
+          {hasAccess("nav_employee", "canAccessEmployees") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/EmployeeData"
@@ -118,8 +116,8 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Admin Panel (শুধুমাত্র Admin / Owner-দের জন্য) */}
-          {isAdmin && (
+          {/* Admin Panel Navigation */}
+          {hasAccess("nav_admin") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/AdminPanel"

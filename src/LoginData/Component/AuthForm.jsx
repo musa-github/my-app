@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router"; // useNavigate ইমপোর্ট করা হয়েছে
 import { clearAuthMessages, loginUser, registerUser } from "../../Fetures/Inventory/authSlice";
 import styles from "./AuthForm.module.css";
 
 const AuthForm = ({ initialMode = "signup" }) => {
   const [isSignUp, setIsSignUp] = useState(initialMode === "signup");
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // Hook ইনিশিয়ালাইজ করা হয়েছে
   const { loading, error, successMessage, user } = useSelector((state) => state.auth);
 
   const initialFormState = {
@@ -50,6 +52,7 @@ const AuthForm = ({ initialMode = "signup" }) => {
       ).then((res) => {
         if (!res.error) {
           setFormData(initialFormState);
+          navigate("/"); // সফল লগইনের পর Home Page-এ রিডাইরেক্ট করবে
         }
       });
     }
@@ -61,7 +64,6 @@ const AuthForm = ({ initialMode = "signup" }) => {
     setIsSignUp(mode === "signup");
     setFormData(initialFormState);
   };
-  
 
   return (
     <div className={styles.authContainer}>

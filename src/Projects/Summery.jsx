@@ -1,3 +1,4 @@
+import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -9,12 +10,15 @@ import {
   setSelectedWhoseProject,
   updateProjectLocal
 } from '../Fetures/Inventory/ProjectsSlice';
+import { auth, db } from '../Firebase/Firebase';
 import './Summery.css';
 
 const monthsList = ['All', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const OWNER_EMAIL = "smabumusa98@gmail.com";
 
 const Summery = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth || {});
   const { 
     projects = [], 
     selectedMonth = 'All', 
@@ -25,6 +29,52 @@ const Summery = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [dueFilter, setDueFilter] = useState('All');
+
+  // Permission & Admin States
+  const [permissions, setPermissions] = useState({});
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const currentUserEmail = (user?.email || auth.currentUser?.email || "").toLowerCase();
+
+  // Fetch Permissions from Firebase
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (!currentUserEmail) {
+        setPermissions({});
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const cleanEmail = currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_");
+
+        // Admin status check
+        const adminDoc = await getDoc(doc(db, "app_admins", cleanEmail));
+        const adminAccess = currentUserEmail === OWNER_EMAIL || adminDoc.exists();
+        setIsAdmin(adminAccess);
+
+        // User permissions check
+        const permDoc = await getDoc(doc(db, "user_permissions", cleanEmail));
+        if (permDoc.exists()) {
+          setPermissions(permDoc.data());
+        } else {
+          setPermissions({});
+        }
+      } catch (error) {
+        console.error("Error fetching permissions in Summery:", error);
+      }
+    };
+
+    fetchPermissions();
+  }, [currentUserEmail]);
+
+  // Updated Flexible Permission Checker Helper Function
+  const hasPermission = (featureKey, fallbackKey = "") => {
+    if (isAdmin) return true; // Admins have full access
+    if (permissions[featureKey]) return true;
+    if (fallbackKey && permissions[fallbackKey]) return true;
+    return false;
+  };
 
   const initialFormState = {
     projectName: '',
@@ -51,12 +101,20 @@ const Summery = () => {
   };
 
   const handleOpenAddModal = () => {
+    if (!hasPermission('projects_action_add', 'canAddProjects')) {
+      alert("You don't have permission to add new projects.");
+      return;
+    }
     setEditingId(null);
     setFormData(initialFormState);
     setShowModal(true);
   };
 
   const handleEdit = (proj) => {
+    if (!hasPermission('projects_action_edit', 'canEditProjects')) {
+      alert("You don't have permission to edit projects.");
+      return;
+    }
     setEditingId(proj.id);
     const activeMonth = selectedMonth === 'All' ? 'August' : selectedMonth;
     const currentBill = (proj.billList || []).find(b => b.month === activeMonth) || {};
@@ -109,6 +167,10 @@ const Summery = () => {
   };
 
   const handleSaveToFirebase = () => {
+    if (!hasPermission('projects_action_save', 'canSaveProjects')) {
+      alert("You don't have permission to save projects to Firebase.");
+      return;
+    }
     dispatch(saveAllProjectsToFirebase())
       .unwrap()
       .then(() => alert('All projects saved to Firebase successfully!'))
@@ -116,6 +178,10 @@ const Summery = () => {
   };
 
   const handleDelete = (id, name) => {
+    if (!hasPermission('projects_action_delete', 'canDeleteProjects')) {
+      alert("You don't have permission to delete projects.");
+      return;
+    }
     if (window.confirm(`Are you sure you want to delete: ${name}?`)) {
       dispatch(deleteProjectFromFirebase(id));
     }
@@ -246,11 +312,17 @@ const Summery = () => {
             </select>
           </div>
 
-          <button className="btn btn-add" onClick={handleOpenAddModal}>+ Add New Project</button>
+          {/* Add Project Button */}
+          {hasPermission('projects_action_add', 'canAddProjects') && (
+            <button className="btn btn-add" onClick={handleOpenAddModal}>+ Add New Project</button>
+          )}
 
-          <button className="btn btn-save" onClick={handleSaveToFirebase} disabled={loading}>
-            {loading ? 'Saving...' : '💾 Save to Firebase'}
-          </button>
+          {/* Save to Firebase Button */}
+          {hasPermission('projects_action_save', 'canSaveProjects') && (
+            <button className="btn btn-save" onClick={handleSaveToFirebase} disabled={loading}>
+              {loading ? 'Saving...' : '💾 Save to Firebase'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -324,6 +396,9 @@ const Summery = () => {
                 const collectedBill = Number(bill.collectedBill) || 0;
                 const totalDue = totalBill - collectedBill;
 
+                const canEdit = hasPermission('projects_action_edit', 'canEditProjects');
+                const canDelete = hasPermission('projects_action_delete', 'canDeleteProjects');
+
                 return (
                   <tr key={proj.id || idx}>
                     <td className="text-center">{idx + 1}</td>
@@ -339,8 +414,15 @@ const Summery = () => {
                     <td className="text-center">{bill.collectedBy || '-'}</td>
                     <td className="text-center">{bill.approvedBy || '-'}</td>
                     <td className="text-center action-buttons">
-                      <button className="btn-edit" onClick={() => handleEdit(proj)}>Edit</button>
-                      <button className="btn-delete" onClick={() => handleDelete(proj.id, proj.projectName)}>Delete</button>
+                      {canEdit && (
+                        <button className="btn-edit" onClick={() => handleEdit(proj)}>Edit</button>
+                      )}
+                      {canDelete && (
+                        <button className="btn-delete" onClick={() => handleDelete(proj.id, proj.projectName)}>Delete</button>
+                      )}
+                      {!canEdit && !canDelete && (
+                        <span style={{ fontSize: '11px', color: '#64748b' }}>Read Only</span>
+                      )}
                     </td>
                   </tr>
                 );

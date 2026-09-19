@@ -1,6 +1,4 @@
-
-
-
+import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -10,6 +8,7 @@ import {
   setSelectedWhoseProject,
   updateProjectLocal
 } from '../../Fetures/Inventory/ProjectsSlice';
+import { auth, db } from '../../Firebase/Firebase';
 import styles from './Serviced_and_Schedule.module.css';
 
 // Sub Components
@@ -20,9 +19,11 @@ import SummaryCards from '../Project/Component/SummaryCards';
 import UpcomingScheduleAlert from '../Project/Component/UpcomingScheduleAlert';
 
 const monthsList = ['All', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const OWNER_EMAIL = "smabumusa98@gmail.com";
 
 const Serviced_and_Schedule = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth || {});
   const { 
     projects = [], 
     selectedMonth = 'All', 
@@ -33,6 +34,50 @@ const Serviced_and_Schedule = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [dueFilter, setDueFilter] = useState('All');
+
+  // Permission & Admin States
+  const [permissions, setPermissions] = useState({});
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const currentUserEmail = (user?.email || auth.currentUser?.email || "").toLowerCase();
+
+  // Fetch Permissions from Firebase
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (!currentUserEmail) {
+        setPermissions({});
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const cleanEmail = currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_");
+
+        // Admin status check
+        const adminDoc = await getDoc(doc(db, "app_admins", cleanEmail));
+        const adminAccess = currentUserEmail === OWNER_EMAIL || adminDoc.exists();
+        setIsAdmin(adminAccess);
+
+        // User permissions check
+        const permDoc = await getDoc(doc(db, "user_permissions", cleanEmail));
+        if (permDoc.exists()) {
+          setPermissions(permDoc.data());
+        } else {
+          setPermissions({});
+        }
+      } catch (error) {
+        console.error("Error fetching permissions in Serviced_and_Schedule:", error);
+      }
+    };
+
+    fetchPermissions();
+  }, [currentUserEmail]);
+
+  // Permission Checker Helper Function
+  const hasPermission = (featureKey) => {
+    if (isAdmin) return true; // Admins have full access
+    return Boolean(permissions[featureKey]);
+  };
 
   const initialFormState = {
     projectName: '',
@@ -84,6 +129,11 @@ const Serviced_and_Schedule = () => {
   };
 
   const handleEdit = (proj) => {
+    if (!hasPermission('projects_action_edit')) {
+      alert("You don't have permission to edit projects.");
+      return;
+    }
+
     setEditingId(proj.id);
     const activeMonth = selectedMonth === 'All' ? monthsList[new Date().getMonth() + 1] : selectedMonth;
     const currentBill = (proj.billList || []).find(b => b.month === activeMonth) || {};
@@ -121,6 +171,11 @@ const Serviced_and_Schedule = () => {
   };
 
   const handleSaveToFirebase = () => {
+    if (!hasPermission('projects_action_save')) {
+      alert("You don't have permission to save projects to Firebase.");
+      return;
+    }
+
     dispatch(saveAllProjectsToFirebase())
       .unwrap()
       .then(() => alert('All projects saved to Firebase successfully!'))
@@ -300,11 +355,13 @@ const Serviced_and_Schedule = () => {
         handleSaveToFirebase={handleSaveToFirebase}
         loading={loading}
         dispatch={dispatch}
+        hasSavePermission={hasPermission('projects_action_save')}
       />
 
       <UpcomingScheduleAlert
         upcomingSchedules={upcomingSchedules}
         handleEdit={handleEdit}
+        hasEditPermission={hasPermission('projects_action_edit')}
       />
 
       <SummaryCards
@@ -321,6 +378,7 @@ const Serviced_and_Schedule = () => {
         getLastServicingDateFromProj={getLastServicingDateFromProj}
         handleEdit={handleEdit}
         totals={totals}
+        hasEditPermission={hasPermission('projects_action_edit')}
       />
 
       <EditModal

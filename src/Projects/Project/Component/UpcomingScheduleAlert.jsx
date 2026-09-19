@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router';
 import styles from '../Serviced_and_Schedule.module.css';
 
-const UpcomingScheduleAlert = ({ upcomingSchedules, handleEdit }) => {
+const UpcomingScheduleAlert = ({ upcomingSchedules, handleEdit, hasEditPermission = true }) => {
   return (
     <div className={styles.alertCard}>
       <h4 className={styles.alertTitle}>
@@ -51,7 +51,16 @@ const UpcomingScheduleAlert = ({ upcomingSchedules, handleEdit }) => {
                     )}
                   </td>
                   <td className={styles.textCenter}>
-                    <button className={styles.btnEdit} onClick={() => handleEdit(item)}>Update</button>
+                    {/* Access Control Check for Edit Permission */}
+                    {hasEditPermission ? (
+                      <button className={styles.btnEdit} onClick={() => handleEdit(item)}>
+                        Update
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>
+                        Read Only
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))

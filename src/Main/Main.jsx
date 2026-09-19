@@ -32,7 +32,7 @@ export const Main = () => {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        {/* Standalone Authentication Routes (এখন /Login এবং /SignUp সরাসরি কাজ করবে) */}
+        {/* Authentication Routes */}
         <Route path="/Login" element={<Login />} />
         <Route path="/SignUp" element={<SignUp />} />
 
@@ -48,10 +48,10 @@ export const Main = () => {
 
         {/* Projects Route */}
         <Route path="/Projects" element={<Projects />}>
-          <Route index element={<Navigate to="Summery" replace />} />
-          <Route path="Serviced_and_Schedule" element={<Serviced_and_Schedule />} />
-          <Route path="project-details/:id" element={<ProjectDetails />} />
+          <Route index element={<Navigate to="Serviced_and_Schedule" replace />} />
           <Route path="Summery" element={<Summery />} />
+          <Route path="project-details/:id" element={<ProjectDetails />} />
+          <Route path="Serviced_and_Schedule" element={<Serviced_and_Schedule />} />
         </Route>
 
         {/* Service Bill Route */}
@@ -73,9 +73,9 @@ export const Main = () => {
           <Route path="EmployeeList" element={<EmployeeList />} />
           <Route path="Attendance" element={<Attendance />} />
           <Route path="Payroll" element={<Payroll_Salary />} />
-          
         </Route>
-        <Route path="AdminPanel" element={<AdminPanel/>}/>
+        
+        <Route path="/AdminPanel" element={<AdminPanel />} />
       </Routes>
     </div>
   );

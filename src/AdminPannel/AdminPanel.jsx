@@ -1,4 +1,3 @@
-
 import {
   createUserWithEmailAndPassword,
 } from "firebase/auth";
@@ -30,23 +29,42 @@ function AdminPanel() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Screen-based Hierarchical Access Control Features
   const availableFeatures = [
-    // Header & Navigation Page Access Control
-    { key: "canAccessHome", label: "Home Page Access", category: "Pages" },
-    { key: "canAccessClients", label: "Clients Page Access", category: "Pages" },
-    { key: "canAccessProjects", label: "Projects Page Access", category: "Pages" },
-    { key: "canAccessInventory", label: "Inventory & Billing Page Access", category: "Pages" },
-    { key: "canAccessEmployees", label: "Employee List Page Access", category: "Pages" },
-    { key: "canAccessProfile", label: "Your Profile Page Access", category: "Pages" },
-    { key: "canGiveAttendance", label: "Attendance Page Access", category: "Pages" },
-    { key: "canAccessPayroll", label: "Payroll & Salary Page Access", category: "Pages" },
-    { key: "canViewReports", label: "Reports Page Access", category: "Pages" },
+    // 1. Header Navigation Control
+    { key: "nav_home", label: "Header -> Home Navigation", category: "Header Menu" },
+    { key: "nav_clients", label: "Header -> Clients Navigation", category: "Header Menu" },
+    { key: "nav_projects", label: "Header -> Projects Navigation", category: "Header Menu" },
+    { key: "nav_inventory", label: "Header -> Inventory & Billing Navigation", category: "Header Menu" },
+    { key: "nav_employee", label: "Header -> Employee's Data Navigation", category: "Header Menu" },
+    { key: "nav_admin", label: "Header -> Admin Panel Navigation", category: "Header Menu" },
 
-    // Options/Actions Control inside Pages
-    { key: "canAddInventoryItem", label: "Inventory -> Add New Product", category: "Options" },
-    { key: "canDeleteInventoryItem", label: "Inventory -> Delete Product", category: "Options" },
-    { key: "canCreateInvoice", label: "Billing -> Create Voucher/Invoice", category: "Options" },
-    { key: "canExportReports", label: "Reports -> Export PDF/Excel", category: "Options" },
+    // 2. Clients Portal (Sidebar & Actions)
+    { key: "clients_tab_list", label: "Clients -> Sidebar: Client List Page", category: "Clients Portal" },
+    { key: "clients_tab_offer", label: "Clients -> Sidebar: Offer Page", category: "Clients Portal" },
+    { key: "clients_tab_challan", label: "Clients -> Sidebar: Challan Page", category: "Clients Portal" },
+    { key: "clients_tab_invoice", label: "Clients -> Sidebar: Invoice Page", category: "Clients Portal" },
+    { key: "clients_action_save", label: "Clients -> Action: Save Offer/Challan", category: "Clients Actions" },
+    { key: "clients_action_update", label: "Clients -> Action: Update Offer/Challan", category: "Clients Actions" },
+    { key: "clients_action_delete", label: "Clients -> Action: Delete Offer/Challan", category: "Clients Actions" },
+    { key: "clients_action_pdf", label: "Clients -> Action: Download PDF", category: "Clients Actions" },
+
+    // 3. Projects Portal (Sidebar & Actions)
+    { key: "projects_tab_summary", label: "Projects -> Sidebar: Summary Page", category: "Projects Portal" },
+    { key: "projects_tab_serviced", label: "Projects -> Sidebar: Serviced & Schedule Page", category: "Projects Portal" },
+    { key: "projects_action_add", label: "Projects -> Action: Add New Project", category: "Projects Actions" },
+    { key: "projects_action_save", label: "Projects -> Action: Save to Firebase", category: "Projects Actions" },
+    { key: "projects_action_edit", label: "Projects -> Action: Edit Project Info", category: "Projects Actions" },
+    { key: "projects_action_update", label: "Projects -> Action: Update Servicing Schedule", category: "Projects Actions" },
+    { key: "projects_action_delete", label: "Projects -> Action: Delete Project", category: "Projects Actions" },
+
+    // 4. Employee Portal (Sidebar & Actions)
+    { key: "emp_tab_profile", label: "Employee -> Sidebar: Your Profile Page", category: "Employee Portal" },
+    { key: "emp_tab_attendance", label: "Employee -> Sidebar: Attendance Page", category: "Employee Portal" },
+    { key: "emp_tab_list", label: "Employee -> Sidebar: Employee List Page", category: "Employee Portal" },
+    { key: "emp_tab_payroll", label: "Employee -> Sidebar: Payroll & Salary Page", category: "Employee Portal" },
+    { key: "emp_action_edit_profile", label: "Employee -> Action: Edit Profile Info", category: "Employee Actions" },
+    { key: "emp_action_download_pdf", label: "Employee -> Action: Download PDF Statement", category: "Employee Actions" },
   ];
 
   const fetchData = async () => {
@@ -101,7 +119,6 @@ function AdminPanel() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
@@ -170,7 +187,6 @@ function AdminPanel() {
     }
   };
 
-  // Dynamic Approval for Attendance, Leave & Advance
   const handleApproveRequest = async (request) => {
     try {
       const cleanEmpName = (request.employeeName || "Unknown").replace(/[^a-zA-Z0-9]/g, "_");
@@ -202,7 +218,6 @@ function AdminPanel() {
           { merge: true }
         );
       } else if (request.type === "LEAVE") {
-        // Save Leave under month collection
         const docRef = doc(
           db,
           "attendance",
@@ -224,7 +239,6 @@ function AdminPanel() {
           { merge: true }
         );
       } else if (request.type === "ADVANCE") {
-        // Update Advance Deduction in employee doc
         const empRef = doc(db, "employees", cleanEmail);
         await setDoc(
           empRef,
@@ -324,6 +338,13 @@ function AdminPanel() {
     );
   }
 
+  // Category-wise grouping helper for permissions tab
+  const groupedFeatures = availableFeatures.reduce((acc, feat) => {
+    acc[feat.category] = acc[feat.category] || [];
+    acc[feat.category].push(feat);
+    return acc;
+  }, {});
+
   return (
     <div className={styles.adminContainer}>
       <h2 className={styles.heading}>Admin Control Panel</h2>
@@ -372,17 +393,24 @@ function AdminPanel() {
                 </div>
 
                 <div className={styles.toggleGroup}>
-                  {availableFeatures.map((feat) => (
-                    <div key={feat.key} className={styles.toggleItem}>
-                      <span style={{ fontSize: "0.85rem" }}>{feat.label}</span>
-                      <label className={styles.switch}>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(userPerms[feat.key])}
-                          onChange={() => handlePermissionToggle(emp.email, feat.key)}
-                        />
-                        <span className={styles.slider}></span>
-                      </label>
+                  {Object.entries(groupedFeatures).map(([category, items]) => (
+                    <div key={category} style={{ marginBottom: "12px" }}>
+                      <strong style={{ fontSize: "0.85rem", color: "#60a5fa", display: "block", marginBottom: "4px" }}>
+                        {category}
+                      </strong>
+                      {items.map((feat) => (
+                        <div key={feat.key} className={styles.toggleItem}>
+                          <span style={{ fontSize: "0.8rem" }}>{feat.label}</span>
+                          <label className={styles.switch}>
+                            <input
+                              type="checkbox"
+                              checked={Boolean(userPerms[feat.key])}
+                              onChange={() => handlePermissionToggle(emp.email, feat.key)}
+                            />
+                            <span className={styles.slider}></span>
+                          </label>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
