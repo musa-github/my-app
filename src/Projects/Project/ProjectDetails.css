@@ -1,5 +1,5 @@
 /* ==========================================
-   Project Details Modern Dashboard Styling (No Scroll)
+   Project Details Modern Dashboard Styling
    ========================================== */
 
 .details-container {
@@ -27,6 +27,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   border: 1px solid #e2e8f0;
   margin-bottom: 20px;
+  gap: 16px;
 }
 
 .header-info h2 {
@@ -40,6 +41,7 @@
 .meta-badges {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 13px;
   color: #64748b;
@@ -52,6 +54,7 @@
 .header-actions {
   display: flex;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 /* Button Styling */
@@ -65,7 +68,9 @@
   transition: all 0.2s ease-in-out;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .btn-make-bill {
@@ -89,13 +94,14 @@
   color: #0f172a;
 }
 
-/* Table Area (No Horizontal Scrollbar) */
+/* Table Area with Smooth Responsive Scroll */
 .table-wrapper {
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   border: 1px solid #e2e8f0;
-  overflow: hidden; /* Scrollbar disabled */
+  overflow-x: auto; /* Mobile Horizontal Scroll allowed */
+  -webkit-overflow-scrolling: touch;
   width: 100%;
 }
 
@@ -103,7 +109,7 @@
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  table-layout: fixed; /* Ensures tight fit without overflow */
+  min-width: 950px; /* Ensures minimum width for table data readability on mobile */
 }
 
 .project-table th {
@@ -115,7 +121,7 @@
   letter-spacing: 0.3px;
   padding: 10px 8px;
   border-bottom: 1px solid #e2e8f0;
-  word-wrap: break-word;
+  white-space: nowrap;
 }
 
 .project-table td {
@@ -123,8 +129,7 @@
   border-bottom: 1px solid #f1f5f9;
   font-size: 12.5px;
   color: #1e293b;
-  white-space: normal;
-  word-wrap: break-word;
+  white-space: nowrap;
 }
 
 .project-table tbody tr {
@@ -239,13 +244,15 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 12px;
 }
 
 .modal-content {
   background: #ffffff;
-  width: 92%;
+  width: 100%;
   max-width: 620px;
   max-height: 90vh;
+  overflow-y: auto;
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
@@ -318,6 +325,8 @@
   background-color: #ffffff;
   color: #0f172a;
   transition: border-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .input-field input:focus,
@@ -364,6 +373,72 @@
 /* Printable Area Hidden Default */
 .invoice-print-area {
   display: none;
+}
+
+/* ==========================================
+   Responsive Breakpoints
+   ========================================== */
+
+/* Tablets & Below (<= 992px) */
+@media screen and (max-width: 992px) {
+  .details-container {
+    padding: 16px;
+  }
+
+  .details-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .btn {
+    flex: 1;
+  }
+}
+
+/* Mobile Devices (<= 600px) */
+@media screen and (max-width: 600px) {
+  .details-container {
+    padding: 10px;
+  }
+
+  .details-header {
+    padding: 16px;
+  }
+
+  .header-info h2 {
+    font-size: 18px;
+  }
+
+  .meta-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .meta-divider {
+    display: none; /* Hide dots on small mobile view */
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr; /* 1 Column Form for Mobile */
+  }
+
+  .modal-content {
+    padding: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
 }
 
 /* ==========================================

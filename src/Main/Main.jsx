@@ -24,6 +24,7 @@ import ServiceBill from "../Projects/Project/ServiceBill";
 import Serviced_and_Schedule from "../Projects/Project/Serviced_and_Schedule";
 import Projects from "../Projects/Projects";
 import Summery from "../Projects/Summery";
+import Services from "../Services/Services";
 import "./Main.css";
 
 export const Main = () => {
@@ -31,6 +32,7 @@ export const Main = () => {
     <div className="main">
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/Services" element={<Services />} />
 
         {/* Authentication Routes */}
         <Route path="/Login" element={<Login />} />

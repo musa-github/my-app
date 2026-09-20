@@ -7,10 +7,11 @@
   background-color: #0b0f17;
   color: #e2e8f0;
   overflow: hidden; /* মূল কনটেইনার সাইজ বাইরে যাবে না */
+  width: 100%;
 }
 
 /* =========================================
-   SIDEBAR (FIXED - NO SCROLL)
+   SIDEBAR (DESKTOP)
 ========================================= */
 .aside {
   width: 240px;
@@ -21,7 +22,7 @@
   padding: 20px 0;
   flex-shrink: 0;
   height: 100%; /* সম্পূর্ণ হাইট ফিক্সড থাকবে */
-  box-sizing: border-border-box;
+  box-sizing: border-box;
 }
 
 .asideHeader {
@@ -58,6 +59,7 @@
   border-radius: 8px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .asideLink:hover {
@@ -88,16 +90,16 @@
 }
 
 /* =========================================
-   MAIN CONTENT AREA (ONLY THIS WILL SCROLL)
+   MAIN CONTENT AREA
 ========================================= */
 .main,
 .formContainer,
 .content,
 .inventoryFormContainer {
   flex: 1;
-  padding: 30px 10px;
+  padding: 30px 16px;
   background-color: #0f172a;
-  height: 100%; /* মূল হাইট স্ক্রিনের বাকি অংশের সমান */
+  height: 100%;
   overflow-y: auto; /* কনটেন্ট বেশি হলে শুধু ডানপাস স্ক্রল হবে */
   box-sizing: border-box;
 }
@@ -130,4 +132,73 @@
 .content::-webkit-scrollbar-thumb:hover,
 .inventoryFormContainer::-webkit-scrollbar-thumb:hover {
   background: #e50c7a;
+}
+
+/* =========================================
+   MOBILE & TABLET RESPONSIVE BREAKPOINTS
+========================================= */
+
+/* Mobile & Tablet Screens (<= 768px) */
+@media screen and (max-width: 768px) {
+  .inventoryContainer {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 60px);
+    overflow: visible;
+  }
+
+  .aside {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 0;
+  }
+
+  .asideHeader {
+    padding: 0 12px 8px 12px;
+    margin-bottom: 6px;
+  }
+
+  .asideNav {
+    flex-direction: row;
+    overflow-x: auto; /* মোবাইলে লিঙ্কগুলো ডানে-বামে স্ক্রল হবে */
+    white-space: nowrap;
+    padding: 0 12px 6px 12px;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .asideLink {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+
+  /* মোবাইলে এক্টিভ ইন্ডিকেটরটি লেফটের বদলে নিচে চলে আসবে */
+  .active::before {
+    left: 15%;
+    top: auto;
+    bottom: 0;
+    width: 70%;
+    height: 3px;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .main,
+  .formContainer,
+  .content,
+  .inventoryFormContainer {
+    padding: 16px 12px;
+    height: auto;
+  }
+}
+
+/* Small Mobile Screens (<= 480px) */
+@media screen and (max-width: 480px) {
+  .main,
+  .formContainer,
+  .content,
+  .inventoryFormContainer {
+    padding: 12px 8px;
+  }
 }

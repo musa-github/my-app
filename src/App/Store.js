@@ -24,6 +24,7 @@ export const store = configureStore({
     client: clientReducer,
   payroll: payrollReducer,
     auth: authReducer,
+   
     
     
   }

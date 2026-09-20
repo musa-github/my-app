@@ -1,0 +1,440 @@
+/* Container Layout */
+.servicesSection {
+  padding: 4rem 1rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header Section */
+.header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 3.5rem auto;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #2563eb;
+  background-color: #dbeafe;
+  padding: 0.25rem 0.85rem;
+  border-radius: 9999px;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* Grid Layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Card Styling */
+.card {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  padding: 1.75rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.iconWrapper {
+  padding: 0.75rem;
+  background-color: #eff6ff;
+  border-radius: 0.75rem;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.card:hover .iconWrapper {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.tag {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.375rem;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.75rem;
+  transition: color 0.3s ease;
+}
+
+.card:hover .cardTitle {
+  color: #2563eb;
+}
+
+.cardDescription {
+  color: #475569;
+  font-size: 0.925rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+/* Card Footer Pointer */
+.cardFooter {
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.arrowIcon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .arrowIcon {
+  transform: translateX(4px);
+}
+
+/* Bottom CTA Banner */
+.ctaBanner {
+  margin-top: 3.5rem;
+  background-color: #0f172a;
+  border-radius: 1.5rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: #ffffff;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.ctaTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.ctaText {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 1.75rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* CTA Action Buttons Group */
+.ctaActionGroup {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ctaBtn,
+.ctaCallBtn {
+  font-weight: 600;
+  padding: 0.85rem 1.75rem;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.ctaBtn {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.ctaBtn:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.ctaCallBtn {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.ctaCallBtn:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+/* Modal / Popup Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background-color: #ffffff;
+  border-radius: 1.25rem;
+  max-width: 550px;
+  width: 100%;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalFadeIn 0.25s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  border: none;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.modalTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 0.25rem;
+}
+
+.modalBody {
+  margin-bottom: 2rem;
+}
+
+.modalBody h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.modalBody p {
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.modalFooter {
+  display: flex;
+  gap: 1rem;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1.25rem;
+}
+
+.whatsappBtn,
+.phoneBtn {
+  flex: 1;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.whatsappBtn {
+  background-color: #25d366;
+  color: #ffffff;
+}
+
+.whatsappBtn:hover {
+  background-color: #1ebc57;
+}
+
+.phoneBtn {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.phoneBtn:hover {
+  background-color: #1e293b;
+}
+
+/* =========================================
+   MOBILE RESPONSIVE BREAKPOINTS
+========================================= */
+@media (max-width: 640px) {
+  .servicesSection {
+    padding: 2.5rem 0.85rem;
+  }
+
+  .header {
+    margin-bottom: 2.5rem;
+  }
+
+  .title {
+    font-size: 1.65rem;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .ctaBanner {
+    padding: 1.75rem 1rem;
+    border-radius: 1rem;
+  }
+
+  .ctaTitle {
+    font-size: 1.25rem;
+  }
+
+  .ctaActionGroup {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .ctaBtn,
+  .ctaCallBtn {
+    width: 100%;
+  }
+
+  .modalContent {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .modalHeader {
+    align-items: flex-start;
+  }
+
+  .modalTitle {
+    font-size: 1.15rem;
+  }
+
+  .modalFooter {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .whatsappBtn,
+  .phoneBtn {
+    width: 100%;
+  }
+}

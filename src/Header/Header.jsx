@@ -16,6 +16,7 @@ export const Header = () => {
 
   const [permissions, setPermissions] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const currentUserEmail = (user?.email || auth.currentUser?.email || "").toLowerCase();
 
@@ -52,28 +53,59 @@ export const Header = () => {
 
   const handleLogout = () => {
     dispatch(logoutUser());
+    setIsMobileMenuOpen(false);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen((prev) => !prev);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
   };
 
   // এডমিন অথবা নির্দিষ্ট পারমিশন থাকলে নেভিগেশন লিংক দেখাবে
   const hasAccess = (newKey, legacyKey) => {
-    if (isAdmin) return true; // এডমিনরা সবসময় সব মেনু দেখতে পাবেন
+    if (isAdmin) return true;
     return Boolean(permissions[newKey] || permissions[legacyKey]);
   };
 
   return (
     <header className={Style.headerWrapper}>
       <nav className={Style.header}>
-        <Link to="/" className={Style.logoLink}>
+        {/* Logo */}
+        <Link to="/" className={Style.logoLink} onClick={closeMobileMenu}>
           <img className={Style.Logo} src={logo} alt="MM Engineering" />
         </Link>
 
-        <div className={Style.menu}>
-          {/* Home Navigation: Default visible for everyone */}
+        {/* Hamburger Menu Icon (For Mobile) */}
+        <button
+          className={Style.hamburgerBtn}
+          onClick={toggleMobileMenu}
+          aria-label="Toggle Navigation"
+        >
+          <span className={`${Style.bar} ${isMobileMenuOpen ? Style.openBar1 : ""}`}></span>
+          <span className={`${Style.bar} ${isMobileMenuOpen ? Style.openBar2 : ""}`}></span>
+          <span className={`${Style.bar} ${isMobileMenuOpen ? Style.openBar3 : ""}`}></span>
+        </button>
+
+        {/* Nav Links Container */}
+        <div className={`${Style.menu} ${isMobileMenuOpen ? Style.menuOpen : ""}`}>
+          {/* Home Navigation */}
           <NavLink
             className={({ isActive }) => (isActive ? Style.active : Style.link)}
             to="/"
+            onClick={closeMobileMenu}
           >
             Home
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) => (isActive ? Style.active : Style.link)}
+            to="Services"
+            onClick={closeMobileMenu}
+          >
+            Our Services
           </NavLink>
 
           {/* Clients Navigation */}
@@ -81,6 +113,7 @@ export const Header = () => {
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/Clints"
+              onClick={closeMobileMenu}
             >
               Clients
             </NavLink>
@@ -91,6 +124,7 @@ export const Header = () => {
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/Projects"
+              onClick={closeMobileMenu}
             >
               Projects
             </NavLink>
@@ -101,6 +135,7 @@ export const Header = () => {
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/InventoryBilling"
+              onClick={closeMobileMenu}
             >
               Inventory & Billing
             </NavLink>
@@ -111,6 +146,7 @@ export const Header = () => {
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/EmployeeData"
+              onClick={closeMobileMenu}
             >
               Employee's Data
             </NavLink>
@@ -121,13 +157,36 @@ export const Header = () => {
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
               to="/AdminPanel"
+              onClick={closeMobileMenu}
             >
               Admin Panel
             </NavLink>
           )}
+
+          {/* Mobile Auth Buttons (Inside Dropdown) */}
+          <div className={Style.mobileAuthContainer}>
+            {user ? (
+              <div className={Style.userProfileGroup}>
+                {user.employeeProfile && <Avatar profile={user.employeeProfile} />}
+                <button onClick={handleLogout} className={Style.logoutBtn}>
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className={Style.authGroupMobile}>
+                <NavLink className={Style.signupBtn} to="/SignUp" onClick={closeMobileMenu}>
+                  Signup
+                </NavLink>
+                <NavLink className={Style.loginBtn} to="/Login" onClick={closeMobileMenu}>
+                  Login
+                </NavLink>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className={Style.loginContainer}>
+        {/* Desktop Auth Buttons */}
+        <div className={Style.desktopAuthContainer}>
           {user ? (
             <div className={Style.userProfileGroup}>
               {user.employeeProfile && <Avatar profile={user.employeeProfile} />}
@@ -136,14 +195,14 @@ export const Header = () => {
               </button>
             </div>
           ) : (
-            <>
+            <div className={Style.loginContainer}>
               <NavLink className={Style.signupBtn} to="/SignUp">
                 Signup
               </NavLink>
               <NavLink className={Style.loginBtn} to="/Login">
                 Login
               </NavLink>
-            </>
+            </div>
           )}
         </div>
       </nav>

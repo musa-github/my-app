@@ -64,10 +64,10 @@ function EmployeeData() {
         <div className={Style.asideHeader}>
           <span>Employee Portal</span>
         </div>
-        
+
         {!loading && (
           <nav className={Style.asideNav}>
-            {/* Your Profile Link (Default accessible, or checked via emp_action_edit_profile) */}
+            {/* Your Profile Link */}
             <NavLink
               to="YourProfile"
               className={({ isActive }) =>
@@ -77,7 +77,7 @@ function EmployeeData() {
               Your Profile
             </NavLink>
 
-            {/* Attendance Link - Database Keys Checked */}
+            {/* Attendance Link */}
             {(hasPermission("emp_tab_attendance") || hasPermission("canGiveAttendance")) && (
               <NavLink
                 to="Attendance"

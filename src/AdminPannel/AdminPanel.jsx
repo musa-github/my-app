@@ -1,6 +1,4 @@
-import {
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
   collection,
   deleteDoc,
@@ -119,6 +117,7 @@ function AdminPanel() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
@@ -338,7 +337,6 @@ function AdminPanel() {
     );
   }
 
-  // Category-wise grouping helper for permissions tab
   const groupedFeatures = availableFeatures.reduce((acc, feat) => {
     acc[feat.category] = acc[feat.category] || [];
     acc[feat.category].push(feat);
@@ -349,34 +347,37 @@ function AdminPanel() {
     <div className={styles.adminContainer}>
       <h2 className={styles.heading}>Admin Control Panel</h2>
 
-      <div className={styles.tabButtons}>
-        <button
-          className={`${styles.tabBtn} ${activeTab === "permissions" ? styles.activeTab : ""}`}
-          onClick={() => setActiveTab("permissions")}
-        >
-          Access Control
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === "signupRequests" ? styles.activeTab : ""}`}
-          onClick={() => setActiveTab("signupRequests")}
-        >
-          Signup Requests ({signupRequests.length})
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === "requests" ? styles.activeTab : ""}`}
-          onClick={() => setActiveTab("requests")}
-        >
-          Requests ({requests.length})
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === "admins" ? styles.activeTab : ""}`}
-          onClick={() => setActiveTab("admins")}
-        >
-          Manage Admins ({adminList.length})
-        </button>
+      {/* Tab Navigation Section */}
+      <div className={styles.tabWrapper}>
+        <div className={styles.tabButtons}>
+          <button
+            className={`${styles.tabBtn} ${activeTab === "permissions" ? styles.activeTab : ""}`}
+            onClick={() => setActiveTab("permissions")}
+          >
+            Access Control
+          </button>
+          <button
+            className={`${styles.tabBtn} ${activeTab === "signupRequests" ? styles.activeTab : ""}`}
+            onClick={() => setActiveTab("signupRequests")}
+          >
+            Signup Requests ({signupRequests.length})
+          </button>
+          <button
+            className={`${styles.tabBtn} ${activeTab === "requests" ? styles.activeTab : ""}`}
+            onClick={() => setActiveTab("requests")}
+          >
+            Requests ({requests.length})
+          </button>
+          <button
+            className={`${styles.tabBtn} ${activeTab === "admins" ? styles.activeTab : ""}`}
+            onClick={() => setActiveTab("admins")}
+          >
+            Manage Admins ({adminList.length})
+          </button>
+        </div>
       </div>
 
-      {/* Permissions Tab */}
+      {/* Access Control / Permissions Tab */}
       {activeTab === "permissions" && (
         <div className={styles.cardGrid}>
           {employees.map((emp) => {
@@ -386,21 +387,17 @@ function AdminPanel() {
             return (
               <div key={emp.id} className={styles.card}>
                 <div className={styles.cardHeader}>
-                  <div>
-                    <h4 className={styles.userName}>{emp.name || "N/A"}</h4>
-                    <p className={styles.userEmail}>{emp.email}</p>
-                  </div>
+                  <h4 className={styles.userName}>{emp.name || "N/A"}</h4>
+                  <p className={styles.userEmail}>{emp.email}</p>
                 </div>
 
                 <div className={styles.toggleGroup}>
                   {Object.entries(groupedFeatures).map(([category, items]) => (
-                    <div key={category} style={{ marginBottom: "12px" }}>
-                      <strong style={{ fontSize: "0.85rem", color: "#60a5fa", display: "block", marginBottom: "4px" }}>
-                        {category}
-                      </strong>
+                    <div key={category} className={styles.categorySection}>
+                      <span className={styles.categoryTitle}>{category}</span>
                       {items.map((feat) => (
                         <div key={feat.key} className={styles.toggleItem}>
-                          <span style={{ fontSize: "0.8rem" }}>{feat.label}</span>
+                          <span className={styles.featureLabel}>{feat.label}</span>
                           <label className={styles.switch}>
                             <input
                               type="checkbox"
@@ -420,7 +417,42 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Requests Tab (Attendance, Leave & Advance) */}
+      {/* Signup Requests Tab */}
+      {activeTab === "signupRequests" && (
+        <div>
+          {signupRequests.length === 0 ? (
+            <p className={styles.emptyText}>No pending signup requests found.</p>
+          ) : (
+            <div className={styles.cardGrid}>
+              {signupRequests.map((req) => (
+                <div key={req.email} className={styles.card}>
+                  <div className={styles.cardHeader}>
+                    <h4 className={styles.userName}>{req.name || "N/A"}</h4>
+                    <p className={styles.userEmail}>{req.email}</p>
+                  </div>
+
+                  <div className={styles.actionBtns}>
+                    <button
+                      className={styles.approveBtn}
+                      onClick={() => handleApproveSignup(req)}
+                    >
+                      Approve User
+                    </button>
+                    <button
+                      className={styles.rejectBtn}
+                      onClick={() => handleRejectSignup(req.email)}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Attendance & Other Requests Tab */}
       {activeTab === "requests" && (
         <div>
           {requests.length === 0 ? (
@@ -430,30 +462,28 @@ function AdminPanel() {
               {requests.map((req) => (
                 <div key={req.id} className={styles.card}>
                   <div className={styles.cardHeader}>
-                    <div>
-                      <h4 className={styles.userName}>{req.employeeName}</h4>
-                      <p className={styles.userEmail}>{req.employeeEmail}</p>
-                    </div>
+                    <h4 className={styles.userName}>{req.employeeName}</h4>
+                    <p className={styles.userEmail}>{req.employeeEmail}</p>
                   </div>
 
-                  <p style={{ margin: "4px 0", fontSize: "0.9rem" }}>
-                    <strong>Type:</strong> <span style={{ color: "#2563eb", fontWeight: "bold" }}>{req.type}</span>
+                  <p className={styles.requestDetail}>
+                    <strong>Type:</strong> <span className={styles.typeBadge}>{req.type}</span>
                   </p>
 
                   {req.type === "ADVANCE" ? (
-                    <p style={{ margin: "4px 0", fontSize: "0.9rem" }}>
+                    <p className={styles.requestDetail}>
                       <strong>Amount:</strong> ৳ {req.amount} ({req.reason})
                     </p>
                   ) : req.type === "LEAVE" ? (
-                    <p style={{ margin: "4px 0", fontSize: "0.9rem" }}>
+                    <p className={styles.requestDetail}>
                       <strong>Reason:</strong> {req.reason} ({req.date})
                     </p>
                   ) : (
                     <>
-                      <p style={{ margin: "4px 0", fontSize: "0.9rem" }}>
+                      <p className={styles.requestDetail}>
                         <strong>Time:</strong> {req.time}
                       </p>
-                      <p style={{ margin: "4px 0", fontSize: "0.9rem" }}>
+                      <p className={styles.requestDetail}>
                         <strong>Date:</strong> {req.date}
                       </p>
                     </>
@@ -480,44 +510,7 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Signup Requests */}
-      {activeTab === "signupRequests" && (
-        <div>
-          {signupRequests.length === 0 ? (
-            <p className={styles.emptyText}>No pending signup requests found.</p>
-          ) : (
-            <div className={styles.cardGrid}>
-              {signupRequests.map((req) => (
-                <div key={req.email} className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <div>
-                      <h4 className={styles.userName}>{req.name || "N/A"}</h4>
-                      <p className={styles.userEmail}>{req.email}</p>
-                    </div>
-                  </div>
-
-                  <div className={styles.actionBtns}>
-                    <button
-                      className={styles.approveBtn}
-                      onClick={() => handleApproveSignup(req)}
-                    >
-                      Approve User
-                    </button>
-                    <button
-                      className={styles.rejectBtn}
-                      onClick={() => handleRejectSignup(req.email)}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Manage Admins */}
+      {/* Manage Admins Tab */}
       {activeTab === "admins" && (
         <div>
           <form onSubmit={handleAddAdmin} className={styles.adminForm}>
@@ -534,7 +527,7 @@ function AdminPanel() {
           <div className={styles.adminList}>
             {adminList.map((email) => (
               <div key={email} className={styles.adminItem}>
-                <span>{email}</span>
+                <span className={styles.adminEmail}>{email}</span>
                 {email !== OWNER_EMAIL && (
                   <button onClick={() => handleRemoveAdmin(email)} className={styles.removeBtn}>
                     Remove

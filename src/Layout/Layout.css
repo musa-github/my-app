@@ -14,6 +14,9 @@ html {
   background-color: #0b0f17;
   color: #e2e8f0;
   overflow: hidden; /* মূল উইন্ডোর স্ক্রলবার বন্ধ থাকবে */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, sans-serif;
 }
 
 /* =========================================
@@ -28,14 +31,14 @@ html {
 }
 
 /* =========================================
-   FIXED HEADER (কনটেন্ট নিচে ঢুকে যাওয়া রোধ করতে)
+   HEADER
 ========================================= */
 .header,
 header {
   height: 70px;
   width: 100%;
-  flex-shrink: 0; /* হেডারের সাইজ যেন ছোট না হয় */
-  position: relative; /* fixed বাদ দিয়ে relative বা স্বাভাবিক ফ্লোতে রাখতে হবে */
+  flex-shrink: 0;
+  position: relative;
   z-index: 100;
   background-color: #0b0f17;
 }
@@ -46,8 +49,9 @@ header {
 .layout-body {
   display: flex;
   flex: 1;
-  height: calc(100vh - 70px); /* হেডারের সঠিক উচ্চতা বাদ দিয়ে বাকি জায়গা নিবে */
+  height: calc(100vh - 70px);
   overflow: hidden;
+  position: relative;
 }
 
 /* =========================================
@@ -59,6 +63,8 @@ aside {
   height: 100%;
   flex-shrink: 0;
   overflow-y: auto;
+  background-color: #0f172a;
+  transition: all 0.3s ease;
 }
 
 /* =========================================
@@ -68,6 +74,7 @@ aside {
   flex: 1;
   height: 100%;
   overflow-y: auto; /* শুধু এই অংশটি স্ক্রল করবে */
+  -webkit-overflow-scrolling: touch; /* মোবাইল স্মুথ স্ক্রোলিং */
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -76,5 +83,61 @@ aside {
 .main-content {
   flex: 1;
   padding: 20px;
-  margin-top: 50px; /* কনটেন্ট এবং সাইডবারের মাঝে মার্জিন নিশ্চিত করে */
+  margin-top: 10px; /* ডেক্সটপ ফ্রেন্ডলি মার্জিন */
+  width: 100%;
+  max-width: 100%;
+}
+
+/* =========================================
+   MOBILE & TABLET RESPONSIVE BREAKPOINTS
+========================================= */
+
+/* Tablet Screens (<= 1024px) */
+@media screen and (max-width: 1024px) {
+  .aside,
+  aside {
+    width: 200px; /* ট্যাবলেটে সাইডবারের উইডথ একটু কমানো হলো */
+  }
+
+  .main-content {
+    padding: 16px;
+    margin-top: 10px;
+  }
+}
+
+/* Mobile Screens (<= 768px) */
+@media screen and (max-width: 768px) {
+  .header,
+  header {
+    height: 60px; /* মোবাইলে হেডারের হাইট কমানো হলো */
+  }
+
+  .layout-body {
+    height: calc(100vh - 60px);
+    flex-direction: column; /* মোবাইলে লেআউট কলামে পরিবর্তিত হবে */
+  }
+
+  /* 
+    যদি মোবাইলে সাইডবার/Aside উপরে বা ড্রপডাউনে রাখতে চান,
+    অথবা আপনার Aside এর ভেতর টগল মেনু থাকে:
+  */
+  .aside,
+  aside {
+    width: 100%;
+    height: auto;
+    max-height: 250px; /* সাইডবার বেশি জায়গা নিলে স্ক্রোল হবে */
+  }
+
+  .main-content {
+    padding: 12px;
+    margin-top: 0px; /* মোবাইলে অতিরিক্ত মার্জিন রিমুভ করা হয়েছে */
+  }
+}
+
+/* Small Mobile Screens (<= 480px) */
+@media screen and (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+    margin-top: 0;
+  }
 }
