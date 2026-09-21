@@ -131,3 +131,68 @@
 .inventoryFormContainer::-webkit-scrollbar-thumb:hover {
   background: #e50c7a;
 }
+/* Mobile & Tablet Screens (<= 768px) */
+@media screen and (max-width: 768px) {
+  .clintsContainer {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 60px);
+    overflow: visible;
+    margin-top: 20px;
+  }
+
+  .aside {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 0;
+  }
+
+  .asideHeader {
+    padding: 0 12px 8px 12px;
+    margin-bottom: 6px;
+  }
+
+  .asideNav {
+    flex-direction: row;
+    overflow-x: auto; /* মোবাইলে লিঙ্কগুলো ডানে-বামে স্ক্রল হবে */
+    white-space: nowrap;
+    padding: 0 12px 6px 12px;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .asideLink {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+
+  /* মোবাইলে এক্টিভ ইন্ডিকেটরটি লেফটের বদলে নিচে চলে আসবে */
+  .active::before {
+    left: 15%;
+    top: auto;
+    bottom: 0;
+    width: 70%;
+    height: 3px;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .main,
+  .formContainer,
+  .content,
+  .inventoryFormContainer {
+    padding: 16px 12px;
+    height: auto;
+  }
+}
+
+/* Small Mobile Screens (<= 480px) */
+@media screen and (max-width: 480px) {
+  .main,
+  .formContainer,
+  .content,
+  .inventoryFormContainer {
+    padding: 12px 8px;
+  }
+}

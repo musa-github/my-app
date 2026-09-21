@@ -26,12 +26,12 @@ const TechSection = ({ Style, onWhatsAppClick }) => {
       </div>
 
       <div className={Style.videoWrapper}>
-        <iframe
-          src="https://www.youtube.com/embed/wE8AsupuJAI"
-          title="Elevator Technology"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        ></iframe>
+        <iframe src="https://www.youtube.com/embed/IbC42JSJdHw?si=7DtWVObZ3Xox8hsU" 
+        title="YouTube video player" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+         allowfullscreen>
+
+         </iframe>
       </div>
     </section>
   );

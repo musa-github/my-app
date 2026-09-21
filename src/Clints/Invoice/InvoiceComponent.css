@@ -199,6 +199,32 @@
   justify-content: space-between;
   font-size: 12px;
   color: #000000;
+  position: relative; /* ওয়াটারমার্ক এরিয়ার রেফারেন্স নির্ধারণের জন্য */
+  overflow: hidden; /* ওয়াটারমার্ক যেন পেজের বাইরে ছড়িয়ে না পড়ে */
+}
+
+/* --- [নতুন যোগ করা হয়েছে: Watermark CSS] --- */
+.invoice-container::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px; /* ওয়াটারমার্কের সাইজ */
+  height: 320px;
+  background-image: url("../../assets/main-logo.png"); /* লোগো ইমেজ পাথ */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.08; /* হালকা ব্যাকগ্রাউন্ড ভিজিবিলিটি */
+  pointer-events: none;
+  z-index: 0;
+}
+
+.invoice-content-wrap,
+.footer-section-wrap {
+  position: relative;
+  z-index: 1; /* সকল মূল কনটেন্ট ওয়াটারমার্কের উপরে থাকবে */
 }
 
 .invoice-content-wrap {

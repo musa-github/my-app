@@ -3,7 +3,7 @@ import html2pdf from 'html2pdf.js';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import logo from "../../assets/main-logo.png"; // আপনার প্রোজেক্টের লোগো পাথ অনুযায়ী চেক করুন
-import './ServiceBill.css';
+
 
 const ServiceBill = () => {
   const location = useLocation();
@@ -309,7 +309,7 @@ const ServiceBill = () => {
           </div>
 
           <div className="bottom-contact">
-            <p>📞 01711131536, 01407000021 | ✉️ mmengineering@gmail.com</p>
+            <p>📞 01610989538, 01932405247 | ✉️ hrengineers@gmail.com</p>
             <p>📍 Dhaka, Bangladesh</p>
           </div>
         </div>

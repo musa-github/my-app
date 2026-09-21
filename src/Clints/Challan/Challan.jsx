@@ -417,7 +417,7 @@ const Challan = () => {
             </div>
 
             <div className="bottom-contact">
-              <p>📞 01711131536, 01407000021 | ✉️ hrengineers@gmail.com</p>
+              <p>📞 01610989538, 01932405247 | ✉️ hrengineers@gmail.com</p>
               <p>📍 Dhaka, Bangladesh</p>
             </div>
           </div>

@@ -48,28 +48,32 @@ const portfolioData = [
     tag: "PASSENGER",
     title: "Passenger Elevator",
     description: "Smooth, ultra-quiet, and energy-efficient mobility designed for commercial towers and luxury residential complexes.",
-    details: "Features gearless traction machine technology, VVVF door drives, VVVF main inverted drive, and customizable luxury COP & LOP interfaces."
+    details: "Features gearless traction machine technology, VVVF door drives, VVVF main inverted drive, and customizable luxury COP & LOP interfaces.",
+    image: "https://images.unsplash.com/photo-1592256410394-51c948ec13d5?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bGlmdHxlbnwwfHwwfHx8MA%3D%3D"
   },
   {
     id: "p2",
     tag: "RESIDENTIAL",
     title: "Home Elevator",
     description: "Custom luxury home lifts engineered to integrate seamlessly into private residences with minimal shaft space.",
-    details: "Compact single-phase/three-phase operating systems requiring low headroom and pit depth, with soft-start/stop features for maximum comfort."
+    details: "Compact single-phase/three-phase operating systems requiring low headroom and pit depth, with soft-start/stop features for maximum comfort.",
+    image: "https://media.istockphoto.com/id/509960329/photo/two-elevators-shot-from-outside.webp?a=1&b=1&s=612x612&w=0&k=20&c=am_hJB4Ioumz15o7WLyMIiz8KSaYAeJG_uQNEg0in5M="
   },
   {
     id: "p3",
     tag: "HEALTHCARE",
     title: "Hospital Elevator",
     description: "Spacious, smooth-start stretcher lifts designed for rapid, reliable transport in medical environments.",
-    details: "Equipped with priority landing control, extended door-hold timing, emergency battery backup (ARD), and anti-bacterial stainless steel interior finishing."
+    details: "Equipped with priority landing control, extended door-hold timing, emergency battery backup (ARD), and anti-bacterial stainless steel interior finishing.",
+    image: "https://media.istockphoto.com/id/2149025784/photo/male-nurse-and-female-doctor-standing-with-male-patient-in-wheelchair-in-hospital-elevator.webp?a=1&b=1&s=612x612&w=0&k=20&c=rElaXPA9TWwN5NltdVLWA_xVOubDFZueOxpob0ZqM6U="
   },
   {
     id: "p4",
     tag: "HEAVY DUTY",
     title: "Goods & Freight Lift",
     description: "Robust, heavy-duty elevators engineered for industrial plants, logistics hubs, and multi-level warehouses.",
-    details: "High load capacity structures (up to 5000 kg+) with heavy-gauge checkered floor plates, bump guards, and reinforced door sills."
+    details: "High load capacity structures (up to 5000 kg+) with heavy-gauge checkered floor plates, bump guards, and reinforced door sills.",
+    image: "https://media.istockphoto.com/id/507690254/photo/large-freight-elevators-in-modern-building.webp?a=1&b=1&s=612x612&w=0&k=20&c=z-b2H-WHkSaBPSak2Aqn_CWPHFtvQlHRKNsLwak6D2U="
   }
 ];
 

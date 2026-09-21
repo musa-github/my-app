@@ -12,8 +12,10 @@ const ElevatorSection = ({ Style, portfolioData, onSelectPortfolio }) => {
         {portfolioData.map((item) => (
           <div key={item.id} className={Style.elevatorCard}>
             <div className={Style.elevatorImage}>
+              <img src={item.image} alt={item.title} className={Style.cardImg} />
               <span className={Style.imageTag}>{item.tag}</span>
             </div>
+            
             <div className={Style.elevatorInfo}>
               <h3>{item.title}</h3>
               <p>{item.description}</p>

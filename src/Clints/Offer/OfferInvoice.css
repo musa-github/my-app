@@ -1,6 +1,9 @@
 /* ==========================================
    Action Bar & Base Layout
    ========================================== */
+.main-wrapper {
+  margin-top: 20px;
+}
 .action-bar {
   max-width: 210mm;
   margin: 0 auto 10px auto;
@@ -79,7 +82,7 @@
 
 .company-title {
   margin: 0;
-  font-size: 38px;
+  font-size: 56px;
   letter-spacing: 1px;
   color: #1a2d38;
   font-weight: 900;

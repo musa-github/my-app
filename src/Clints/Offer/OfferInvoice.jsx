@@ -399,7 +399,7 @@ const OfferInvoice = () => {
             <img src={logo} alt="Logo" className="logo-img" />
           </div>
           <div className="company-info">
-            <h1 className="company-title">H.R ENGINEERS</h1>
+            <h1 className="company-title" >H.R ENGINEERS</h1>
             <p className="company-services">
               ■ Lift ■ ARD ■ Generator ■ Escalator ■ Service & Maintenance ■ Spare Parts
             </p>

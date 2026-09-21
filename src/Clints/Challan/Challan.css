@@ -94,6 +94,31 @@
   flex-direction: column;
   justify-content: space-between; /* অটোমেটিক ফুটারকে একদম নিচে রাখবে */
   position: relative;
+  overflow: hidden; /* ওয়াটারমার্ক যেন প্যাডের বাইরে চলে না যায় */
+}
+
+/* --- [নতুন যোগ করা হয়েছে: Watermark CSS] --- */
+.invoice-container::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px; /* ওয়াটারমার্ক লোগোর সাইজ */
+  height: 320px;
+  background-image: url("../../assets/main-logo.png"); /* হেডার লোগোর পাথ */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.08; /* হালকা ওয়াটারমার্ক ভিজিবিলিটি (প্রিন্ট ও PDF এ স্পষ্ট আসবে) */
+  pointer-events: none; /* ইনপুট বা লেখার ক্ষেত্রে কোনো বাধা দেবে না */
+  z-index: 0;
+}
+
+.challan-content-wrap,
+.footer-section-wrap {
+  position: relative;
+  z-index: 1; /* কনটেন্ট ওয়াটারমার্কের উপরে থাকবে */
 }
 
 .challan-content-wrap {
