@@ -11,7 +11,7 @@ import {
   fetchAllCompanies,
   fetchOffersByCompany,
   fetchSpecificOfferForChallan,
-  resetChallan // <-- ১. ইম্পোর্ট করা হলো
+  resetChallan
 } from '../../Fetures/Inventory/ChallanSlice';
 import './Challan.css';
 
@@ -34,6 +34,7 @@ const Challan = () => {
   const [isPdfPrinting, setIsPdfPrinting] = useState(false);
 
   const [editableHeader, setEditableHeader] = useState({
+    date: new Date().toLocaleDateString('en-US'),
     toCompany: '',
     address: '',
     subject: ''
@@ -47,6 +48,7 @@ const Challan = () => {
   useEffect(() => {
     if (challanData) {
       setEditableHeader({
+        date: challanData.date || new Date().toLocaleDateString('en-US'),
         toCompany: challanData.toCompany || '',
         address: challanData.address || '',
         subject: challanData.subject || ''
@@ -83,11 +85,10 @@ const Challan = () => {
     dispatch(createCustomChallan());
   };
 
-  // ২. [নতুন] রিকুয়েস্ট রিসেট করার ফাংশন
   const handleReset = () => {
     setSelectedCompany('');
     setSelectedOfferId('');
-    setEditableHeader({ toCompany: '', address: '', subject: '' });
+    setEditableHeader({ date: new Date().toLocaleDateString('en-US'), toCompany: '', address: '', subject: '' });
     setEditableItems([]);
     dispatch(resetChallan());
   };
@@ -115,41 +116,110 @@ const Challan = () => {
     setEditableHeader(prev => ({ ...prev, [field]: value }));
   };
 
+  // Challan Invoice এর ডায়নামিক PDF জেনারেটর সিস্টেম
   const handleDownloadPDF = () => {
     if (!challanData) return;
 
     setIsPdfPrinting(true);
+    window.scrollTo(0, 0);
 
     setTimeout(() => {
       const element = challanRef.current;
-      
-      const options = {
-        margin:       0,
-        filename:     `Delivery_Challan_${challanData.challanNo}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { 
-          scale: 2, 
-          useCORS: true, 
-          scrollX: 0, 
-          scrollY: 0 
+
+      const opt = {
+        margin: [42, 8, 38, 8],
+        filename: `Delivery_Challan_${challanData.challanNo || 'Invoice'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const pdfElement = clonedDoc.querySelector('.pdf-mode');
+            if (pdfElement) {
+              pdfElement.style.width = '100%';
+              const inputs = pdfElement.querySelectorAll('input, textarea');
+              inputs.forEach((input) => {
+                const span = clonedDoc.createElement('span');
+                span.innerText = input.value || input.placeholder || '';
+                span.style.display = 'inline-block';
+                span.style.width = '100%';
+                span.style.fontFamily = 'inherit';
+                span.style.fontSize = window.getComputedStyle(input).fontSize;
+                span.style.fontWeight = window.getComputedStyle(input).fontWeight;
+                span.style.color = window.getComputedStyle(input).color;
+                span.style.textAlign = window.getComputedStyle(input).textAlign;
+                span.style.lineHeight = '1.4';
+                span.style.paddingBottom = '2px';
+                span.style.verticalAlign = 'middle';
+                span.style.wordBreak = 'break-word';
+                span.style.whiteSpace = 'pre-wrap';
+
+                if (input.parentNode) {
+                  input.parentNode.replaceChild(span, input);
+                }
+              });
+            }
+          }
         },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: {
+          mode: ['css', 'legacy'],
+          avoid: ['tr', '.page-break-avoid', '.invoice-footer']
+        }
       };
 
-      html2pdf().set(options).from(element).save().then(() => {
-        setIsPdfPrinting(false);
-      });
-    }, 150);
+      html2pdf()
+        .from(element)
+        .set(opt)
+        .toPdf()
+        .get('pdf')
+        .then((pdf) => {
+          const totalPages = pdf.internal.getNumberOfPages();
+          const headerImg = new Image();
+          const footerImg = new Image();
+          headerImg.src = header;
+          footerImg.src = footer;
+
+          return new Promise((resolve) => {
+            let loadedCount = 0;
+            const checkLoaded = () => {
+              loadedCount++;
+              if (loadedCount === 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                  pdf.setPage(i);
+                  pdf.addImage(headerImg, 'PNG', 10, 3.5, 190, 30);
+                  pdf.addImage(footerImg, 'PNG', 10, 263, 190, 30);
+                }
+                resolve(pdf);
+              }
+            };
+
+            headerImg.onload = checkLoaded;
+            footerImg.onload = checkLoaded;
+            if (headerImg.complete) checkLoaded();
+            if (footerImg.complete) checkLoaded();
+          });
+        })
+        .then((pdf) => {
+          pdf.save(`Delivery_Challan_${challanData.challanNo || 'Invoice'}.pdf`);
+          setIsPdfPrinting(false);
+        })
+        .catch((err) => {
+          console.error("PDF generation error:", err);
+          setIsPdfPrinting(false);
+        });
+    }, 300);
   };
 
   return (
     <div className="main-wrapper">
       
-      {/* ১. ড্রপডাউন, র‍্যান্ডম ক্রিয়েট, রিসেট ও ডাউনলোড কন্ট্রোল বক্স */}
+      {/* Search and Action Bar */}
       <div className="challan-search-card no-print">
         <div className="dropdown-filter-group">
           
-          {/* Company Dropdown */}
           <div className="select-box">
             <label className="select-label">1. Select Company Name:</label>
             <select 
@@ -169,7 +239,6 @@ const Challan = () => {
             </select>
           </div>
 
-          {/* Offer ID Dropdown */}
           <div className="select-box">
             <label className="select-label">2. Select Offer ID:</label>
             <select 
@@ -189,7 +258,6 @@ const Challan = () => {
             </select>
           </div>
 
-          {/* বাটনের গ্রুপ (Create Random & Reset) */}
           <div className="select-box" style={{ justifyContent: 'flex-end', gap: '8px' }}>
             <label className="select-label">Actions:</label>
             <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
@@ -202,7 +270,6 @@ const Challan = () => {
                 ➕ Create Blank
               </button>
 
-              {/* [নতুন যোগ করা হয়েছে] Reset Button */}
               <button 
                 type="button" 
                 className="btn-download-challan" 
@@ -227,196 +294,154 @@ const Challan = () => {
         )}
       </div>
 
-      {/* ২. চালানের বডি */}
+      {/* Challan Body (OfferInvoice Layout Applied) */}
       {loadingChallan ? (
         <div className="no-data-placeholder">Generating Delivery Challan...</div>
       ) : challanData ? (
         <div className={`invoice-container ${isPdfPrinting ? 'pdf-mode' : ''}`} ref={challanRef}>
           
-          <div className="challan-content-wrap">
-            
-            {/* Header */}
-            <div className="company-header">
-              <div className="logo-box">
-                <img src={header} alt="Company Logo" className="logo-img" />
+          {/* Header Image (Visible only on UI screen, PDF injects it automatically) */}
+          {!isPdfPrinting && (
+            <div className="company-header no-pdf-img">
+              <div style={{ width: "100%", height: "110px" }}>
+                <img src={header} alt="Header Logo" style={{ width: "100%" }} />
               </div>
-              
             </div>
+          )}
 
-            <div className="document-type">DELIVERY CHALLAN</div>
+          <div className="document-type">DELIVERY CHALLAN</div>
 
-            {/* Info Section */}
-            <div className="info-section">
-              <div className="meta-info-grid">
-                <div><strong>Challan No: </strong>{challanData.challanNo}</div>
-                <div><strong>Date: </strong>{challanData.date}</div>
+          {/* Info Section */}
+          <div className="info-section">
+            <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div>
+                <span className="bold">Challan No: </span>
+                <span>{challanData.challanNo}</span>
               </div>
-
-              <div className="to-address">
-                <p className="no-margin"><strong>To,</strong></p>
-                {isPdfPrinting ? (
-                  <>
-                    <div className="bold">{editableHeader.toCompany}</div>
-                    <div>{editableHeader.address}</div>
-                  </>
-                ) : (
-                  <>
-                    <input
-                      type="text"
-                      className="table-input bold"
-                      style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '4px' }}
-                      value={editableHeader.toCompany}
-                      placeholder="Company / Client Name"
-                      onChange={(e) => handleHeaderChange('toCompany', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="table-input"
-                      value={editableHeader.address}
-                      placeholder="Company Address"
-                      onChange={(e) => handleHeaderChange('address', e.target.value)}
-                    />
-                  </>
-                )}
-              </div>
-
-              <div className="subject-line challan-subject">
-                <strong>Sub: </strong>
-                {isPdfPrinting ? (
-                  <span className="bold">{editableHeader.subject}</span>
-                ) : (
-                  <input
-                    type="text"
-                    className="table-input bold"
-                    value={editableHeader.subject}
-                    placeholder="Subject..."
-                    onChange={(e) => handleHeaderChange('subject', e.target.value)}
-                  />
-                )}
-              </div>
-
-              <div className="salutation challan-salutation">
-                Dear Sir,<br />
-                Please receive the following goods/materials in good condition:
+              <div>
+                <span className="bold">Date: </span>
+                <input
+                  type="text"
+                  className="inline-input"
+                  style={{ width: '120px' }}
+                  value={editableHeader.date}
+                  onChange={(e) => handleHeaderChange('date', e.target.value)}
+                />
               </div>
             </div>
 
-            {/* Table */}
-            <table className="invoice-table challan-table-wrapper">
-              <thead>
-                <tr>
-                  <th style={{ width: '8%' }}>S.l No.</th>
-                  <th style={{ width: '55%' }}>Items Description</th>
-                  <th style={{ width: '12%' }}>Qty</th>
-                  <th style={{ width: '13%' }}>Unit</th>
-                  {!isPdfPrinting && <th className="no-print" style={{ width: '12%' }}>Action</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {editableItems.length > 0 ? (
-                  editableItems.map((item, index) => (
-                    <tr key={index} className="page-break-avoid">
-                      <td className="text-center">{index + 1}</td>
-                      <td>
-                        {isPdfPrinting ? (
-                          item.name
-                        ) : (
-                          <input
-                            type="text"
-                            className="table-input"
-                            value={item.name}
-                            placeholder="Item description..."
-                            onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                          />
-                        )}
-                      </td>
-                      <td className="text-center">
-                        {isPdfPrinting ? (
-                          item.quantity
-                        ) : (
-                          <input
-                            type="number"
-                            className="table-input text-center"
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                          />
-                        )}
-                      </td>
-                      <td className="text-center">
-                        {isPdfPrinting ? (
-                          item.unit
-                        ) : (
-                          <input
-                            type="text"
-                            className="table-input text-center"
-                            value={item.unit}
-                            onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                          />
-                        )}
-                      </td>
-                      {!isPdfPrinting && (
-                        <td className="text-center no-print">
-                          <button
-                            type="button"
-                            className="btn-delete-item"
-                            onClick={() => handleRemoveItem(index)}
-                          >
-                            ✖ Remove
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={isPdfPrinting ? "4" : "5"} className="text-center" style={{ color: 'red', padding: '15px' }}>
-                      No items selected for this Challan.
+            <div className="to-address">
+              <span className="bold">To,</span>
+              <input
+                type="text"
+                placeholder="Company / Client Name"
+                className="block-input bold"
+                value={editableHeader.toCompany}
+                onChange={(e) => handleHeaderChange('toCompany', e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="Company Address"
+                className="block-input"
+                value={editableHeader.address}
+                onChange={(e) => handleHeaderChange('address', e.target.value)}
+              />
+            </div>
+
+            <div className="subject-line">
+              <span className="bold">Sub: </span>
+              <input
+                type="text"
+                placeholder="Subject..."
+                className="inline-input bold"
+                style={{ width: '80%' }}
+                value={editableHeader.subject}
+                onChange={(e) => handleHeaderChange('subject', e.target.value)}
+              />
+            </div>
+
+            <p className="no-margin" style={{ marginTop: '6px' }}>Dear Sir,</p>
+            <p className="no-margin">Please receive the following goods/materials in good condition:</p>
+          </div>
+
+          {/* Table */}
+          <table className="invoice-table">
+            <thead>
+              <tr>
+                <th style={{ width: '8%' }}>S.l No.</th>
+                <th style={{ width: '64%' }}>Items Description</th>
+                <th style={{ width: '12%' }}>Qty</th>
+                <th style={{ width: '12%' }}>Unit</th>
+                <th className="no-print" style={{ width: '4%' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {editableItems.length > 0 ? (
+                editableItems.map((item, index) => (
+                  <tr key={index}>
+                    <td className="text-center">{index + 1}</td>
+                    <td>
+                      <input
+                        type="text"
+                        className="table-input"
+                        placeholder="Item description..."
+                        value={item.name}
+                        onChange={(e) => handleItemChange(index, 'name', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        className="table-input text-center"
+                        value={item.quantity}
+                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="table-input text-center"
+                        value={item.unit}
+                        onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
+                      />
+                    </td>
+                    <td className="no-print text-center">
+                      <button className="btn-delete" onClick={() => handleRemoveItem(index)}>✕</button>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="text-center" style={{ color: 'red', padding: '15px' }}>
+                    No items selected for this Challan.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
 
-            {!isPdfPrinting && (
-              <div className="no-print" style={{ marginTop: '10px' }}>
-                <button
-                  type="button"
-                  onClick={handleAddItem}
-                  style={{
-                    backgroundColor: '#007bff',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '6px 14px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  ➕ Add Item
-                </button>
-              </div>
-            )}
+          <div className="add-row-container no-print">
+            <button className="btn-add-row" onClick={handleAddItem}>+ Add Item</button>
           </div>
 
-          {/* Footer */}
-          <div className="page-break-avoid footer-section-wrap">
-            <div className="invoice-footer">
-              <div className="footer-left">
-                <div className="signature-title">
-                  <p><strong>Prepared By / Authorized Signature</strong></p>
-                </div>
-              </div>
-              <div className="footer-center">
-                <div className="signature-title">
-                  <p><strong>Receiver's Signature & Seal</strong></p>
-                </div>
-              </div>
+          {/* Footer Signatures */}
+          <div className="invoice-footer page-break-avoid" style={{ marginTop: '40px' }}>
+            <div>
+              <div className="signature-line"></div>
+              <p className="no-margin bold" style={{ fontSize: '11px', textAlign: 'center' }}>Prepared By / Authorized Signature</p>
             </div>
-
-            <div className="bottom-contact">
-              <img src={footer} alt="footer" style={{width:"100%"}}/>
+            <div>
+              <div className="signature-line"></div>
+              <p className="no-margin bold" style={{ fontSize: '11px', textAlign: 'center' }}>Receiver's Signature & Seal</p>
             </div>
           </div>
+
+          {/* Footer Image (Visible only on UI screen) */}
+          {!isPdfPrinting && (
+            <div className="bottom-contact no-pdf-img page-break-avoid">
+              <img src={footer} alt="Footer Logo" style={{ width: "100%" }} />
+            </div>
+          )}
 
         </div>
       ) : (

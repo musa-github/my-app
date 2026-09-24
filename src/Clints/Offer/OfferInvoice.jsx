@@ -241,95 +241,105 @@ const OfferInvoice = () => {
   };
 
   const handleDownloadPDF = () => {
-    setIsPdfPrinting(true);
-    window.scrollTo(0, 0);
+  setIsPdfPrinting(true);
+  window.scrollTo(0, 0);
 
-    setTimeout(() => {
-      const element = invoiceRef.current;
+  setTimeout(() => {
+    const element = invoiceRef.current;
 
-      const opt = {
-        margin: [5, 5, 20, 5],
-        filename: `Offer_${headerData.toCompany || 'Invoice'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          scrollX: 0,
-          scrollY: 0,
-          onclone: (clonedDoc) => {
-            const pdfElement = clonedDoc.querySelector('.pdf-mode');
-            if (pdfElement) {
-              pdfElement.style.width = '100%';
-              const inputs = pdfElement.querySelectorAll('input, textarea');
-              inputs.forEach((input) => {
-                const span = clonedDoc.createElement('span');
-                span.innerText = input.value || input.placeholder || '';
-                span.style.display = 'inline-block';
-                span.style.fontFamily = 'inherit';
-                span.style.fontSize = window.getComputedStyle(input).fontSize;
-                span.style.fontWeight = window.getComputedStyle(input).fontWeight;
-                span.style.color = window.getComputedStyle(input).color;
-                span.style.lineHeight = '1.2';
-                span.style.wordBreak = 'break-word';
-                span.style.whiteSpace = 'pre-wrap';
+    const opt = {
+      // Top: 42mm, Right: 8mm, Bottom: 38mm, Left: 8mm (লেখাকে হেডার/ফুটারে কাটা পড়া থেকে বাঁচাবে)
+      margin: [42, 8, 38, 8],
+      filename: `Offer_${headerData.toCompany || 'Invoice'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc) => {
+  const pdfElement = clonedDoc.querySelector('.pdf-mode');
+  if (pdfElement) {
+    pdfElement.style.width = '100%';
+    const inputs = pdfElement.querySelectorAll('input, textarea');
+    inputs.forEach((input) => {
+      const span = clonedDoc.createElement('span');
+      span.innerText = input.value || input.placeholder || '';
+      span.style.display = 'inline-block';
+      span.style.fontFamily = 'inherit';
+      span.style.fontSize = window.getComputedStyle(input).fontSize;
+      span.style.fontWeight = window.getComputedStyle(input).fontWeight;
+      span.style.color = window.getComputedStyle(input).color;
+      
+      // নিচের অংশ যেন কেটে না যায় সেজন্য লাইন-হাইট ও হালকা প্যাডিং যোগ করা হয়েছে
+      span.style.lineHeight = '1.5';
+      span.style.paddingBottom = '2px';
+      span.style.verticalAlign = 'middle';
+      span.style.wordBreak = 'break-word';
+      span.style.whiteSpace = 'pre-wrap';
 
-                if (input.parentNode) {
-                  input.parentNode.replaceChild(span, input);
-                }
-              });
-            }
-          }
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: {
-          mode: ['avoid-all', 'css', 'legacy'],
-          avoid: ['tr', '.page-break-avoid', '.invoice-footer']
-        }
-      };
+      if (input.parentNode) {
+        input.parentNode.replaceChild(span, input);
+      }
+    });
+  }
+}
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: {
+        mode: ['css', 'legacy'], // 'avoid-all' বাদ দেয়া হয়েছে যা টেবিল লাইন কাটছিল
+        avoid: ['tr', '.page-break-avoid', '.invoice-footer']
+      }
+    };
 
-      html2pdf()
-        .from(element)
-        .set(opt)
-        .toPdf()
-        .get('pdf')
-        .then((pdf) => {
-          const totalPages = pdf.internal.getNumberOfPages();
-          const headerImg = new Image();
-          const footerImg = new Image();
-          headerImg.src = header;
-          footerImg.src = footer;
+    html2pdf()
+      .from(element)
+      .set(opt)
+      .toPdf()
+      .get('pdf')
+      .then((pdf) => {
+        const totalPages = pdf.internal.getNumberOfPages();
+        const headerImg = new Image();
+        const footerImg = new Image();
+        headerImg.src = header;
+        footerImg.src = footer;
 
-          return new Promise((resolve) => {
-            let loadedCount = 0;
-            const checkLoaded = () => {
-              loadedCount++;
-              if (loadedCount === 2) {
-                for (let i = 1; i <= totalPages; i++) {
-                  pdf.setPage(i);
-                  pdf.addImage(headerImg, 'PNG', 10, 10, 190, 30);
-                  pdf.addImage(footerImg, 'PNG', 10, 267, 190, 30);
-                }
-                resolve(pdf);
+        return new Promise((resolve) => {
+          let loadedCount = 0;
+          const checkLoaded = () => {
+            loadedCount++;
+            if (loadedCount === 2) {
+              for (let i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                
+                // ১. উপর থেকে ১০px (৩.৫mm) নিচে হেডার সেট করা হলো
+                // X: 10mm, Y: 3.5mm (10px), Width: 190mm, Height: 32mm
+                pdf.addImage(headerImg, 'PNG', 10, 3.5, 190, 30);
+
+                // ২. ফুটার একদম নিচে সুন্দরভাবে বসানো হলো
+                // X: 10mm, Y: 263mm, Width: 190mm, Height: 30mm
+                pdf.addImage(footerImg, 'PNG', 10, 263, 190, 30);
               }
-            };
+              resolve(pdf);
+            }
+          };
 
-            headerImg.onload = checkLoaded;
-            footerImg.onload = checkLoaded;
-            if (headerImg.complete) checkLoaded();
-            if (footerImg.complete) checkLoaded();
-          });
-        })
-        .then((pdf) => {
-          pdf.save(`Offer_${headerData.toCompany || 'Invoice'}.pdf`);
-          setIsPdfPrinting(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          setIsPdfPrinting(false);
+          headerImg.onload = checkLoaded;
+          footerImg.onload = checkLoaded;
+          if (headerImg.complete) checkLoaded();
+          if (footerImg.complete) checkLoaded();
         });
-    }, 300);
-  };
-
+      })
+      .then((pdf) => {
+        pdf.save(`Offer_${headerData.toCompany || 'Invoice'}.pdf`);
+        setIsPdfPrinting(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setIsPdfPrinting(false);
+      });
+  }, 300);
+};
   const numberToWords = (num) => {
     if (!num) return 'Zero Taka Only';
     const a = [

@@ -1,6 +1,11 @@
 /* eslint-disable react-hooks/set-state-in-effect */
+import html2pdf from 'html2pdf.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
+// Header & Footer Assets Import
+import footer from "../../assets/Footer.png";
+import header from "../../assets/header.png";
 
 import {
   DEFAULT_NOTES,
@@ -20,9 +25,6 @@ import {
   setSubSourceFilter,
   updateBillInFirebase
 } from '../../Fetures/Inventory/InvoiceSlice.js';
-import { downloadInvoicePDF } from '../../HndlePDF/HndlePDF.js';
-import InvoiceFooter from '../../Pad/InvoiceFooter.jsx';
-import InvoiceHeader from '../../Pad/InvoiceHeader.jsx';
 import './InvoiceComponent.css';
 
 const InvoiceComponent = () => {
@@ -260,6 +262,7 @@ const InvoiceComponent = () => {
     dispatch(resetInvoiceData());
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleHeaderChange = (field, value) => setEditableHeader((prev) => ({ ...prev, [field]: value }));
 
   const handleItemChange = (index, field, value) => {
@@ -399,12 +402,102 @@ const InvoiceComponent = () => {
     }
   }, [saveSuccess, updateSuccess, deleteSuccess, dispatch, handleReset]);
 
+  // Direct PDF Generator Logic (Challan er moto dynamic multi-page Header/Footer inline handle kora hoyeche)
   const handleDownloadPDF = () => {
-    downloadInvoicePDF({
-      elementRef: invoiceRef,
-      fileName: `Invoice_Bill_${editableHeader.invoiceNo || 'Draft'}`,
-      setIsPdfPrinting
-    });
+    if (!invoiceRef.current) return;
+
+    setIsPdfPrinting(true);
+    window.scrollTo(0, 0);
+
+    setTimeout(() => {
+      const element = invoiceRef.current;
+
+      const opt = {
+        margin: [42, 8, 38, 8], // Margin Space for Header & Footer Image
+        filename: `Invoice_Bill_${editableHeader.invoiceNo || 'Draft'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const pdfElement = clonedDoc.querySelector('.pdf-mode');
+            if (pdfElement) {
+              pdfElement.style.width = '100%';
+              const inputs = pdfElement.querySelectorAll('input, textarea');
+              inputs.forEach((input) => {
+                const span = clonedDoc.createElement('span');
+                span.innerText = input.value || input.placeholder || '';
+                span.style.display = 'inline-block';
+                span.style.width = '100%';
+                span.style.fontFamily = 'inherit';
+                span.style.fontSize = window.getComputedStyle(input).fontSize;
+                span.style.fontWeight = window.getComputedStyle(input).fontWeight;
+                span.style.color = window.getComputedStyle(input).color;
+                span.style.textAlign = window.getComputedStyle(input).textAlign;
+                span.style.lineHeight = '1.4';
+                span.style.paddingBottom = '2px';
+                span.style.verticalAlign = 'middle';
+                span.style.wordBreak = 'break-word';
+                span.style.whiteSpace = 'pre-wrap';
+
+                if (input.parentNode) {
+                  input.parentNode.replaceChild(span, input);
+                }
+              });
+            }
+          }
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: {
+          mode: ['css', 'legacy'],
+          avoid: ['tr', '.page-break-avoid', '.invoice-footer']
+        }
+      };
+
+      html2pdf()
+        .from(element)
+        .set(opt)
+        .toPdf()
+        .get('pdf')
+        .then((pdf) => {
+          const totalPages = pdf.internal.getNumberOfPages();
+          const headerImg = new Image();
+          const footerImg = new Image();
+          headerImg.src = header;
+          footerImg.src = footer;
+
+          return new Promise((resolve) => {
+            let loadedCount = 0;
+            const checkLoaded = () => {
+              loadedCount++;
+              if (loadedCount === 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                  pdf.setPage(i);
+                  // Dynamic Multi-page Header and Footer image draw (Challan Position)
+                  pdf.addImage(headerImg, 'PNG', 10, 3.5, 190, 30);
+                  pdf.addImage(footerImg, 'PNG', 10, 263, 190, 30);
+                }
+                resolve(pdf);
+              }
+            };
+
+            headerImg.onload = checkLoaded;
+            footerImg.onload = checkLoaded;
+            if (headerImg.complete) checkLoaded();
+            if (footerImg.complete) checkLoaded();
+          });
+        })
+        .then((pdf) => {
+          pdf.save(`Invoice_Bill_${editableHeader.invoiceNo || 'Draft'}.pdf`);
+          setIsPdfPrinting(false);
+        })
+        .catch((err) => {
+          console.error("PDF generation error:", err);
+          setIsPdfPrinting(false);
+        });
+    }, 300);
   };
 
   const currentActiveData = challanData || manualInvoice;
@@ -565,12 +658,18 @@ const InvoiceComponent = () => {
         <div className="no-data-placeholder">Loading Details....</div>
       ) : currentActiveData ? (
         <div className={`invoice-container ${isPdfPrinting ? 'pdf-mode' : ''}`} ref={invoiceRef}>
+          
+          {/* Header Image for Screen Preview (Challan er moto) */}
+          {!isPdfPrinting && (
+            <div className="company-header no-pdf-img">
+              <div style={{ width: "100%", height: "110px" }}>
+                <img src={header} alt="Header Logo" style={{ width: "100%" }} />
+              </div>
+            </div>
+          )}
+              <div className="document-type">INVOICE/BILL</div>
           <div className="invoice-content-wrap">
-            <InvoiceHeader 
-              isPdfPrinting={isPdfPrinting}
-              editableHeader={editableHeader}
-              handleHeaderChange={handleHeaderChange}
-            />
+            
 
             <table className="invoice-table">
               <thead>
@@ -815,7 +914,24 @@ const InvoiceComponent = () => {
             </div>
           </div>
 
-          <InvoiceFooter />
+          <div className="invoice-footer page-break-avoid" style={{ marginTop: '40px' }}>
+            <div>
+              <div className="signature-line"></div>
+              <p className="no-margin bold" style={{ fontSize: '11px', textAlign: 'center' }}>Prepared By / Authorized Signature</p>
+            </div>
+            <div>
+              <div className="signature-line"></div>
+              <p className="no-margin bold" style={{ fontSize: '11px', textAlign: 'center' }}>Receiver's Signature & Seal</p>
+            </div>
+          </div>
+
+          {/* Footer Image for Screen Preview (Challan er moto) */}
+          {!isPdfPrinting && (
+            <div className="bottom-contact no-pdf-img page-break-avoid">
+              <img src={footer} alt="Footer Logo" style={{ width: "100%" }} />
+            </div>
+          )}
+
         </div>
       ) : (
         <div className="no-data-placeholder">

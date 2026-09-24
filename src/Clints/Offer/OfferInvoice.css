@@ -1,5 +1,5 @@
 /* ==========================================
-   Action Bar & Base Layout
+   ১. Action Bar & Base Layout
    ========================================== */
 .main-wrapper {
   margin-top: 20px;
@@ -44,7 +44,7 @@
   box-sizing: border-box;
   color: #000000;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  line-height: 1.4;
+  line-height: 1.3;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -145,28 +145,31 @@ input:focus {
   margin: 0;
 }
 
-/* Invoice Table */
+/* ==========================================
+   ২. Invoice Table & Alignment
+   ========================================== */
 .invoice-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 6px;
-  table-layout: fixed;
-  box-sizing: border-box;
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin-top: 10px;
+  table-layout: fixed !important;
+  box-sizing: border-box !important;
   position: relative;
   z-index: 1;
 }
 
 .invoice-table th,
 .invoice-table td {
-  border: 1px solid #000000;
-  padding: 5px;
+  border: 1px solid #000000 !important;
+  padding: 6px 8px !important;
   font-size: 11px;
   vertical-align: middle;
-  word-wrap: break-word;
+  word-wrap: break-word !important;
+  box-sizing: border-box !important;
 }
 
 .invoice-table th {
-  background-color: #f0f0f0;
+  background-color: #f0f0f0 !important;
   text-align: center;
   font-weight: bold;
 }
@@ -254,7 +257,9 @@ input:focus {
   margin-bottom: 2px;
 }
 
-/* Footer Section */
+/* ==========================================
+   ৩. Footer Section
+   ========================================== */
 .invoice-footer {
   display: flex;
   justify-content: space-between;
@@ -383,10 +388,10 @@ input:focus {
 }
 
 /* ==========================================
-   PERFECT PDF PRINTING MODE SETTINGS
+   ৪. PERFECT PDF PRINTING MODE SETTINGS
    ========================================== */
 
-/* Explicit Page Break Protections */
+/* Page Break Protections */
 .page-break-avoid,
 .invoice-table tr,
 .in-words-section,
@@ -412,16 +417,24 @@ input:focus {
   break-after: auto !important;
 }
 
+/* PDF Render Container Fix */
 .pdf-mode {
-  width: 210mm !important;
+  width: 194mm !important;
   height: auto !important;
   min-height: 0 !important;
   margin: 0 auto !important;
-  padding: 38mm 10mm 32mm 10mm !important;
+  padding: 0 !important;
   background: #ffffff !important;
   box-shadow: none !important;
   box-sizing: border-box !important;
   overflow: visible !important;
+}
+
+/* পিডিএফ প্রিন্টিং চলাকালীন অতিরিক্ত মার্জিন স্পেসিং ঠিক রাখতে */
+.pdf-mode .invoice-container {
+  padding: 0 !important;
+  box-shadow: none !important;
+  width: 100% !important;
 }
 
 .pdf-mode .no-print,
@@ -449,4 +462,21 @@ input:focus {
   margin: 0 !important;
   appearance: none !important;
   -webkit-appearance: none !important;
+}
+/* PDF Mode Text Clipping Fix */
+.pdf-mode input,
+.pdf-mode textarea,
+.pdf-mode span,
+.pdf-mode td,
+.pdf-mode th,
+.pdf-mode p,
+.pdf-mode div {
+  line-height: 1.5 !important;
+  overflow: visible !important;
+}
+
+.pdf-mode td,
+.pdf-mode th {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important; /* টেবিল সেল থেকে টেক্সটের নিচ কাটার সমাধান */
 }

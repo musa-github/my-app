@@ -1,4 +1,6 @@
-/* Card Filter */
+/* ==========================================
+   1. Action Bar & Filter Layout
+   ========================================== */
 .invoice-search-card {
   margin: 15px auto 25px auto;
   padding: 20px 25px;
@@ -10,7 +12,6 @@
   box-sizing: border-box;
 }
 
-/* Filter Options Header (Updated & Enhanced) */
 .filter-container {
   margin-bottom: 18px;
   display: flex;
@@ -101,7 +102,6 @@
   outline: none;
 }
 
-/* Quick Actions Button Container */
 .quick-actions-box {
   justify-content: flex-end;
 }
@@ -122,7 +122,6 @@
   margin-top: 0 !important;
 }
 
-/* Action Buttons Wrap */
 .action-buttons-wrap {
   margin-top: 15px;
   display: flex;
@@ -171,13 +170,19 @@
   font-size: 14px;
   font-weight: 600;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+  transition: background-color 0.2s;
 }
 
 .btn-download-pdf:hover {
   background-color: #1d4ed8;
 }
 
-/* Error Text Styling */
+.btn-download-pdf:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .error-text,
 .invoice-error-text {
   color: #dc3545;
@@ -185,10 +190,12 @@
   margin-top: 10px;
 }
 
-/* Invoice Sheet Layout */
+/* ==========================================
+   2. Document Container & Watermark
+   ========================================== */
 .invoice-container {
   width: 210mm;
-  height: 296mm;
+  min-height: 296mm;
   padding: 15mm;
   margin: 0 auto 30px auto;
   background: #ffffff;
@@ -199,24 +206,23 @@
   justify-content: space-between;
   font-size: 12px;
   color: #000000;
-  position: relative; /* ওয়াটারমার্ক এরিয়ার রেফারেন্স নির্ধারণের জন্য */
-  overflow: hidden; /* ওয়াটারমার্ক যেন পেজের বাইরে ছড়িয়ে না পড়ে */
+  position: relative;
+  overflow: hidden;
 }
 
-/* --- [নতুন যোগ করা হয়েছে: Watermark CSS] --- */
 .invoice-container::before {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px; /* ওয়াটারমার্কের সাইজ */
+  width: 320px;
   height: 320px;
-  background-image: url("../../assets/main-logo.png"); /* লোগো ইমেজ পাথ */
+  background-image: url("../../assets/main-logo.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  opacity: 0.08; /* হালকা ব্যাকগ্রাউন্ড ভিজিবিলিটি */
+  opacity: 0.08;
   pointer-events: none;
   z-index: 0;
 }
@@ -224,7 +230,7 @@
 .invoice-content-wrap,
 .footer-section-wrap {
   position: relative;
-  z-index: 1; /* সকল মূল কনটেন্ট ওয়াটারমার্কের উপরে থাকবে */
+  z-index: 1;
 }
 
 .invoice-content-wrap {
@@ -235,11 +241,9 @@
   display: flex;
   align-items: center;
   gap: 15px;
-
   padding-bottom: 8px;
 }
 
-/* Logo Container - Flex properties reset */
 .logo-box {
   width: 100%;
   height: 110px;
@@ -250,7 +254,6 @@
   overflow: hidden;
 }
 
-/* Logo Image - Aspect ratio fix for html2pdf */
 .logo-img {
   width: auto;
   height: auto;
@@ -302,23 +305,30 @@
   text-align: right;
 }
 
-/* Table Section */
+/* ==========================================
+   3. Table Styling
+   ========================================== */
 .invoice-table {
-  width: 100%;
-  border-collapse: collapse;
+  width: 100% !important;
+  border-collapse: collapse !important;
   margin-top: 10px;
+  table-layout: fixed !important;
+  box-sizing: border-box !important;
 }
 
 .invoice-table th,
 .invoice-table td {
-  border: 1px solid #000000;
-  padding: 6px 8px;
+  border: 1px solid #000000 !important;
+  padding: 6px 8px !important;
   font-size: 12px;
+  vertical-align: middle;
+  word-wrap: break-word !important;
 }
 
 .invoice-table th {
-  background-color: #f1f5f9;
+  background-color: #f1f5f9 !important;
   text-align: center;
+  font-weight: bold;
 }
 
 .table-input {
@@ -330,7 +340,6 @@
   box-sizing: border-box;
 }
 
-/* Table Specific Cell Styles */
 .table-col-sl {
   width: 7%;
 }
@@ -426,6 +435,9 @@
   margin-top: 8px;
 }
 
+/* ==========================================
+   4. Footer Section & Signatures
+   ========================================== */
 .footer-section-wrap {
   width: 100%;
   margin-top: auto;
@@ -482,23 +494,43 @@
   margin: 20px auto;
 }
 
+/* ==========================================
+   5. PDF Mode & Print Utilities
+   ========================================== */
 .page-break-avoid {
   page-break-inside: avoid !important;
   break-inside: avoid !important;
+}
+
+.pdf-mode {
+  box-shadow: none !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 10mm !important;
+}
+
+.pdf-mode .no-print {
+  display: none !important;
 }
 
 @media print {
   .no-print {
     display: none !important;
   }
-}
 
-.pdf-mode {
-  box-shadow: none !important;
-  margin: 0 !important;
-  padding: 12mm !important;
-}
+  body {
+    background: #ffffff;
+  }
 
-.pdf-mode .no-print {
-  display: none !important;
+  .invoice-container {
+    box-shadow: none;
+    margin: 0;
+    width: 100%;
+  }
+
+  input {
+    border: none !important;
+    background: transparent !important;
+  }
 }
