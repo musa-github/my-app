@@ -18,12 +18,12 @@
 }
 
 .userName {
-  color: #f8fafc;
+  color: #000000;
   font-size: 0.9rem;
   font-weight: 600;
 }
 
 .userRole {
-  color: #94a3b8;
+  color: #020202;
   font-size: 0.75rem;
 }

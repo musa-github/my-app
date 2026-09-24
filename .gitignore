@@ -7,10 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node modules & Build output
 node_modules
 dist
 dist-ssr
+
+# --- Environment Variables & Secret Keys (নতুন যোগ করা হয়েছে) ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.local
+
+# Firebase logs and cache (নতুন যোগ করা হয়েছে)
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
 
 # Editor directories and files
 .vscode/*

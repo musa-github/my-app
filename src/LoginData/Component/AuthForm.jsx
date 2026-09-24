@@ -26,37 +26,43 @@ const AuthForm = ({ initialMode = "signup" }) => {
   };
 
   // সাবমিট হ্যান্ডলার
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    dispatch(clearAuthMessages());
+  // AuthForm.jsx এর handleSubmit অংশ:
+const handleSubmit = (e) => {
+  e.preventDefault();
+  dispatch(clearAuthMessages());
 
-    if (isSignUp) {
-      if (!formData.name || !formData.email || !formData.password) {
-        alert("Please fill in all fields!");
-        return;
-      }
-      dispatch(registerUser(formData)).then((res) => {
-        if (!res.error) {
+  if (isSignUp) {
+    if (!formData.name || !formData.email || !formData.password) {
+      alert("Please fill in all fields!");
+      return;
+    }
+    dispatch(registerUser(formData)).then((res) => {
+      if (!res.error) {
+        // ওনার হলে সরাসরি হোম পেজে যাবে, সাধারণ ইউজার হলে অ্যালার্ট দেখাবে
+        if (formData.email.trim().toLowerCase() === "osanlift@gmail.com") {
+          navigate("/");
+        } else {
           alert("Registration request submitted! Please wait for Admin approval.");
           setIsSignUp(false);
           setFormData({ name: "", email: formData.email, password: "" });
         }
-      });
-    } else {
-      if (!formData.email || !formData.password) {
-        alert("Please enter email and password!");
-        return;
       }
-      dispatch(
-        loginUser({ email: formData.email, password: formData.password })
-      ).then((res) => {
-        if (!res.error) {
-          setFormData(initialFormState);
-          navigate("/"); // সফল লগইনের পর Home Page-এ রিডাইরেক্ট করবে
-        }
-      });
+    });
+  } else {
+    if (!formData.email || !formData.password) {
+      alert("Please enter email and password!");
+      return;
     }
-  };
+    dispatch(
+      loginUser({ email: formData.email, password: formData.password })
+    ).then((res) => {
+      if (!res.error) {
+        setFormData(initialFormState);
+        navigate("/");
+      }
+    });
+  }
+};
 
   // মোড সুইচিং (Signup ↔ Login)
   const toggleMode = (mode) => {
@@ -107,7 +113,7 @@ const AuthForm = ({ initialMode = "signup" }) => {
               <input
                 type="text"
                 name="name"
-                placeholder="e.g. S.M. Abu Musa"
+                placeholder="Your Name"
                 value={formData.name}
                 onChange={handleChange}
                 required={isSignUp}

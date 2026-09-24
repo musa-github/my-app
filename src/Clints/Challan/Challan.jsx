@@ -2,7 +2,9 @@
 import html2pdf from 'html2pdf.js';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import logo from '../../assets/main-logo.png';
+import footer from "../../assets/Footer.png";
+import header from "../../assets/header.png";
+
 import {
   clearOffersList,
   createCustomChallan,
@@ -236,14 +238,9 @@ const Challan = () => {
             {/* Header */}
             <div className="company-header">
               <div className="logo-box">
-                <img src={logo} alt="Company Logo" className="logo-img" />
+                <img src={header} alt="Company Logo" className="logo-img" />
               </div>
-              <div className="company-info">
-                <h1 className="company-title">H.R.ENGINEERS</h1>
-                <p className="company-services">
-                  ■ Lift ■ ARD ■ Generator ■ Escalator ■ Service & Maintenance ■ Spare Parts
-                </p>
-              </div>
+              
             </div>
 
             <div className="document-type">DELIVERY CHALLAN</div>
@@ -417,8 +414,7 @@ const Challan = () => {
             </div>
 
             <div className="bottom-contact">
-              <p>📞 01610989538, 01932405247 | ✉️ hrengineers@gmail.com</p>
-              <p>📍 Dhaka, Bangladesh</p>
+              <img src={footer} alt="footer" style={{width:"100%"}}/>
             </div>
           </div>
 

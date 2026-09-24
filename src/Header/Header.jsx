@@ -8,7 +8,7 @@ import { auth, db } from "../Firebase/Firebase";
 import { Avatar } from "../LoginData/Component/Avatar/Avatar";
 import Style from "./Header.module.css";
 
-const OWNER_EMAIL = "smabumusa98@gmail.com";
+const OWNER_EMAIL = "osanlift@gmail.com";
 
 export const Header = () => {
   const dispatch = useDispatch();

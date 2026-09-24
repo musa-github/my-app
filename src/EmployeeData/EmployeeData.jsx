@@ -5,7 +5,7 @@ import { NavLink, Outlet } from "react-router";
 import { auth, db } from "../Firebase/Firebase";
 import Style from "./EmployeeData.module.css";
 
-const OWNER_EMAIL = "smabumusa98@gmail.com";
+const OWNER_EMAIL = "osanlift@gmail.com";
 
 function EmployeeData() {
   const { user } = useSelector((state) => state.auth || {});

@@ -1,7 +1,8 @@
 import html2pdf from 'html2pdf.js';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import logo from "../../assets/main-logo.png";
+import footer from "../../assets/Footer.png";
+import header from "../../assets/header.png";
 import {
   deleteOfferFromFirebase,
   fetchAllSavedOffers,
@@ -247,7 +248,7 @@ const OfferInvoice = () => {
       const element = invoiceRef.current;
 
       const opt = {
-        margin: 0,
+        margin: [5, 5, 20, 5],
         filename: `Offer_${headerData.toCompany || 'Invoice'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -255,10 +256,10 @@ const OfferInvoice = () => {
           useCORS: true,
           scrollX: 0,
           scrollY: 0,
-          letterRendering: true,
           onclone: (clonedDoc) => {
             const pdfElement = clonedDoc.querySelector('.pdf-mode');
             if (pdfElement) {
+              pdfElement.style.width = '100%';
               const inputs = pdfElement.querySelectorAll('input, textarea');
               inputs.forEach((input) => {
                 const span = clonedDoc.createElement('span');
@@ -268,8 +269,7 @@ const OfferInvoice = () => {
                 span.style.fontSize = window.getComputedStyle(input).fontSize;
                 span.style.fontWeight = window.getComputedStyle(input).fontWeight;
                 span.style.color = window.getComputedStyle(input).color;
-                span.style.lineHeight = '1.4';
-                span.style.padding = '2px 0';
+                span.style.lineHeight = '1.2';
                 span.style.wordBreak = 'break-word';
                 span.style.whiteSpace = 'pre-wrap';
 
@@ -280,21 +280,54 @@ const OfferInvoice = () => {
             }
           }
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: {
+          mode: ['avoid-all', 'css', 'legacy'],
+          avoid: ['tr', '.page-break-avoid', '.invoice-footer']
+        }
       };
 
       html2pdf()
-        .set(opt)
         .from(element)
-        .save()
-        .then(() => {
+        .set(opt)
+        .toPdf()
+        .get('pdf')
+        .then((pdf) => {
+          const totalPages = pdf.internal.getNumberOfPages();
+          const headerImg = new Image();
+          const footerImg = new Image();
+          headerImg.src = header;
+          footerImg.src = footer;
+
+          return new Promise((resolve) => {
+            let loadedCount = 0;
+            const checkLoaded = () => {
+              loadedCount++;
+              if (loadedCount === 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                  pdf.setPage(i);
+                  pdf.addImage(headerImg, 'PNG', 10, 10, 190, 30);
+                  pdf.addImage(footerImg, 'PNG', 10, 267, 190, 30);
+                }
+                resolve(pdf);
+              }
+            };
+
+            headerImg.onload = checkLoaded;
+            footerImg.onload = checkLoaded;
+            if (headerImg.complete) checkLoaded();
+            if (footerImg.complete) checkLoaded();
+          });
+        })
+        .then((pdf) => {
+          pdf.save(`Offer_${headerData.toCompany || 'Invoice'}.pdf`);
           setIsPdfPrinting(false);
         })
         .catch((err) => {
           console.error(err);
           setIsPdfPrinting(false);
         });
-    }, 200);
+    }, 300);
   };
 
   const numberToWords = (num) => {
@@ -394,17 +427,13 @@ const OfferInvoice = () => {
       <div className={`invoice-container ${isPdfPrinting ? 'pdf-mode' : ''}`} ref={invoiceRef}>
         
         {/* Company Header */}
-        <div className="company-header">
-          <div className="logo-box">
-            <img src={logo} alt="Logo" className="logo-img" />
+        {!isPdfPrinting && (
+          <div className="company-header no-pdf-img">
+            <div style={{ width: "100%", height: "110px" }}>
+              <img src={header} alt="Logo" style={{ width: "100%" }} />
+            </div>
           </div>
-          <div className="company-info">
-            <h1 className="company-title" >H.R ENGINEERS</h1>
-            <p className="company-services">
-              ■ Lift ■ ARD ■ Generator ■ Escalator ■ Service & Maintenance ■ Spare Parts
-            </p>
-          </div>
-        </div>
+        )}
 
         <div className="document-type">PRICE OFFER</div>
 
@@ -472,7 +501,6 @@ const OfferInvoice = () => {
           <tbody>
             {items.map((item, index) => {
               const totalItemPrice = (Number(item.quantity) || 0) * (Number(item.price) || 0);
-
               const searchSearchTerm = item.name.trim().toLowerCase();
 
               const filteredOfferProds = offerProductList.filter((p) =>
@@ -683,7 +711,7 @@ const OfferInvoice = () => {
         {/* Footer Signatures */}
         <div className="invoice-footer page-break-avoid">
           <div>
-            <div className="seal-circle">H.R.E</div>
+            <div className="seal-circle">osan</div>
             <p className="no-margin bold" style={{ fontSize: '11px' }}>Thanking You. Yours Truly</p>
           </div>
           <div>
@@ -693,10 +721,11 @@ const OfferInvoice = () => {
         </div>
 
         {/* Bottom Pad Contact Info */}
-        <div className="bottom-contact page-break-avoid">
-          H.R ENGINEERS | Phone: +880171131536 | Email: hrengineersbd@gmail.com | 202/1,South Borua,Hazibari,Khilkhet,Dhaka-1229
-        </div>
-
+        {!isPdfPrinting && (
+          <div className="bottom-contact no-pdf-img page-break-avoid">
+            <img src={footer} alt="Footer" style={{ width: "100%" }} />
+          </div>
+        )}
       </div>
     </div>
   );

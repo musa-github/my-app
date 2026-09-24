@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTotalPurchase } from '../../Fetures/Inventory/TotalPurchaseSlice';
+import { fetchTotalPurchase, updatePurchaseItem } from '../../Fetures/Inventory/TotalPurchaseSlice';
 import styles from './TotalPurchase.module.css';
 
 function TotalPurchase() {
   const dispatch = useDispatch();
-
   const purchaseState = useSelector((state) => state.totalPurchase);
 
-  const items = purchaseState?.items || [];
+  const rawItems = purchaseState?.items || [];
   const loading = purchaseState?.loading;
   const error = purchaseState?.error;
+
+  // Local Editable Items State
+  const [items, setItems] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +25,13 @@ function TotalPurchase() {
   useEffect(() => {
     dispatch(fetchTotalPurchase());
   }, [dispatch]);
+
+  // Redux store data syncs with local state
+  useEffect(() => {
+    if (rawItems.length > 0) {
+      setItems(rawItems);
+    }
+  }, [rawItems]);
 
   // তারিখ ফরম্যাট হেলপার ফাংশন
   const getItemDateObject = (itemDate) => {
@@ -44,14 +55,8 @@ function TotalPurchase() {
 
     if (itemDateObj && !isNaN(itemDateObj)) {
       const formattedItemDate = itemDateObj.toISOString().split('T')[0];
-      if (selectedDate) {
-        matchesDate = formattedItemDate === selectedDate;
-      }
-
-      if (selectedMonth) {
-        matchesMonth = (itemDateObj.getMonth() + 1).toString() === selectedMonth;
-      }
-
+      if (selectedDate) matchesDate = formattedItemDate === selectedDate;
+      if (selectedMonth) matchesMonth = (itemDateObj.getMonth() + 1).toString() === selectedMonth;
       if (selectedDay) {
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         matchesDay = dayNames[itemDateObj.getDay()] === selectedDay;
@@ -63,10 +68,74 @@ function TotalPurchase() {
     return matchesName && matchesDate && matchesMonth && matchesDay;
   });
 
+  // Total Amounts Calculation
   const totalPurchaseAmount = filteredItems.reduce(
     (total, item) => total + (Number(item?.UnitPrice || item?.price) || 0) * (Number(item?.QTY || item?.quantity) || 0),
     0
   );
+
+  const totalSellingAmount = filteredItems.reduce(
+    (total, item) => total + (Number(item?.SalingPrice || item?.sellingPrice || item?.SellingPrice) || 0) * (Number(item?.QTY || item?.quantity) || 0),
+    0
+  );
+
+  // Edit Handlers
+  const handleEditClick = (item, index) => {
+    const id = item.id || index;
+    setEditingId(id);
+    setEditFormData({
+      itemName: item.ItemsName || item.itemName || item.name || '',
+      quantity: item.QTY || item.quantity || 0,
+      unitPrice: item.UnitPrice || item.price || 0,
+      sellingPrice: item.SalingPrice || item.sellingPrice || item.SellingPrice || 0,
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSave = (id, index) => {
+    const updatedFields = {
+      ItemsName: editFormData.itemName,
+      itemName: editFormData.itemName,
+      QTY: Number(editFormData.quantity),
+      quantity: Number(editFormData.quantity),
+      UnitPrice: Number(editFormData.unitPrice),
+      price: Number(editFormData.unitPrice),
+      SalingPrice: Number(editFormData.sellingPrice),
+      sellingPrice: Number(editFormData.sellingPrice),
+      SellingPrice: Number(editFormData.sellingPrice),
+    };
+
+    // Firebase & Redux Store Update
+    if (id && typeof id === 'string') {
+      dispatch(updatePurchaseItem({ id, updatedFields }));
+    }
+
+    // Local State Update
+    setItems((prevItems) =>
+      prevItems.map((item, idx) => {
+        if ((item.id && item.id === id) || idx === index) {
+          return {
+            ...item,
+            ...updatedFields,
+          };
+        }
+        return item;
+      })
+    );
+
+    setEditingId(null);
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+  };
 
   if (loading) return <div className={styles.loadingState}>⏳ Loading Purchase Inventory...</div>;
   if (error) return <div className={styles.errorState}>⚠️ Error: {error}</div>;
@@ -75,14 +144,18 @@ function TotalPurchase() {
     <div className={styles.purchaseContainer}>
       <div className={styles.purchaseHeader}>
         <h2>🛍️ Total Purchase Inventory</h2>
-        <p>Track purchased inventory items, filter by date/month, and monitor total expenditure</p>
+        <p>Track purchased inventory items, filter by date/month, and monitor expenditure & sales projection</p>
       </div>
 
-      {/* KPI Card */}
+      {/* KPI Cards */}
       <div className={styles.summaryCards}>
         <div className={styles.card}>
           <h4>Total Purchase Cost</h4>
           <h3>BDT {totalPurchaseAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h3>
+        </div>
+        <div className={styles.card}>
+          <h4>Total Selling Value</h4>
+          <h3>BDT {totalSellingAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h3>
         </div>
       </div>
 
@@ -162,34 +235,125 @@ function TotalPurchase() {
         <table className={styles.purchaseTable}>
           <thead>
             <tr>
-              <th className={styles.textCenter} style={{ width: '120px' }}>Date</th>
+              <th className={styles.textCenter} style={{ width: '110px' }}>Date</th>
               <th>Item Description</th>
-              <th className={styles.textCenter}>Quantity</th>
-              <th className={styles.textRight}>Unit Price</th>
-              <th className={styles.textRight}>Total Cost</th>
+              <th className={styles.textCenter} style={{ width: '90px' }}>QTY</th>
+              <th className={styles.textRight}>Purchase Price</th>
+              <th className={styles.textRight}>Selling Price</th>
+              <th className={styles.textRight}>Total Purchase</th>
+              <th className={styles.textCenter} style={{ width: '130px' }}>Action</th>
             </tr>
           </thead>
           <tbody>
             {filteredItems.length > 0 ? (
               filteredItems.map((item, index) => {
+                const currentId = item.id || index;
+                const isEditing = editingId === currentId;
                 const dateObj = getItemDateObject(item.date || item.createdAt);
                 const formattedDate = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString() : 'N/A';
+
                 const unitPrice = Number(item.UnitPrice || item.price) || 0;
+                const sellingPrice = Number(item.SalingPrice || item.sellingPrice || item.SellingPrice) || 0;
                 const qty = Number(item.QTY || item.quantity) || 0;
 
                 return (
-                  <tr key={item.id || index}>
+                  <tr key={currentId}>
                     <td className={`${styles.textCenter} ${styles.bold}`}>{formattedDate}</td>
-                    <td className={styles.bold}>{item.ItemsName || item.itemName || item.name || 'Unnamed Item'}</td>
-                    <td className={styles.textCenter}>{qty}</td>
-                    <td className={styles.textRight}>BDT {unitPrice.toFixed(2)}</td>
-                    <td className={`${styles.textRight} ${styles.bold}`}>BDT {(unitPrice * qty).toFixed(2)}</td>
+                    
+                    {/* Item Description */}
+                    <td>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="itemName"
+                          value={editFormData.itemName}
+                          onChange={handleInputChange}
+                          className={styles.editInput}
+                        />
+                      ) : (
+                        item.ItemsName || item.itemName || item.name || 'Unnamed Item'
+                      )}
+                    </td>
+
+                    {/* Quantity */}
+                    <td className={styles.textCenter}>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          name="quantity"
+                          value={editFormData.quantity}
+                          onChange={handleInputChange}
+                          className={`${styles.editInput} ${styles.textCenter}`}
+                        />
+                      ) : (
+                        qty
+                      )}
+                    </td>
+
+                    {/* Unit Purchase Price */}
+                    <td className={styles.textRight}>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          name="unitPrice"
+                          value={editFormData.unitPrice}
+                          onChange={handleInputChange}
+                          className={`${styles.editInput} ${styles.textRight}`}
+                        />
+                      ) : (
+                        `BDT ${unitPrice.toFixed(2)}`
+                      )}
+                    </td>
+
+                    {/* Selling Price */}
+                    <td className={`${styles.textRight} ${styles.bold}`}>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          name="sellingPrice"
+                          value={editFormData.sellingPrice}
+                          onChange={handleInputChange}
+                          className={`${styles.editInput} ${styles.textRight}`}
+                        />
+                      ) : (
+                        `BDT ${sellingPrice.toFixed(2)}`
+                      )}
+                    </td>
+
+                    {/* Total Purchase Cost */}
+                    <td className={`${styles.textRight} ${styles.bold}`}>
+                      BDT {(unitPrice * qty).toFixed(2)}
+                    </td>
+
+                    {/* Actions */}
+                    <td className={styles.textCenter}>
+                      {isEditing ? (
+                        <div className={styles.actionBtnGroup}>
+                          <button
+                            onClick={() => handleSave(item.id, index)}
+                            className={styles.saveBtn}
+                          >
+                            Save
+                          </button>
+                          <button onClick={handleCancel} className={styles.cancelBtn}>
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleEditClick(item, index)}
+                          className={styles.editBtn}
+                        >
+                          ✏️ Edit
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan="5" className={styles.noData}>
+                <td colSpan="7" className={styles.noData}>
                   No purchase records matched your filters.
                 </td>
               </tr>
@@ -198,12 +362,13 @@ function TotalPurchase() {
           {filteredItems.length > 0 && (
             <tfoot>
               <tr>
-                <td colSpan="4" className={`${styles.textRight} ${styles.bold}`}>
+                <td colSpan="5" className={`${styles.textRight} ${styles.bold}`}>
                   Grand Total Purchase:
                 </td>
                 <td className={`${styles.textRight} ${styles.bold} ${styles.textPrimary}`}>
                   BDT {totalPurchaseAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </td>
+                <td></td>
               </tr>
             </tfoot>
           )}

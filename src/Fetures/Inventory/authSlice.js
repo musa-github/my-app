@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
@@ -8,14 +9,47 @@ import { auth, db } from "../../Firebase/Firebase";
 
 const savedUser = JSON.parse(localStorage.getItem("authUser")) || null;
 
-// ১. Async Thunk: Sign Up Request Handler (Admin Approval এর জন্য)
+// ওনার বা এডমিনের ইমেইল
+const OWNER_EMAIL = "osanlift@gmail.com";
+
+// ১. Async Thunk: Sign Up Request Handler
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (signUpData, { rejectWithValue }) => {
     try {
       const cleanEmail = signUpData.email.trim().toLowerCase();
 
-      // একই ইমেইল দিয়ে আগের কোনো পেন্ডিং রিকোয়েস্ট আছে কিনা চেক করা
+      // ** যদি ওনার বা এডমিন অ্যাকাউন্ট ক্রিয়েট করে **
+      if (cleanEmail === OWNER_EMAIL) {
+        // ১. সরাসরি Firebase Auth এ অ্যাকাউন্ট তৈরি
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          signUpData.password
+        );
+        const user = userCredential.user;
+
+        // ২. signUpData কালেকশনে ইউজারের প্রোফাইল ডাটা সেভ
+        const userPayload = {
+          name: signUpData.name,
+          email: cleanEmail,
+          role: "Admin",
+          createdAt: new Date().toISOString(),
+        };
+
+        await setDoc(doc(db, "signUpData", cleanEmail), { data: userPayload });
+
+        // ৩. সরাসরি অটো-লগইন প্রোফাইল রিটার্ন
+        const finalPayload = {
+          ...userPayload,
+          uid: user.uid,
+        };
+
+        localStorage.setItem("authUser", JSON.stringify(finalPayload));
+        return { isOwner: true, user: finalPayload, message: "Admin account created & logged in successfully!" };
+      }
+
+      // ** সাধারণ ইউজারদের জন্য (অ্যাপ্রুভাল প্রসেস) **
       const pendingRef = doc(db, "pendingRequests", cleanEmail);
       const pendingSnap = await getDoc(pendingRef);
 
@@ -23,19 +57,21 @@ export const registerUser = createAsyncThunk(
         return rejectWithValue("An approval request is already pending for this email!");
       }
 
-      // Firestore-এর pendingRequests কালেকশনে সেভ রাখা
       const pendingPayload = {
         name: signUpData.name,
         email: cleanEmail,
-        password: signUpData.password, // এডমিন এপ্রুভালের পর Firebase Auth-এ ইউজার বানাতে লাগবে
+        password: signUpData.password,
         status: "Pending",
         requestedAt: new Date().toISOString(),
       };
 
       await setDoc(pendingRef, { data: pendingPayload });
 
-      return "Signup request sent successfully! Waiting for admin approval.";
+      return { isOwner: false, message: "Signup request sent successfully! Waiting for admin approval." };
     } catch (error) {
+      if (error.code === "auth/email-already-in-use") {
+        return rejectWithValue("This email is already registered. Please login!");
+      }
       return rejectWithValue(error.message);
     }
   }
@@ -138,11 +174,14 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.successMessage = action.payload;
+        if (action.payload.isOwner) {
+          state.user = action.payload.user; // ওনার হলে স্টেট-এ সরাসরি সেভ হবে
+        }
+        state.successMessage = action.payload.message;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Registration request failed!";
+        state.error = action.payload || "Registration failed!";
       })
 
       // Login

@@ -12,7 +12,7 @@ import { useSelector } from "react-redux";
 import { auth, db } from "../Firebase/Firebase";
 import styles from "./AdminPanel.module.css";
 
-const OWNER_EMAIL = "smabumusa98@gmail.com";
+const OWNER_EMAIL = "osanlift@gmail.com";
 
 function AdminPanel() {
   const reduxUserEmail = useSelector((state) => state.auth?.user?.email);

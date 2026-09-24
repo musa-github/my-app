@@ -474,7 +474,7 @@ const InvoiceComponent = () => {
                 checked={subSourceFilter === 'bills_only'} 
                 onChange={() => handleSubSourceChange('bills_only')} 
               />
-              <span>🧾 Saved Offer Bills</span>
+              <span>🧾 Saved Bills</span>
             </label>
           </div>
         )}

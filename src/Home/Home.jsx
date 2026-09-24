@@ -84,7 +84,7 @@ const Home = () => {
   const [selectedModalItem, setSelectedModalItem] = useState(null);
 
   const handleOpenWhatsApp = (title) => {
-    const text = encodeURIComponent(`Hello MM Engineering! I need information about: ${title || 'Services'}`);
+    const text = encodeURIComponent(`Hello Osan Lift! I need information about: ${title || 'Services'}`);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank');
   };
 

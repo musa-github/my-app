@@ -4,6 +4,7 @@
 .main-wrapper {
   margin-top: 20px;
 }
+
 .action-bar {
   max-width: 210mm;
   margin: 0 auto 10px auto;
@@ -33,81 +34,72 @@
   cursor: not-allowed;
 }
 
-/* Dynamic Page Container */
+/* Page Container */
 .invoice-container {
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
   background: #ffffff;
-  padding: 10mm 15mm;
+  padding: 5mm 10mm;
   box-sizing: border-box;
   color: #000000;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   line-height: 1.4;
   position: relative;
-}
-
-/* Company Header Section */
-.company-header {
   display: flex;
-  align-items: center;
-  gap: 20px;
-  border-bottom: 2px solid #000;
-  padding-bottom: 8px;
-}
-
-.logo-box {
-  width: 90px;
-  height: 90px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.logo-img {
-  width: auto;
+/* Watermark Overlay */
+.watermark-box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.watermark-img {
+  width: 100%;
   height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
   display: block;
-  margin: 0 auto;
 }
 
-.company-info {
-  flex-grow: 1;
+/* Pad Header Image */
+.pad-header {
+  width: 100%;
+  margin-bottom: 5px;
+  position: relative;
+  z-index: 1;
 }
 
-.company-title {
-  margin: 0;
-  font-size: 56px;
-  letter-spacing: 1px;
-  color: #1a2d38;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.company-services {
-  margin: 6px 0 0 0;
-  font-size: 11px;
-  color: #000;
-  font-weight: 700;
+.pad-header-img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .document-type {
   text-align: center;
   font-size: 18px;
   font-weight: bold;
-  margin: 10px 0 6px 0;
+  margin: 10px 0 8px 0;
   letter-spacing: 2px;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
 }
 
 /* Document Info & Inputs */
 .info-section {
   font-size: 12px;
   margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .info-row,
@@ -135,26 +127,6 @@ input:focus {
   border-radius: 2px;
 }
 
-.table-textarea {
-  width: 100%;
-  min-height: 32px;
-  border: 1px solid transparent;
-  outline: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 11px;
-  padding: 2px 4px;
-  box-sizing: border-box;
-  resize: vertical;
-}
-
-.table-textarea:hover,
-.table-textarea:focus {
-  border: 1px solid #0d6efd;
-  background-color: #f8f9fa;
-  border-radius: 2px;
-}
-
 .table-input {
   width: 100%;
 }
@@ -177,15 +149,17 @@ input:focus {
 .invoice-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 8px;
+  margin-top: 6px;
   table-layout: fixed;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 
 .invoice-table th,
 .invoice-table td {
   border: 1px solid #000000;
-  padding: 6px;
+  padding: 5px;
   font-size: 11px;
   vertical-align: middle;
   word-wrap: break-word;
@@ -210,6 +184,8 @@ input:focus {
   margin-top: 6px;
   display: flex;
   justify-content: flex-start;
+  position: relative;
+  z-index: 1;
 }
 
 .btn-add-row,
@@ -241,18 +217,22 @@ input:focus {
   margin-top: 10px;
   font-size: 12px;
   border-top: 1px solid #ccc;
-  padding-top: 6px;
+  padding-top: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .notes-section {
   margin-top: 10px;
   font-size: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .note-row {
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .note-label {
@@ -268,7 +248,7 @@ input:focus {
   margin: 4px 0;
 }
 .payment-mode {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .payment-line {
   margin-bottom: 2px;
@@ -279,37 +259,91 @@ input:focus {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: 35px;
+  margin-top: 25px;
+  padding-top: 10px;
+  padding-bottom: 8px;
+  position: relative;
+  z-index: 1;
 }
 
-.seal-circle {
-  border: 2px dashed #0d6efd;
-  width: 55px;
-  height: 55px;
+.seal-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.official-seal {
+  width: 75px;
+  height: 75px;
+  border: 2px solid #5e2785;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: bold;
-  color: #0d6efd;
-  margin-bottom: 4px;
+  position: relative;
+  margin-bottom: 6px;
+  box-shadow: inset 0 0 0 2px #5e2785;
+}
+
+.seal-outer {
+  text-align: center;
+  font-size: 7.5px;
+  font-weight: 900;
+  color: #5e2785;
+  padding: 3px;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.seal-top {
+  display: block;
+  font-size: 8.5px;
+  border-bottom: 1px solid #5e2785;
+  padding-bottom: 1px;
+  margin-bottom: 1px;
+}
+
+.seal-middle {
+  display: block;
+  font-size: 6px;
+}
+
+.receiver-sign-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .signature-line {
-  border-top: 1px solid #000;
-  width: 140px;
-  margin-bottom: 4px;
+  border-top: 1.5px dashed #000;
+  width: 150px;
+  margin-bottom: 6px;
 }
 
-.bottom-contact {
-  border-top: 1px solid #ddd;
-  padding-top: 6px;
+.footer-sign-text {
+  font-size: 11px;
+}
+
+/* Key Services Footer Bar */
+.bottom-services-container {
+  margin-top: 10px;
   text-align: center;
-  font-size: 10px;
-  color: #333;
-  font-weight: 500;
-  margin-top: 15px;
+  position: relative;
+  z-index: 1;
+}
+
+.services-footer-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 3px;
+}
+
+.bottom-tagline {
+  font-size: 10.5px;
+  color: #0b1d33;
+  margin-top: 5px;
+  text-align: left;
 }
 
 /* Suggestions Dropdown */
@@ -345,31 +379,59 @@ input:focus {
 
 .suggestion-item:hover {
   background-color: #0d6efd;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
-.page-break-avoid {
+/* ==========================================
+   PERFECT PDF PRINTING MODE SETTINGS
+   ========================================== */
+
+/* Explicit Page Break Protections */
+.page-break-avoid,
+.invoice-table tr,
+.in-words-section,
+.notes-section,
+.invoice-footer,
+.seal-box,
+.receiver-sign-box {
   page-break-inside: avoid !important;
   break-inside: avoid !important;
 }
 
-/* ==========================================
-   PERFECT PDF MODE & TEXT CUTTING FIX
-   ========================================== */
+.invoice-table {
+  page-break-inside: auto !important;
+  break-inside: auto !important;
+}
+
+.invoice-table thead {
+  display: table-header-group !important;
+}
+
+.invoice-table tr {
+  page-break-after: auto !important;
+  break-after: auto !important;
+}
+
 .pdf-mode {
   width: 210mm !important;
-  min-height: 297mm !important;
+  height: auto !important;
+  min-height: 0 !important;
   margin: 0 auto !important;
-  padding: 10mm 15mm !important; /* বাম, ডান, উপর ও নিচে নিরাপদ মার্জিন */
+  padding: 38mm 10mm 32mm 10mm !important;
   background: #ffffff !important;
   box-shadow: none !important;
   box-sizing: border-box !important;
-  transform: none !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  overflow: visible !important;
 }
 
-.pdf-mode .no-print {
+.pdf-mode .no-print,
+.pdf-mode .pad-header,
+.pdf-mode .bottom-services-container,
+.pdf-mode .btn-action,
+.pdf-mode .add-row-container,
+.pdf-mode .btn-delete,
+.pdf-mode .inline-delete,
+.pdf-mode .suggestions-dropdown {
   display: none !important;
 }
 
@@ -377,55 +439,14 @@ input:focus {
   box-sizing: border-box !important;
 }
 
-/* PDF মোডে সকল ইনপুট ফিল্ড ও টেক্সটের নিচে কাটিং রোধ */
 .pdf-mode input,
 .pdf-mode textarea {
   border: none !important;
   outline: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  padding-top: 2px !important;
-  padding-bottom: 4px !important; /* g, y, p অক্ষরের নিচের অংশ কাটিং আটকাবে */
+  padding: 0 !important;
   margin: 0 !important;
-  line-height: 1.4 !important;
-  height: auto !important;
-  overflow: visible !important;
-  display: inline-block !important;
-  box-sizing: content-box !important;
-}
-
-/* টেবিল সেল ও সাধারণ টেক্সট কাট-অফ প্রতিরোধ */
-.pdf-mode .invoice-table td,
-.pdf-mode .invoice-table th,
-.pdf-mode .note-row,
-.pdf-mode .payment-line,
-.pdf-mode .info-row {
-  line-height: 1.4 !important;
-  vertical-align: middle !important;
-  padding-bottom: 4px !important;
-  word-break: break-word !important;
-  overflow: visible !important;
-}
-
-.pdf-mode .company-header,
-.pdf-mode .info-section,
-.pdf-mode .notes-section {
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  body {
-    background: none;
-    padding: 0;
-  }
-  .invoice-container {
-    box-shadow: none;
-    padding: 0;
-    width: 100%;
-    box-sizing: border-box;
-  }
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }

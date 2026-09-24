@@ -1,16 +1,13 @@
-import logo from '../assets/main-logo.png';
+import header from '../assets/header.png';
 
 const InvoiceHeader = ({ isPdfPrinting, editableHeader, handleHeaderChange }) => {
   return (
     <>
       <div className="company-header">
         <div className="logo-box">
-          <img src={logo} alt="Company Logo" className="logo-img" />
+          <img src={header} alt="Company Logo" className="logo-img" />
         </div>
-        <div className="company-info">
-          <h1 className="company-title" style={{fontSize:"56px"}}>H.R.ENGINEERS</h1>
-          <p className="company-services">■ Lift ■ ARD ■ Generator ■ Escalator ■ Service & Maintenance ■ Spare Parts</p>
-        </div>
+        
       </div>
 
       <div className="document-type">BILL / INVOICE</div>

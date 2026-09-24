@@ -7,7 +7,7 @@
   left: 0;
   width: 100%;
   z-index: 1000;
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(250, 251, 251, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -70,11 +70,11 @@
 
 /* Inactive Link */
 .link {
-  color: #cbd5e1;
+  color: #333;
 }
 
 .link:hover {
-  color: #ffffff;
+  color: #e50c7a;
   background: rgba(255, 255, 255, 0.05);
 }
 
