@@ -365,60 +365,63 @@ const Challan = () => {
           </div>
 
           {/* Table */}
-          <table className="invoice-table">
-            <thead>
-              <tr>
-                <th style={{ width: '8%' }}>S.l No.</th>
-                <th style={{ width: '64%' }}>Items Description</th>
-                <th style={{ width: '12%' }}>Qty</th>
-                <th style={{ width: '12%' }}>Unit</th>
-                <th className="no-print" style={{ width: '4%' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {editableItems.length > 0 ? (
-                editableItems.map((item, index) => (
-                  <tr key={index}>
-                    <td className="text-center">{index + 1}</td>
-                    <td>
-                      <input
-                        type="text"
-                        className="table-input"
-                        placeholder="Item description..."
-                        value={item.name}
-                        onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        className="table-input text-center"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="table-input text-center"
-                        value={item.unit}
-                        onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                      />
-                    </td>
-                    <td className="no-print text-center">
-                      <button className="btn-delete" onClick={() => handleRemoveItem(index)}>✕</button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="text-center" style={{ color: 'red', padding: '15px' }}>
-                    No items selected for this Challan.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {/* Table Wrapper for Horizontal Scrolling on Mobile */}
+<div className="table-responsive">
+  <table className="invoice-table">
+    <thead>
+      <tr>
+        <th style={{ width: '8%' }}>S.l No.</th>
+        <th style={{ width: '56%' }}>Items Description</th>
+        <th style={{ width: '16%' }}>Qty</th>
+        <th style={{ width: '16%' }}>Unit</th>
+        <th className="no-print" style={{ width: '4%' }}></th>
+      </tr>
+    </thead>
+    <tbody>
+      {editableItems.length > 0 ? (
+        editableItems.map((item, index) => (
+          <tr key={index}>
+            <td className="text-center">{index + 1}</td>
+            <td>
+              <input
+                type="text"
+                className="table-input"
+                placeholder="Item description..."
+                value={item.name}
+                onChange={(e) => handleItemChange(index, 'name', e.target.value)}
+              />
+            </td>
+            <td>
+              <input
+                type="number"
+                className="table-input text-center"
+                value={item.quantity}
+                onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                className="table-input text-center"
+                value={item.unit}
+                onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
+              />
+            </td>
+            <td className="no-print text-center">
+              <button className="btn-delete" onClick={() => handleRemoveItem(index)}>✕</button>
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan="5" className="text-center" style={{ color: 'red', padding: '15px' }}>
+            No items selected for this Challan.
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
 
           <div className="add-row-container no-print">
             <button className="btn-add-row" onClick={handleAddItem}>+ Add Item</button>

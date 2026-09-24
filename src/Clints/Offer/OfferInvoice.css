@@ -1,177 +1,195 @@
-/* ==========================================
-   ১. Action Bar & Base Layout
-   ========================================== */
+/* ==========================================================================
+   Base & Layout Configurations
+   ========================================================================== */
+
 .main-wrapper {
-  margin-top: 20px;
+  background-color: #f4f6f8;
+  min-height: 100vh;
+  padding: 20px 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
+/* Container simulating standard A4 width on Desktop */
+.invoice-container {
+  width: 100%;
+  max-width: 800px;
+  background-color: #ffffff;
+  padding: 20px 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  position: relative;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #333333;
+}
+
+/* Mode active when generating PDF via html2pdf */
+.invoice-container.pdf-mode {
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* ==========================================================================
+   Action Bar / Control Buttons
+   ========================================================================== */
+
 .action-bar {
-  max-width: 210mm;
-  margin: 0 auto 10px auto;
+  width: 100%;
+  max-width: 800px;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 10px;
+  background-color: #ffffff;
+  padding: 12px 16px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 20px;
+  box-sizing: border-box;
 }
 
 .btn-action {
   padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  font-size: 12px;
-  background-color: #0d6efd;
-  color: #ffffff;
+  transition:
+    opacity 0.2s ease,
+    transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-.btn-action:hover {
+.btn-action:hover:not(:disabled) {
   opacity: 0.9;
 }
 
+.btn-action:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .btn-action:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
-/* Page Container */
-.invoice-container {
-  width: 210mm;
-  min-height: 297mm;
-  margin: 0 auto;
-  background: #ffffff;
-  padding: 5mm 10mm;
-  box-sizing: border-box;
-  color: #000000;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  line-height: 1.3;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* ==========================================================================
+   Invoice Header & Typography
+   ========================================================================== */
 
-/* Watermark Overlay */
-.watermark-box {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 380px;
-  opacity: 0.08;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.watermark-img {
-  width: 100%;
-  height: auto;
+.company-header img,
+.bottom-contact img {
   display: block;
-}
-
-/* Pad Header Image */
-.pad-header {
-  width: 100%;
-  margin-bottom: 5px;
-  position: relative;
-  z-index: 1;
-}
-
-.pad-header-img {
-  width: 100%;
-  height: auto;
-  display: block;
+  object-fit: contain;
 }
 
 .document-type {
   text-align: center;
   font-size: 18px;
-  font-weight: bold;
-  margin: 10px 0 8px 0;
-  letter-spacing: 2px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  position: relative;
-  z-index: 1;
+  color: #1a202c;
+  margin: 15px 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-/* Document Info & Inputs */
 .info-section {
-  font-size: 12px;
-  margin-bottom: 10px;
-  position: relative;
-  z-index: 1;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 15px;
 }
 
 .info-row,
-.subject-line,
-.to-address {
-  margin-bottom: 4px;
+.to-address,
+.subject-line {
+  margin-bottom: 8px;
 }
 
-input {
-  border: 1px solid transparent;
-  outline: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 12px;
-  padding: 2px 4px;
-  margin: 0;
-  box-sizing: border-box;
-  line-height: 1.3;
-}
-
-input:hover,
-input:focus {
-  border: 1px solid #0d6efd;
-  background-color: #f8f9fa;
-  border-radius: 2px;
-}
-
-.table-input {
-  width: 100%;
-}
-.inline-input {
-  display: inline-block;
-}
-.block-input {
-  display: block;
-  width: 100%;
-}
 .bold {
-  font-weight: bold;
-  color: #000;
+  font-weight: 700;
 }
+
 .no-margin {
   margin: 0;
 }
 
-/* ==========================================
-   ২. Invoice Table & Alignment
-   ========================================== */
+/* Editable Inputs */
+.inline-input,
+.block-input,
+.note-input,
+.table-input {
+  border: none;
+  border-bottom: 1px dashed #cbd5e1;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: #000000;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.inline-input:focus,
+.block-input:focus,
+.note-input:focus,
+.table-input:focus {
+  border-bottom-color: #2563eb;
+  background-color: rgba(37, 99, 235, 0.02);
+}
+
+.block-input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Table Styling
+   ========================================================================== */
+
 .invoice-table {
-  width: 100% !important;
-  border-collapse: collapse !important;
+  width: 100%;
+  border-collapse: collapse;
   margin-top: 10px;
-  table-layout: fixed !important;
-  box-sizing: border-box !important;
-  position: relative;
-  z-index: 1;
+  margin-bottom: 15px;
 }
 
 .invoice-table th,
 .invoice-table td {
-  border: 1px solid #000000 !important;
-  padding: 6px 8px !important;
-  font-size: 11px;
+  border: 1px solid #cbd5e1;
+  padding: 8px 6px;
+  font-size: 12px;
   vertical-align: middle;
-  word-wrap: break-word !important;
-  box-sizing: border-box !important;
 }
 
 .invoice-table th {
-  background-color: #f0f0f0 !important;
+  background-color: #f8fafc;
+  font-weight: 700;
   text-align: center;
-  font-weight: bold;
+  color: #334155;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.invoice-table .table-input {
+  width: 100%;
+  border-bottom: none;
+  text-align: left;
 }
 
 .text-center {
@@ -179,304 +197,189 @@ input:focus {
 }
 
 .cell-total {
-  white-space: nowrap;
+  background-color: #f8fafc;
 }
 
-/* Controls & Buttons */
+/* Table Delete & Add Row Buttons */
+.btn-delete {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btn-delete:hover {
+  background-color: #fee2e2;
+}
+
 .add-row-container {
-  margin-top: 6px;
-  display: flex;
-  justify-content: flex-start;
-  position: relative;
-  z-index: 1;
+  margin-bottom: 15px;
 }
 
 .btn-add-row,
 .btn-add-note {
-  background-color: #198754;
-  color: white;
+  background-color: #e2e8f0;
+  color: #334155;
   border: none;
-  padding: 4px 10px;
-  border-radius: 3px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 11px;
-  font-weight: bold;
 }
 
-.btn-delete {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  padding: 3px 7px;
-  font-size: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.btn-add-row:hover,
+.btn-add-note:hover {
+  background-color: #cbd5e1;
 }
+
+/* ==========================================================================
+   Notes, Words, & Signatures
+   ========================================================================== */
 
 .in-words-section {
-  margin-top: 10px;
-  font-size: 12px;
-  border-top: 1px solid #ccc;
-  padding-top: 4px;
-  position: relative;
-  z-index: 1;
+  font-size: 13px;
+  margin-bottom: 15px;
+  padding: 8px 12px;
+  background-color: #f8fafc;
+  border-left: 3px solid #2563eb;
+  border-radius: 2px;
 }
 
 .notes-section {
-  margin-top: 10px;
   font-size: 12px;
-  position: relative;
-  z-index: 1;
+  margin-top: 15px;
+  margin-bottom: 30px;
 }
 
 .note-row {
   display: flex;
   align-items: center;
-  margin-bottom: 3px;
+  margin-top: 4px;
+  gap: 6px;
 }
 
-.note-label {
-  flex-shrink: 0;
-}
 .note-input {
-  width: 80%;
-}
-.inline-delete {
-  margin-left: 8px;
-}
-.add-note-box {
-  margin: 4px 0;
-}
-.payment-mode {
-  margin-top: 6px;
-}
-.payment-line {
-  margin-bottom: 2px;
+  flex: 1;
 }
 
-/* ==========================================
-   ৩. Footer Section
-   ========================================== */
+.payment-mode {
+  margin-top: 12px;
+}
+
+.payment-line {
+  margin-top: 4px;
+}
+
 .invoice-footer {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: 25px;
+  margin-top: 40px;
   padding-top: 10px;
-  padding-bottom: 8px;
-  position: relative;
-  z-index: 1;
 }
 
-.seal-box {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.official-seal {
-  width: 75px;
-  height: 75px;
-  border: 2px solid #5e2785;
+.seal-circle {
+  width: 65px;
+  height: 65px;
+  border: 2px dashed #94a3b8;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  margin-bottom: 6px;
-  box-shadow: inset 0 0 0 2px #5e2785;
-}
-
-.seal-outer {
-  text-align: center;
-  font-size: 7.5px;
-  font-weight: 900;
-  color: #5e2785;
-  padding: 3px;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-bottom: 8px;
   text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.seal-top {
-  display: block;
-  font-size: 8.5px;
-  border-bottom: 1px solid #5e2785;
-  padding-bottom: 1px;
-  margin-bottom: 1px;
-}
-
-.seal-middle {
-  display: block;
-  font-size: 6px;
-}
-
-.receiver-sign-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .signature-line {
-  border-top: 1.5px dashed #000;
-  width: 150px;
+  width: 160px;
+  border-bottom: 1px solid #334155;
   margin-bottom: 6px;
 }
 
-.footer-sign-text {
-  font-size: 11px;
+.page-break-avoid {
+  page-break-inside: avoid;
 }
 
-/* Key Services Footer Bar */
-.bottom-services-container {
-  margin-top: 10px;
-  text-align: center;
-  position: relative;
-  z-index: 1;
+/* ==========================================================================
+   Print & PDF Rule Overrides
+   ========================================================================== */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
 
-.services-footer-img {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 3px;
-}
+/* ==========================================================================
+   Mobile Responsiveness (Screens smaller than 768px)
+   ========================================================================== */
 
-.bottom-tagline {
-  font-size: 10.5px;
-  color: #0b1d33;
-  margin-top: 5px;
-  text-align: left;
-}
+@media screen and (max-width: 768px) {
+  .main-wrapper {
+    padding: 10px 5px;
+  }
 
-/* Suggestions Dropdown */
-.suggestions-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: #ffffff;
-  border: 1px solid #0d6efd;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-  max-height: 180px;
-  overflow-y: auto;
-  z-index: 100;
-  padding: 5px 0;
-  text-align: left;
-}
+  /* Action Bar Controls Stack Vertically */
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
 
-.suggestion-category {
-  padding: 4px 8px;
-  font-size: 10px;
-  background-color: #e9ecef;
-  color: #333;
-}
+  .action-bar > div {
+    flex-direction: column;
+    align-items: stretch !important;
+    width: 100%;
+    margin-right: 0 !important;
+  }
 
-.suggestion-item {
-  padding: 6px 12px;
-  font-size: 11px;
-  cursor: pointer;
-  border-bottom: 1px solid #f1f1f1;
-}
+  .action-bar select {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+  }
 
-.suggestion-item:hover {
-  background-color: #0d6efd;
-  color: #ffffff !important;
-}
+  .btn-action {
+    width: 100%;
+    padding: 10px 0;
+  }
 
-/* ==========================================
-   ৪. PERFECT PDF PRINTING MODE SETTINGS
-   ========================================== */
+  /* Invoice Box Adjustments */
+  .invoice-container {
+    padding: 15px 12px;
+  }
 
-/* Page Break Protections */
-.page-break-avoid,
-.invoice-table tr,
-.in-words-section,
-.notes-section,
-.invoice-footer,
-.seal-box,
-.receiver-sign-box {
-  page-break-inside: avoid !important;
-  break-inside: avoid !important;
-}
+  /* Horizontal Scrollable Table Wrapper for Mobile */
+  .invoice-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
 
-.invoice-table {
-  page-break-inside: auto !important;
-  break-inside: auto !important;
-}
+  .invoice-table th,
+  .invoice-table td {
+    padding: 6px 4px;
+  }
 
-.invoice-table thead {
-  display: table-header-group !important;
-}
+  .document-type {
+    font-size: 16px;
+  }
 
-.invoice-table tr {
-  page-break-after: auto !important;
-  break-after: auto !important;
-}
+  /* Footer Section Adjustments */
+  .invoice-footer {
+    gap: 20px;
+  }
 
-/* PDF Render Container Fix */
-.pdf-mode {
-  width: 194mm !important;
-  height: auto !important;
-  min-height: 0 !important;
-  margin: 0 auto !important;
-  padding: 0 !important;
-  background: #ffffff !important;
-  box-shadow: none !important;
-  box-sizing: border-box !important;
-  overflow: visible !important;
-}
-
-/* পিডিএফ প্রিন্টিং চলাকালীন অতিরিক্ত মার্জিন স্পেসিং ঠিক রাখতে */
-.pdf-mode .invoice-container {
-  padding: 0 !important;
-  box-shadow: none !important;
-  width: 100% !important;
-}
-
-.pdf-mode .no-print,
-.pdf-mode .pad-header,
-.pdf-mode .bottom-services-container,
-.pdf-mode .btn-action,
-.pdf-mode .add-row-container,
-.pdf-mode .btn-delete,
-.pdf-mode .inline-delete,
-.pdf-mode .suggestions-dropdown {
-  display: none !important;
-}
-
-.pdf-mode * {
-  box-sizing: border-box !important;
-}
-
-.pdf-mode input,
-.pdf-mode textarea {
-  border: none !important;
-  outline: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  appearance: none !important;
-  -webkit-appearance: none !important;
-}
-/* PDF Mode Text Clipping Fix */
-.pdf-mode input,
-.pdf-mode textarea,
-.pdf-mode span,
-.pdf-mode td,
-.pdf-mode th,
-.pdf-mode p,
-.pdf-mode div {
-  line-height: 1.5 !important;
-  overflow: visible !important;
-}
-
-.pdf-mode td,
-.pdf-mode th {
-  padding-top: 6px !important;
-  padding-bottom: 6px !important; /* টেবিল সেল থেকে টেক্সটের নিচ কাটার সমাধান */
+  .signature-line {
+    width: 120px;
+  }
 }

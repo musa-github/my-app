@@ -670,7 +670,7 @@ const InvoiceComponent = () => {
               <div className="document-type">INVOICE/BILL</div>
           <div className="invoice-content-wrap">
             
-
+            <div className="table-responsive">
             <table className="invoice-table">
               <thead>
                 <tr>
@@ -860,7 +860,7 @@ const InvoiceComponent = () => {
                 </tr>
               </tfoot>
             </table>
-
+              </div>
             {!isPdfPrinting && (
               <div className="add-row-container no-print">
                 <button className="btn-add-row" onClick={handleAddRow}>+ Add Item</button>

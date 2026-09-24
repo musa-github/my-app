@@ -76,8 +76,10 @@ const Summery = () => {
     return false;
   };
 
-  const initialFormState = {
+const initialFormState = {
     projectName: '',
+    address: '',     
+    phoneNo: '',     
     liftQty: '', 
     whoseProjects: '',
     servicingDate: '',
@@ -121,6 +123,8 @@ const Summery = () => {
 
     setFormData({
       projectName: proj.projectName || '',
+      address: proj.address || '',   
+      phoneNo: proj.phoneNo || '',   
       liftQty: proj.liftQty || '',
       whoseProjects: proj.whoseProjects || '',
       servicingDate: currentBill.servicingDate || currentBill.lastServicingDate || proj.servicingDate || '',
@@ -460,6 +464,20 @@ const Summery = () => {
                   value={formData.projectName} 
                   onChange={handleInputChange} 
                   required 
+                />
+                <input 
+                  type="text" 
+                  name="address" 
+                  placeholder="Address" 
+                  value={formData.address} 
+                  onChange={handleInputChange} 
+                />
+                <input 
+                  type="text" 
+                  name="phoneNo" 
+                  placeholder="Phone No" 
+                  value={formData.phoneNo} 
+                  onChange={handleInputChange} 
                 />
                 <input 
                   type="number" 

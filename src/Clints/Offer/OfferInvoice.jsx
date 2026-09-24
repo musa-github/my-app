@@ -496,6 +496,7 @@ const OfferInvoice = () => {
         </div>
 
         {/* Invoice Table */}
+        <div className="table-responsive">
         <table className="invoice-table">
           <thead>
             <tr>
@@ -656,7 +657,7 @@ const OfferInvoice = () => {
             </tr>
           </tfoot>
         </table>
-
+          </div>
         <div className="add-row-container no-print">
           <button className="btn-add-row" onClick={addItemRow}>+ Add Item</button>
         </div>

@@ -3,6 +3,8 @@
    ========================================== */
 .main-wrapper {
   margin-top: 20px;
+  padding: 0 10px; /* Added spacing for small screens */
+  box-sizing: border-box;
 }
 
 .challan-search-card {
@@ -13,14 +15,15 @@
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   max-width: 210mm;
+  width: 100%;
   box-sizing: border-box;
 }
 
 .dropdown-filter-group {
   display: flex;
-  gap: 20px;
+  gap: 15px;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .select-box {
@@ -47,6 +50,8 @@
   color: #0f172a;
   outline: none;
   transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .download-box {
@@ -70,7 +75,8 @@
 
 /* Document Container */
 .invoice-container {
-  width: 210mm;
+  width: 100%;
+  max-width: 210mm;
   min-height: 297mm;
   margin: 0 auto 30px auto;
   background: #ffffff;
@@ -148,8 +154,14 @@ input:focus {
 }
 
 /* ==========================================
-   2. Table Styling
+   2. Table Styling & Responsive Wrapper
    ========================================== */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .invoice-table {
   width: 100% !important;
   border-collapse: collapse !important;
@@ -192,7 +204,7 @@ input:focus {
   background-color: #198754;
   color: white;
   border: none;
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 3px;
   cursor: pointer;
   font-size: 11px;
@@ -214,13 +226,15 @@ input:focus {
 
 .no-data-placeholder {
   text-align: center;
-  padding: 50px 20px;
+  padding: 40px 20px;
   background: #ffffff;
   border-radius: 8px;
   border: 2px dashed #cbd5e1;
   color: #64748b;
   max-width: 210mm;
+  width: 100%;
   margin: 20px auto;
+  box-sizing: border-box;
 }
 
 /* ==========================================
@@ -263,6 +277,69 @@ input:focus {
 }
 
 .pdf-mode {
+  width: 210mm !important;
+  max-width: 210mm !important;
   box-shadow: none !important;
   margin: 0 !important;
+  padding: 5mm 10mm !important;
+}
+
+/* ==========================================
+   5. Mobile Responsive Overrides
+   ========================================== */
+@media screen and (max-width: 768px) {
+  .main-wrapper {
+    margin-top: 10px;
+    padding: 0 5px;
+  }
+
+  .challan-search-card {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .dropdown-filter-group {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .select-box {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .download-box,
+  .btn-download-challan {
+    width: 100%;
+  }
+
+  .invoice-container {
+    padding: 12px;
+    min-height: auto;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .info-row > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .subject-line .inline-input {
+    width: 100% !important;
+    margin-top: 4px;
+  }
+
+  /* Ensure long item descriptions scroll smoothly on small displays */
+  .invoice-table {
+    min-width: 500px;
+  }
+
+  .signature-line {
+    width: 120px;
+  }
 }
