@@ -16,7 +16,7 @@ const OWNER_EMAIL = "osanlift@gmail.com";
 
 function AdminPanel() {
   const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
-  const currentUserEmail = (reduxUserEmail || auth.currentUser?.email || "").toLowerCase();
+  const currentUserEmail = (reduxUserEmail || auth.currentUser?.email || "").toLowerCase().trim();
 
   const [activeTab, setActiveTab] = useState("permissions");
   const [employees, setEmployees] = useState([]);
@@ -102,7 +102,10 @@ function AdminPanel() {
       const adminSnap = await getDocs(collection(db, "app_admins"));
       const admins = [];
       adminSnap.forEach((docSnap) => {
-        admins.push(docSnap.id.replace(/_/g, "."));
+        const adminData = docSnap.data();
+        if (adminData && adminData.email) {
+          admins.push(adminData.email.toLowerCase().trim());
+        }
       });
 
       if (!admins.includes(OWNER_EMAIL)) {
@@ -121,21 +124,42 @@ function AdminPanel() {
     fetchData();
   }, []);
 
+  // Check current user is Admin or Owner
   const isAdmin = currentUserEmail === OWNER_EMAIL || adminList.includes(currentUserEmail);
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     if (!newAdminEmail) return;
 
-    const cleanEmail = newAdminEmail.trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+    const rawEmail = newAdminEmail.trim().toLowerCase();
+    const cleanEmail = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
+
     try {
       await setDoc(doc(db, "app_admins", cleanEmail), {
-        email: newAdminEmail.trim().toLowerCase(),
+        email: rawEmail,
         addedBy: currentUserEmail,
         createdAt: serverTimestamp(),
       });
 
-      setAdminList((prev) => [...prev, newAdminEmail.trim().toLowerCase()]);
+      const fullPermissions = availableFeatures.reduce((acc, feat) => {
+        acc[feat.key] = true;
+        return acc;
+      }, {});
+
+      const updatedUserPerms = {
+        ...fullPermissions,
+        userEmail: rawEmail,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await setDoc(doc(db, "user_permissions", cleanEmail), updatedUserPerms, { merge: true });
+
+      setPermissions((prev) => ({
+        ...prev,
+        [cleanEmail]: updatedUserPerms,
+      }));
+
+      setAdminList((prev) => [...prev, rawEmail]);
       setNewAdminEmail("");
       alert("New Admin added successfully!");
     } catch (err) {
@@ -492,7 +516,8 @@ function AdminPanel() {
                   <div className={styles.actionBtns}>
                     <button
                       className={styles.approveBtn}
-                      onClick={() => handleApproveRequest(req)}
+                      // eslint-disable-next-line no-undef
+                      onClick={() => handleApproveRequest(request)}
                     >
                       Approve
                     </button>

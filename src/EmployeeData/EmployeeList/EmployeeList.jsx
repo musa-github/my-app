@@ -1,25 +1,53 @@
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { db } from "../../Firebase/Firebase";
+import { useSelector } from "react-redux";
+import { auth, db } from "../../Firebase/Firebase";
 import UserAttendanceRecord from "../Component/UserAttendanceRecord";
 import styles from "./EmployeeList.module.css";
 
 const DEFAULT_AVATAR =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='%23ccc'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
 
+const OWNER_EMAIL = "osanlift@gmail.com";
+
 function EmployeeList() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+  // Redux/Auth state for logged in user email
+  const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
+  const currentUserEmail = (reduxUserEmail || auth.currentUser?.email || "").toLowerCase().trim();
+
   useEffect(() => {
-    const fetchEmployees = async () => {
+    const fetchEmployeesAndAdminStatus = async () => {
       try {
         setLoading(true);
-        const querySnapshot = await getDocs(collection(db, "employees"));
 
+        // 1. Fetch Admin List
+        const adminSnap = await getDocs(collection(db, "app_admins"));
+        const adminList = [];
+        adminSnap.forEach((docSnap) => {
+          const adminData = docSnap.data();
+          if (adminData && adminData.email) {
+            adminList.push(adminData.email.toLowerCase().trim());
+          }
+        });
+
+        const checkIsAdmin =
+          currentUserEmail === OWNER_EMAIL || adminList.includes(currentUserEmail);
+        setIsAdmin(checkIsAdmin);
+
+        // 2. Fetch Employee List
+        const querySnapshot = await getDocs(collection(db, "employees"));
         const employeeList = [];
         querySnapshot.forEach((docSnap) => {
           const docData = docSnap.data();
@@ -29,15 +57,44 @@ function EmployeeList() {
 
         setEmployees(employeeList);
       } catch (err) {
-        console.error("Error fetching employees:", err);
+        console.error("Error fetching data:", err);
         setErrorMsg("Failed to load employee list.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEmployees();
-  }, []);
+    fetchEmployeesAndAdminStatus();
+  }, [currentUserEmail]);
+
+  // Handle Employee Delete Functionality
+  const handleDeleteEmployee = async (e, emp) => {
+    e.stopPropagation(); // Card Click / Modal open off rakhar jonno
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${emp.name || emp.email}?`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const cleanEmail = (emp.email || "").toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+
+      // Delete from employees, signUpData, user_permissions collections
+      if (emp.id) {
+        await deleteDoc(doc(db, "employees", emp.id));
+      }
+      if (cleanEmail) {
+        await deleteDoc(doc(db, "signUpData", cleanEmail));
+        await deleteDoc(doc(db, "user_permissions", cleanEmail));
+      }
+
+      setEmployees((prev) => prev.filter((item) => item.id !== emp.id));
+      alert("Employee deleted successfully!");
+    } catch (err) {
+      console.error("Delete Employee Error:", err);
+      alert("Failed to delete employee. Please try again.");
+    }
+  };
 
   if (loading) {
     return <div className={styles.loader}>Loading Employees...</div>;
@@ -83,6 +140,16 @@ function EmployeeList() {
                   <strong>Address:</strong> {emp.address || "N/A"}
                 </p>
               </div>
+
+              {/* Only Show Delete Button if current user is Admin */}
+              {isAdmin && (
+                <button
+                  className={styles.deleteBtn}
+                  onClick={(e) => handleDeleteEmployee(e, emp)}
+                >
+                  Delete Employee
+                </button>
+              )}
             </div>
           ))}
         </div>

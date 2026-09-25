@@ -173,3 +173,21 @@
   display: inline-block;
   margin: 4px 0;
 }
+/* Delete Button Style */
+.deleteBtn {
+  margin-top: 15px;
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.deleteBtn:hover {
+  background-color: #dc2626;
+}
