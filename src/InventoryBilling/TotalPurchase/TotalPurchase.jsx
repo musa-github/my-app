@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTotalPurchase } from '../../Fetures/Inventory/TotalPurchaseSlice';
+import { fetchTotalPurchase, updatePurchaseItem } from '../../Fetures/Inventory/TotalPurchaseSlice';
 import styles from './TotalPurchase.module.css';
 
 function TotalPurchase() {
@@ -17,6 +17,15 @@ function TotalPurchase() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedDay, setSelectedDay] = useState('');
+
+  // Edit State & Modal
+  const [editingItem, setEditingItem] = useState(null);
+  const [formData, setFormData] = useState({
+    ItemsName: '',
+    QTY: '',
+    UnitPrice: '',
+    date: '',
+  });
 
   useEffect(() => {
     dispatch(fetchTotalPurchase());
@@ -67,6 +76,41 @@ function TotalPurchase() {
     (total, item) => total + (Number(item?.UnitPrice || item?.price) || 0) * (Number(item?.QTY || item?.quantity) || 0),
     0
   );
+
+  // Edit Modal Open Handler
+  const handleOpenEdit = (item) => {
+    const dateObj = getItemDateObject(item.date || item.createdAt);
+    const dateString = dateObj && !isNaN(dateObj) ? dateObj.toISOString().split('T')[0] : '';
+
+    setEditingItem(item);
+    setFormData({
+      ItemsName: item.ItemsName || item.itemName || item.name || '',
+      QTY: item.QTY || item.quantity || 0,
+      UnitPrice: item.UnitPrice || item.price || 0,
+      date: dateString,
+    });
+  };
+
+  // Edit Submit Handler
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    const payload = {
+      ItemsName: formData.ItemsName,
+      QTY: Number(formData.QTY),
+      UnitPrice: Number(formData.UnitPrice),
+      date: formData.date,
+    };
+
+    try {
+      await dispatch(updatePurchaseItem({ id: editingItem.id, updatedData: payload })).unwrap();
+      alert('Purchase record updated successfully!');
+      setEditingItem(null);
+    } catch (err) {
+      alert('Failed to update record: ' + err);
+    }
+  };
 
   if (loading) return <div className={styles.loadingState}>⏳ Loading Purchase Inventory...</div>;
   if (error) return <div className={styles.errorState}>⚠️ Error: {error}</div>;
@@ -167,6 +211,7 @@ function TotalPurchase() {
               <th className={styles.textCenter}>Quantity</th>
               <th className={styles.textRight}>Unit Price</th>
               <th className={styles.textRight}>Total Cost</th>
+              <th className={styles.textCenter} style={{ width: '90px' }}>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -184,12 +229,28 @@ function TotalPurchase() {
                     <td className={styles.textCenter}>{qty}</td>
                     <td className={styles.textRight}>BDT {unitPrice.toFixed(2)}</td>
                     <td className={`${styles.textRight} ${styles.bold}`}>BDT {(unitPrice * qty).toFixed(2)}</td>
+                    <td className={styles.textCenter}>
+                      <button
+                        className={styles.editBtn || 'edit-btn'}
+                        onClick={() => handleOpenEdit(item)}
+                        style={{
+                          backgroundColor: '#007bff',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '5px 10px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✏️ Edit
+                      </button>
+                    </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan="5" className={styles.noData}>
+                <td colSpan="6" className={styles.noData}>
                   No purchase records matched your filters.
                 </td>
               </tr>
@@ -204,11 +265,119 @@ function TotalPurchase() {
                 <td className={`${styles.textRight} ${styles.bold} ${styles.textPrimary}`}>
                   BDT {totalPurchaseAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </td>
+                <td></td>
               </tr>
             </tfoot>
           )}
         </table>
       </div>
+
+      {/* Edit Modal */}
+      {editingItem && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#fff',
+              padding: '25px',
+              borderRadius: '8px',
+              minWidth: '320px',
+              maxWidth: '450px',
+              width: '100%',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+            }}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: '15px' }}>✏️ Edit Purchase Item</h3>
+            <form onSubmit={handleUpdateSubmit}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>Item Name:</label>
+                <input
+                  type="text"
+                  value={formData.ItemsName}
+                  onChange={(e) => setFormData({ ...formData, ItemsName: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>Quantity:</label>
+                <input
+                  type="number"
+                  value={formData.QTY}
+                  onChange={(e) => setFormData({ ...formData, QTY: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>Unit Price (BDT):</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.UnitPrice}
+                  onChange={(e) => setFormData({ ...formData, UnitPrice: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px' }}>Date:</label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingItem(null)}
+                  style={{
+                    padding: '8px 15px',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    backgroundColor: '#fff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '8px 15px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    backgroundColor: '#28a745',
+                    color: '#fff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

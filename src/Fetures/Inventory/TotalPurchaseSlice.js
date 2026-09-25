@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '../../Firebase/Firebase';
 
 // Timestamp কনভার্ট করার হেলপার ফাংশন
@@ -22,21 +22,30 @@ const convertTimestamps = (data) => {
 export const fetchTotalPurchase = createAsyncThunk(
   'totalPurchase/fetchTotalPurchase',
   async () => {
-    // এখানে 'totalPurchase' এর জায়গায় 'purchase' কালেকশন নির্দেশ করা হলো
     const querySnapshot = await getDocs(collection(db, 'purchase'));
     const items = [];
     
-    querySnapshot.forEach((doc) => {
-      const rawData = doc.data();
+    querySnapshot.forEach((docSnap) => {
+      const rawData = docSnap.data();
       const safeData = convertTimestamps(rawData);
 
       items.push({
-        id: doc.id,
+        id: docSnap.id,
         ...safeData,
       });
     });
     
     return items;
+  }
+);
+
+// Data Edit/Update Thunk
+export const updatePurchaseItem = createAsyncThunk(
+  'totalPurchase/updatePurchaseItem',
+  async ({ id, updatedData }) => {
+    const docRef = doc(db, 'purchase', id);
+    await updateDoc(docRef, updatedData);
+    return { id, updatedData };
   }
 );
 
@@ -50,6 +59,7 @@ const totalPurchaseSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // Fetch Reducers
       .addCase(fetchTotalPurchase.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -61,6 +71,14 @@ const totalPurchaseSlice = createSlice({
       .addCase(fetchTotalPurchase.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
+      })
+      // Update Reducers
+      .addCase(updatePurchaseItem.fulfilled, (state, action) => {
+        const { id, updatedData } = action.payload;
+        const index = state.items.findIndex((item) => item.id === id);
+        if (index !== -1) {
+          state.items[index] = { ...state.items[index], ...updatedData };
+        }
       });
   },
 });

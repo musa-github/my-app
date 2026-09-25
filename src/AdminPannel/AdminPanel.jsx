@@ -102,11 +102,15 @@ function AdminPanel() {
       const adminSnap = await getDocs(collection(db, "app_admins"));
       const admins = [];
       adminSnap.forEach((docSnap) => {
-        admins.push(docSnap.id.replace(/_/g, "."));
+        const data = docSnap.data();
+        if (data?.email) {
+          admins.push(data.email.toLowerCase());
+        }
       });
 
-      if (!admins.includes(OWNER_EMAIL)) {
-        admins.push(OWNER_EMAIL);
+      // Owner ইমেইল অ্যাডমিন লিস্টে না থাকলেও লিস্টে অ্যাডমিন হিসেবে গ্রান্টেড থাকবে
+      if (!admins.includes(OWNER_EMAIL.toLowerCase())) {
+        admins.push(OWNER_EMAIL.toLowerCase());
       }
       setAdminList(admins);
     } catch (err) {
@@ -121,23 +125,47 @@ function AdminPanel() {
     fetchData();
   }, []);
 
-  const isAdmin = currentUserEmail === OWNER_EMAIL || adminList.includes(currentUserEmail);
+  // Owner ইমেইল অ্যাডমিন লিস্টে থাকুক বা না থাকুক, সে সর্বদাই Full Admin Permission পাবে
+  const isAdmin = currentUserEmail === OWNER_EMAIL.toLowerCase() || adminList.includes(currentUserEmail);
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     if (!newAdminEmail) return;
 
-    const cleanEmail = newAdminEmail.trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+    const targetEmail = newAdminEmail.trim().toLowerCase();
+    const cleanEmail = targetEmail.replace(/[^a-zA-Z0-9]/g, "_");
+
     try {
+      // ১. app_admins টেবিল/কালেকশনে অ্যাডমিন ইমেইল যুক্ত করা
       await setDoc(doc(db, "app_admins", cleanEmail), {
-        email: newAdminEmail.trim().toLowerCase(),
+        email: targetEmail,
         addedBy: currentUserEmail,
         createdAt: serverTimestamp(),
       });
 
-      setAdminList((prev) => [...prev, newAdminEmail.trim().toLowerCase()]);
+      // ২. নতুন Admin-কে স্বয়ংক্রিয়ভাবে সব ধরণের Access (Permissions) true করে দেওয়া
+      const fullPermissions = availableFeatures.reduce((acc, feat) => {
+        acc[feat.key] = true;
+        return acc;
+      }, {});
+
+      const adminPermsPayload = {
+        ...fullPermissions,
+        userEmail: targetEmail,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await setDoc(doc(db, "user_permissions", cleanEmail), adminPermsPayload, { merge: true });
+
+      // Local state আপডেট
+      setAdminList((prev) => [...prev, targetEmail]);
+      setPermissions((prev) => ({
+        ...prev,
+        [cleanEmail]: adminPermsPayload,
+      }));
+
       setNewAdminEmail("");
-      alert("New Admin added successfully!");
+      alert("New Admin added with full permissions successfully!");
     } catch (err) {
       console.error("Add Admin Error:", err);
       alert("Failed to add admin.");
@@ -145,7 +173,7 @@ function AdminPanel() {
   };
 
   const handleRemoveAdmin = async (targetEmail) => {
-    if (targetEmail === OWNER_EMAIL) {
+    if (targetEmail === OWNER_EMAIL.toLowerCase()) {
       alert("Owner account cannot be removed from Admin list!");
       return;
     }
@@ -528,7 +556,7 @@ function AdminPanel() {
             {adminList.map((email) => (
               <div key={email} className={styles.adminItem}>
                 <span className={styles.adminEmail}>{email}</span>
-                {email !== OWNER_EMAIL && (
+                {email !== OWNER_EMAIL.toLowerCase() && (
                   <button onClick={() => handleRemoveAdmin(email)} className={styles.removeBtn}>
                     Remove
                   </button>

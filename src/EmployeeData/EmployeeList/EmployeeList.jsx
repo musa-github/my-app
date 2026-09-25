@@ -1,4 +1,4 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../Firebase/Firebase";
 import UserAttendanceRecord from "../Component/UserAttendanceRecord";
@@ -39,6 +39,36 @@ function EmployeeList() {
     fetchEmployees();
   }, []);
 
+  // Employee Delete Handler
+  const handleDeleteEmployee = async (e, empId, empName) => {
+    // Card Click Event যেন ট্রিগার না হয় (Modal open বন্ধ করতে)
+    e.stopPropagation();
+
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete employee "${empName || "N/A"}"?`
+    );
+
+    if (!isConfirmed) return;
+
+    try {
+      // 1. Firestore database থেকে Delete
+      await deleteDoc(doc(db, "employees", empId));
+
+      // 2. UI/State থেকে Remove
+      setEmployees((prev) => prev.filter((emp) => emp.id !== empId));
+
+      // 3. যদি ওপেন থাকা মডালের এমপ্লয়ি ডিলেট করা হয়, তবে মডাল বন্ধ হবে
+      if (selectedEmployee?.id === empId) {
+        setSelectedEmployee(null);
+      }
+
+      alert("Employee deleted successfully!");
+    } catch (err) {
+      console.error("Error deleting employee:", err);
+      alert("Failed to delete employee.");
+    }
+  };
+
   if (loading) {
     return <div className={styles.loader}>Loading Employees...</div>;
   }
@@ -60,8 +90,35 @@ function EmployeeList() {
               key={emp.id}
               className={styles.card}
               onClick={() => setSelectedEmployee(emp)}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: "pointer", position: "relative" }}
             >
+              {/* Delete Button */}
+              <button
+                type="button"
+                className={styles.deleteBtn || "delete-btn"}
+                title="Delete Employee"
+                onClick={(e) => handleDeleteEmployee(e, emp.id, emp.name)}
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  backgroundColor: "#ff4d4f",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "28px",
+                  height: "28px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "14px",
+                  zIndex: 2,
+                }}
+              >
+                🗑️
+              </button>
+
               <img
                 src={emp.avatar || DEFAULT_AVATAR}
                 alt={emp.name || "Employee"}
