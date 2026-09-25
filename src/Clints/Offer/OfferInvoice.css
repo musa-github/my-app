@@ -418,11 +418,21 @@ input:focus {
   height: auto !important;
   min-height: 0 !important;
   margin: 0 auto !important;
-  padding: 0mm 5mm 0mm 5mm !important;
+  padding: 0mm 3mm 0mm 3mm !important;
   background: #ffffff !important;
   box-shadow: none !important;
   box-sizing: border-box !important;
   overflow: visible !important;
+}
+
+.pdf-mode .notes-section {
+  margin-top: 8px !important;
+  padding-bottom: 5px !important;
+}
+
+.pdf-mode .invoice-footer {
+  margin-top: 15px !important;
+  padding-bottom: 5px !important;
 }
 
 .pdf-mode .no-print,
@@ -442,14 +452,16 @@ input:focus {
   box-sizing: border-box !important;
 }
 
+/* ইনপুট টেক্সটের নিচের অংশ জাতে না কাটে তার জন্য প্যাডিং এবং লাইন-হাইট সমন্বয় */
 .pdf-mode input,
 .pdf-mode textarea {
   border: none !important;
   outline: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  padding: 0 !important;
+  padding: 1px 2px 3px 2px !important;
   margin: 0 !important;
+  line-height: 1.4 !important;
   appearance: none !important;
   -webkit-appearance: none !important;
 }

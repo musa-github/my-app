@@ -248,8 +248,7 @@ const OfferInvoice = () => {
       const element = invoiceRef.current;
 
       const opt = {
-        // [top, left, bottom, right] - Top 42mm and Bottom 38mm space reserved for Header & Footer
-        margin: [42, 5, 38, 5], 
+        margin: [38, 8, 32, 8], 
         filename: `Offer_${headerData.toCompany || 'Invoice'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -270,7 +269,12 @@ const OfferInvoice = () => {
                 span.style.fontSize = window.getComputedStyle(input).fontSize;
                 span.style.fontWeight = window.getComputedStyle(input).fontWeight;
                 span.style.color = window.getComputedStyle(input).color;
-                span.style.lineHeight = '1.2';
+                
+                // --- লেটার কাটা পড়া বন্ধের জন্য লাইন হাইট ও প্যাডিং ফিক্স ---
+                span.style.lineHeight = '1.4';
+                span.style.paddingBottom = '3px';
+                span.style.marginBottom = '0px';
+                span.style.verticalAlign = 'bottom';
                 span.style.wordBreak = 'break-word';
                 span.style.whiteSpace = 'pre-wrap';
 
@@ -284,7 +288,7 @@ const OfferInvoice = () => {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: {
           mode: ['avoid-all', 'css', 'legacy'],
-          avoid: ['tr', '.page-break-avoid', '.invoice-footer', '.in-words-section', '.notes-section']
+          avoid: ['.page-break-avoid', '.invoice-footer', '.in-words-section', '.notes-section']
         }
       };
 
@@ -307,9 +311,8 @@ const OfferInvoice = () => {
               if (loadedCount === 2) {
                 for (let i = 1; i <= totalPages; i++) {
                   pdf.setPage(i);
-                  // Dynamic Page Header and Footer Overlay
-                  pdf.addImage(headerImg, 'PNG', 5, 5, 200, 32);
-                  pdf.addImage(footerImg, 'PNG', 5, 262, 200, 30);
+                  pdf.addImage(headerImg, 'PNG', 5, 4, 200, 30);
+                  pdf.addImage(footerImg, 'PNG', 5, 268, 200, 24);
                 }
                 resolve(pdf);
               }

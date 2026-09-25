@@ -10,7 +10,7 @@
   box-sizing: border-box;
 }
 
-/* Filter Options Header (Updated & Enhanced) */
+/* Filter Options Header */
 .filter-container {
   margin-bottom: 18px;
   display: flex;
@@ -101,7 +101,6 @@
   outline: none;
 }
 
-/* Quick Actions Button Container */
 .quick-actions-box {
   justify-content: flex-end;
 }
@@ -122,7 +121,6 @@
   margin-top: 0 !important;
 }
 
-/* Action Buttons Wrap */
 .action-buttons-wrap {
   margin-top: 15px;
   display: flex;
@@ -177,7 +175,6 @@
   background-color: #1d4ed8;
 }
 
-/* Error Text Styling */
 .error-text,
 .invoice-error-text {
   color: #dc3545;
@@ -188,7 +185,7 @@
 /* Invoice Sheet Layout */
 .invoice-container {
   width: 210mm;
-  height: 296mm;
+  min-height: 296mm;
   padding: 15mm;
   margin: 0 auto 30px auto;
   background: #ffffff;
@@ -199,24 +196,24 @@
   justify-content: space-between;
   font-size: 12px;
   color: #000000;
-  position: relative; /* ওয়াটারমার্ক এরিয়ার রেফারেন্স নির্ধারণের জন্য */
-  overflow: hidden; /* ওয়াটারমার্ক যেন পেজের বাইরে ছড়িয়ে না পড়ে */
+  position: relative;
+  overflow: hidden;
 }
 
-/* --- [নতুন যোগ করা হয়েছে: Watermark CSS] --- */
+/* Watermark CSS */
 .invoice-container::before {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px; /* ওয়াটারমার্কের সাইজ */
+  width: 320px;
   height: 320px;
-  background-image: url("../../assets/main-logo.png"); /* লোগো ইমেজ পাথ */
+  background-image: url("../../assets/main-logo.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  opacity: 0.08; /* হালকা ব্যাকগ্রাউন্ড ভিজিবিলিটি */
+  opacity: 0.08;
   pointer-events: none;
   z-index: 0;
 }
@@ -224,7 +221,7 @@
 .invoice-content-wrap,
 .footer-section-wrap {
   position: relative;
-  z-index: 1; /* সকল মূল কনটেন্ট ওয়াটারমার্কের উপরে থাকবে */
+  z-index: 1;
 }
 
 .invoice-content-wrap {
@@ -235,11 +232,9 @@
   display: flex;
   align-items: center;
   gap: 15px;
-
   padding-bottom: 8px;
 }
 
-/* Logo Container - Flex properties reset */
 .logo-box {
   width: 100%;
   height: 110px;
@@ -250,7 +245,6 @@
   overflow: hidden;
 }
 
-/* Logo Image - Aspect ratio fix for html2pdf */
 .logo-img {
   width: auto;
   height: auto;
@@ -330,7 +324,6 @@
   box-sizing: border-box;
 }
 
-/* Table Specific Cell Styles */
 .table-col-sl {
   width: 7%;
 }
@@ -486,7 +479,6 @@
    PERFECT PDF PRINTING MODE SETTINGS
    ========================================== */
 
-/* Page Break Control Rules */
 .page-break-avoid,
 .in-words-section,
 .notes-section,
@@ -513,21 +505,21 @@
   break-after: auto !important;
 }
 
-/* PDF Mode Specific Styling */
 .pdf-mode {
   width: 100% !important;
   height: auto !important;
   min-height: 0 !important;
   margin: 0 auto !important;
-  /* Top 0mm and Bottom 0mm since html2pdf margins handle the content spacing */
-  padding: 0mm 5mm 0mm 5mm !important;
+  padding: 0mm 3mm 0mm 3mm !important;
   background: #ffffff !important;
   box-shadow: none !important;
   box-sizing: border-box !important;
   overflow: visible !important;
 }
 
+/* Hide duplicate headers/footers and interactive UI in PDF layer */
 .pdf-mode .no-print,
+.pdf-mode .no-print-in-pdf,
 .pdf-mode .pad-header,
 .pdf-mode .bottom-services-container,
 .pdf-mode .btn-action,
@@ -536,8 +528,21 @@
 .pdf-mode .inline-delete,
 .pdf-mode .suggestions-dropdown,
 .pdf-mode .company-header,
-.pdf-mode .bottom-contact {
+.pdf-mode .bottom-contact,
+.pdf-mode .bottom-contact img {
   display: none !important;
+}
+
+.pdf-mode .footer-section-wrap {
+  margin-top: 15px !important;
+  padding-top: 5px !important;
+  page-break-inside: avoid !important;
+}
+
+.pdf-mode .invoice-footer {
+  margin-bottom: 10px !important;
+  display: flex !important;
+  justify-content: space-between !important;
 }
 
 .pdf-mode * {

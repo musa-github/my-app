@@ -2,7 +2,8 @@
 import html2pdf from 'html2pdf.js';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import logo from "../../assets/main-logo.png"; // আপনার প্রোজেক্টের লোগো পাথ অনুযায়ী চেক করুন
+import footerImg from "../../assets/Footer.png";
+import headerImg from "../../assets/header.png";
 
 
 const ServiceBill = () => {
@@ -10,7 +11,7 @@ const ServiceBill = () => {
   const navigate = useNavigate();
   const invoiceRef = useRef(null);
 
-  // Router Location State থেকে ডাটা নেওয়া
+  // Router Location State থেকে ডাটা নেওয়া
   const { projectInfo, billInfo } = location.state || {};
 
   const [isPdfPrinting, setIsPdfPrinting] = useState(false);
@@ -26,7 +27,7 @@ const ServiceBill = () => {
     mode: 'Payment by cash.'
   });
 
-  // ProjectDetails থেকে আসা সার্ভিস এবং স্পেয়ার পার্টস ডাটা টেবিলে সেট করা
+  // ProjectDetails থেকে সার্ভিস ও স্পেয়ার পার্টস ডাটা সেট করা
   useEffect(() => {
     if (billInfo) {
       const items = [];
@@ -41,7 +42,7 @@ const ServiceBill = () => {
         });
       }
 
-      // Spare Parts Charges (যদি থাকে)
+      // Spare Parts Charges
       if (parseFloat(billInfo.sparePartsBill) > 0) {
         items.push({
           name: 'Spare Parts Charges',
@@ -51,7 +52,7 @@ const ServiceBill = () => {
         });
       }
 
-      // Previous Due Balance (যদি থাকে)
+      // Previous Due Balance
       if (parseFloat(billInfo.lastMonthDue) > 0) {
         items.push({
           name: 'Previous Due Balance',
@@ -109,24 +110,95 @@ const ServiceBill = () => {
       : `${integerPart} Taka Only`;
   };
 
-  // PDF Export
+  // PDF Download Solution with Dynamic Header & Footer Image Overlay
   const handleDownloadPDF = () => {
     setIsPdfPrinting(true);
+    window.scrollTo(0, 0);
 
     setTimeout(() => {
       const element = invoiceRef.current;
+
       const options = {
-        margin: 0,
-        filename: `Service_Bill_${projectInfo.projectName || 'Draft'}_${billInfo.month}.pdf`,
+        margin: [35, 8, 30, 8],
+        filename: `Service_Bill_${projectInfo.projectName || 'Draft'}_${billInfo.month || 'Current'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const pdfElement = clonedDoc.querySelector('.pdf-mode');
+            if (pdfElement) {
+              pdfElement.style.width = '100%';
+              const inputs = pdfElement.querySelectorAll('input, textarea');
+              inputs.forEach((input) => {
+                const span = clonedDoc.createElement('span');
+                span.innerText = input.value || input.placeholder || '';
+                span.style.display = 'inline-block';
+                span.style.fontFamily = 'inherit';
+                span.style.fontSize = window.getComputedStyle(input).fontSize;
+                span.style.fontWeight = window.getComputedStyle(input).fontWeight;
+                span.style.color = window.getComputedStyle(input).color;
+                span.style.lineHeight = '1.4';
+                span.style.wordBreak = 'break-word';
+                span.style.whiteSpace = 'pre-wrap';
+
+                if (input.parentNode) {
+                  input.parentNode.replaceChild(span, input);
+                }
+              });
+            }
+          }
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: {
+          mode: ['avoid-all', 'css', 'legacy'],
+          avoid: ['.page-break-avoid', '.footer-section-wrap']
+        }
       };
 
-      html2pdf().set(options).from(element).save().then(() => {
-        setIsPdfPrinting(false);
-      });
-    }, 150);
+      html2pdf()
+        .from(element)
+        .set(options)
+        .toPdf()
+        .get('pdf')
+        .then((pdf) => {
+          const totalPages = pdf.internal.getNumberOfPages();
+          const hImg = new Image();
+          const fImg = new Image();
+          hImg.src = headerImg;
+          fImg.src = footerImg;
+
+          return new Promise((resolve) => {
+            let loadedCount = 0;
+            const checkLoaded = () => {
+              loadedCount++;
+              if (loadedCount === 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                  pdf.setPage(i);
+                  pdf.addImage(hImg, 'PNG', 5, 4, 200, 30);
+                  pdf.addImage(fImg, 'PNG', 5, 268, 200, 24);
+                }
+                resolve(pdf);
+              }
+            };
+
+            hImg.onload = checkLoaded;
+            fImg.onload = checkLoaded;
+            if (hImg.complete) checkLoaded();
+            if (fImg.complete) checkLoaded();
+          });
+        })
+        .then((pdf) => {
+          pdf.save(`Service_Bill_${projectInfo.projectName || 'Draft'}_${billInfo.month || 'Current'}.pdf`);
+          setIsPdfPrinting(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setIsPdfPrinting(false);
+        });
+    }, 200);
   };
 
   return (
@@ -146,18 +218,12 @@ const ServiceBill = () => {
       {/* Invoice Pad Document Area */}
       <div className={`invoice-container ${isPdfPrinting ? 'pdf-mode' : ''}`} ref={invoiceRef}>
         <div className="invoice-content-wrap">
-          {/* Header Pad */}
-          <div className="company-header">
-            <div className="logo-box">
-              <img src={logo} alt="Company Logo" className="logo-img" />
-            </div>
-            <div className="company-info">
-              <h1 className="company-title">H.R.ENGINEERS</h1>
-              <p className="company-services">■ Lift ■ ARD ■ Generator ■ Escalator ■ Service & Maintenance ■ Spare Parts</p>
-            </div>
+          {/* Pad Header Image Placeholder / Visible on UI only */}
+          <div className="company-header no-print-in-pdf">
+            <img src={headerImg} alt="Header Pad" style={{ width: '100%', height: 'auto' }} />
           </div>
 
-          <div className="document-type">SERVICE BILL / INVOICE</div>
+          <div className="document-type" style={{ marginTop: '15px' }}>SERVICE BILL / INVOICE</div>
 
           {/* Customer Meta Details */}
           <div className="info-section">
@@ -173,11 +239,11 @@ const ServiceBill = () => {
               <div>Phone: {projectInfo.phoneNo || '-'}</div>
             </div>
 
-            <div className="subject-line">
+            <div className="subject-line" style={{ marginTop: '8px' }}>
               <strong>Sub: </strong><span className="bold">Servicing & Maintenance Bill for the month of {billInfo.month}</span>
             </div>
 
-            <div className="salutation">
+            <div className="salutation" style={{ marginTop: '8px' }}>
               Dear Sir,<br />
               We would like to submit our servicing bill as per the following basis:
             </div>
@@ -187,13 +253,13 @@ const ServiceBill = () => {
           <table className="invoice-table">
             <thead>
               <tr>
-                <th style={{ width: '7%' }}>S.l No.</th>
-                <th style={{ width: '43%' }}>Items Description</th>
-                <th style={{ width: '8%' }}>Qty</th>
-                <th style={{ width: '8%' }}>Unit</th>
-                <th style={{ width: '14%' }}>Price (BDT)</th>
-                <th style={{ width: '14%' }}>Total (BDT)</th>
-                {!isPdfPrinting && <th className="no-print" style={{ width: '6%' }}>Action</th>}
+                <th className="table-col-sl">S.l No.</th>
+                <th className="table-col-desc">Items Description</th>
+                <th className="table-col-qty">Qty</th>
+                <th className="table-col-unit">Unit</th>
+                <th className="table-col-price">Price (BDT)</th>
+                <th className="table-col-total">Total (BDT)</th>
+                {!isPdfPrinting && <th className="no-print table-col-action">Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -236,7 +302,7 @@ const ServiceBill = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={isPdfPrinting ? "6" : "7"} className="text-center" style={{ color: 'red', padding: '15px' }}>
+                  <td colSpan={isPdfPrinting ? "6" : "7"} className="text-center empty-items-cell">
                     No items available.
                   </td>
                 </tr>
@@ -299,7 +365,7 @@ const ServiceBill = () => {
         <div className="page-break-avoid footer-section-wrap">
           <div className="invoice-footer">
             <div className="footer-left">
-              <div className="seal-circle">H.R.E</div>
+              <div className="seal-circle">MM</div>
               <p>Thanking You. Yours Truly</p>
             </div>
             <div className="footer-center">
@@ -308,9 +374,8 @@ const ServiceBill = () => {
             </div>
           </div>
 
-          <div className="bottom-contact">
-            <p>📞 01610989538, 01932405247 | ✉️ hrengineers@gmail.com</p>
-            <p>📍 Dhaka, Bangladesh</p>
+          <div className="bottom-contact no-print-in-pdf">
+            <img src={footerImg} alt="Footer Pad" style={{ width: '100%', height: 'auto' }} />
           </div>
         </div>
       </div>

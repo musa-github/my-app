@@ -84,7 +84,7 @@
    ========================================== */
 .invoice-container {
   width: 210mm;
-  height: 296mm; /* Exactly A4 height to prevent 2nd page overflow */
+  min-height: 296mm;
   padding: 15mm;
   margin: 0 auto 30px auto;
   background: #ffffff;
@@ -92,33 +92,33 @@
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* অটোমেটিক ফুটারকে একদম নিচে রাখবে */
+  justify-content: space-between;
   position: relative;
-  overflow: hidden; /* ওয়াটারমার্ক যেন প্যাডের বাইরে চলে না যায় */
+  overflow: hidden;
 }
 
-/* --- [নতুন যোগ করা হয়েছে: Watermark CSS] --- */
+/* Watermark CSS */
 .invoice-container::before {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px; /* ওয়াটারমার্ক লোগোর সাইজ */
+  width: 320px;
   height: 320px;
-  background-image: url("../../assets/main-logo.png"); /* হেডার লোগোর পাথ */
+  background-image: url("../../assets/main-logo.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  opacity: 0.08; /* হালকা ওয়াটারমার্ক ভিজিবিলিটি (প্রিন্ট ও PDF এ স্পষ্ট আসবে) */
-  pointer-events: none; /* ইনপুট বা লেখার ক্ষেত্রে কোনো বাধা দেবে না */
+  opacity: 0.08;
+  pointer-events: none;
   z-index: 0;
 }
 
 .challan-content-wrap,
 .footer-section-wrap {
   position: relative;
-  z-index: 1; /* কনটেন্ট ওয়াটারমার্কের উপরে থাকবে */
+  z-index: 1;
 }
 
 .challan-content-wrap {
@@ -128,7 +128,7 @@
 /* Footer Section - Fixed at Bottom */
 .footer-section-wrap {
   width: 100%;
-  margin-top: auto; /* ফুটারকে টেনে একদম নিচে বসাবে */
+  margin-top: auto;
   padding-top: 10px;
 }
 
@@ -218,7 +218,7 @@
 }
 
 /* ==========================================
-   ৪. Print / PDF Export Utility Classes
+   ৪. PDF Mode Overrides
    ========================================== */
 @media print {
   .no-print {
@@ -227,11 +227,50 @@
 }
 
 .pdf-mode {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  padding: 0mm 3mm 0mm 3mm !important;
+  background: #ffffff !important;
   box-shadow: none !important;
-  margin: 0 !important;
-  padding: 12mm !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
 }
 
-.pdf-mode .no-print {
+/* Hide elements in PDF mode to prevent duplicate rendering */
+.pdf-mode .no-print,
+.pdf-mode .no-print-in-pdf,
+.pdf-mode .company-header,
+.pdf-mode .bottom-contact img {
   display: none !important;
+}
+
+.pdf-mode .footer-section-wrap {
+  margin-top: 15px !important;
+  padding-top: 5px !important;
+  page-break-inside: avoid !important;
+}
+
+.pdf-mode .invoice-footer {
+  margin-bottom: 10px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+}
+
+.pdf-mode * {
+  box-sizing: border-box !important;
+}
+
+.pdf-mode input,
+.pdf-mode textarea {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 1px 2px 3px 2px !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }

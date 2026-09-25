@@ -1,6 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
+import html2pdf from 'html2pdf.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import footerImg from "../../assets/Footer.png";
+import headerImg from "../../assets/header.png";
 
 import {
   DEFAULT_NOTES,
@@ -20,7 +23,6 @@ import {
   setSubSourceFilter,
   updateBillInFirebase
 } from '../../Fetures/Inventory/InvoiceSlice.js';
-import { downloadInvoicePDF } from '../../HndlePDF/HndlePDF.js';
 import InvoiceFooter from '../../Pad/InvoiceFooter.jsx';
 import InvoiceHeader from '../../Pad/InvoiceHeader.jsx';
 import './InvoiceComponent.css';
@@ -47,7 +49,6 @@ const InvoiceComponent = () => {
     subSourceFilter = 'offers_only'
   } = useSelector((state) => state.invoice || state.challan || {});
 
-  // Redux Stock lists for suggestion dropdown
   const { offerList: offerProductList = [], purchaseList: purchaseProductList = [] } = useSelector((state) => state.offer || {});
 
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -58,7 +59,6 @@ const InvoiceComponent = () => {
   const [existingBillIds, setExistingBillIds] = useState(null);
   const [paidAmount, setPaidAmount] = useState(0);
 
-  // Active suggestion row index state
   const [activeSuggestionRow, setActiveSuggestionRow] = useState(null);
 
   const [editableHeader, setEditableHeader] = useState({
@@ -270,7 +270,6 @@ const InvoiceComponent = () => {
     });
   };
 
-  // Helper functions for suggestion items
   const getProductName = (prod) => prod?.ItemsName || prod?.itemsName || prod?.name || prod?.title || '';
   const getProductPrice = (prod) => prod?.SalingPrice ?? prod?.salingPrice ?? prod?.SellingPrice ?? prod?.sellingPrice ?? prod?.price ?? 0;
 
@@ -302,7 +301,6 @@ const InvoiceComponent = () => {
   const handleRemoveNote = (index) => setNotes((prev) => prev.filter((_, i) => i !== index));
   const handlePaymentChange = (e) => setPaymentMode((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // Calculations
   const grandTotal = useMemo(() => {
     return editableItems.reduce(
       (sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
@@ -325,8 +323,6 @@ const InvoiceComponent = () => {
     const safePaid = Number(paidAmount) || 0;
     const safeGrandTotal = Number(grandTotal) || 0;
     const targetCompanyId = getTargetCompanyId();
-    
-    // Save to Firestore with proper createdType tag
     const createdType = manualInvoice ? 'General' : 'offer_based';
 
     return {
@@ -399,12 +395,96 @@ const InvoiceComponent = () => {
     }
   }, [saveSuccess, updateSuccess, deleteSuccess, dispatch, handleReset]);
 
+  // --- PDF Generat Function Fix for Header & Footer ---
   const handleDownloadPDF = () => {
-    downloadInvoicePDF({
-      elementRef: invoiceRef,
-      fileName: `Invoice_Bill_${editableHeader.invoiceNo || 'Draft'}`,
-      setIsPdfPrinting
-    });
+    setIsPdfPrinting(true);
+    window.scrollTo(0, 0);
+
+    setTimeout(() => {
+      const element = invoiceRef.current;
+
+      const options = {
+        margin: [35, 8, 30, 8],
+        filename: `Invoice_Bill_${editableHeader.invoiceNo || 'Draft'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const pdfElement = clonedDoc.querySelector('.pdf-mode');
+            if (pdfElement) {
+              pdfElement.style.width = '100%';
+              const inputs = pdfElement.querySelectorAll('input, textarea');
+              inputs.forEach((input) => {
+                const span = clonedDoc.createElement('span');
+                span.innerText = input.value || input.placeholder || '';
+                span.style.display = 'inline-block';
+                span.style.fontFamily = 'inherit';
+                span.style.fontSize = window.getComputedStyle(input).fontSize;
+                span.style.fontWeight = window.getComputedStyle(input).fontWeight;
+                span.style.color = window.getComputedStyle(input).color;
+                span.style.lineHeight = '1.4';
+                span.style.paddingBottom = '3px';
+                span.style.wordBreak = 'break-word';
+                span.style.whiteSpace = 'pre-wrap';
+
+                if (input.parentNode) {
+                  input.parentNode.replaceChild(span, input);
+                }
+              });
+            }
+          }
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: {
+          mode: ['avoid-all', 'css', 'legacy'],
+          avoid: ['.page-break-avoid', '.footer-section-wrap']
+        }
+      };
+
+      html2pdf()
+        .from(element)
+        .set(options)
+        .toPdf()
+        .get('pdf')
+        .then((pdf) => {
+          const totalPages = pdf.internal.getNumberOfPages();
+          const hImg = new Image();
+          const fImg = new Image();
+          hImg.src = headerImg;
+          fImg.src = footerImg;
+
+          return new Promise((resolve) => {
+            let loadedCount = 0;
+            const checkLoaded = () => {
+              loadedCount++;
+              if (loadedCount === 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                  pdf.setPage(i);
+                  pdf.addImage(hImg, 'PNG', 5, 4, 200, 30);
+                  pdf.addImage(fImg, 'PNG', 5, 268, 200, 24);
+                }
+                resolve(pdf);
+              }
+            };
+
+            hImg.onload = checkLoaded;
+            fImg.onload = checkLoaded;
+            if (hImg.complete) checkLoaded();
+            if (fImg.complete) checkLoaded();
+          });
+        })
+        .then((pdf) => {
+          pdf.save(`Invoice_Bill_${editableHeader.invoiceNo || 'Draft'}.pdf`);
+          setIsPdfPrinting(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setIsPdfPrinting(false);
+        });
+    }, 200);
   };
 
   const currentActiveData = challanData || manualInvoice;
@@ -412,7 +492,6 @@ const InvoiceComponent = () => {
   return (
     <div className="main-wrapper" onClick={() => setActiveSuggestionRow(null)}>
       <div className="invoice-search-card no-print">
-        {/* Main Filter Category */}
         <div className="filter-container">
           <span className="filter-title">🔍 Filter Category:</span>
 
@@ -450,7 +529,6 @@ const InvoiceComponent = () => {
           </label>
         </div>
 
-        {/* Sub-source Selection for Offer Based */}
         {localFilterType === 'offer_based' && (
           <div className="filter-container sub-filter-container">
             <span className="filter-title">📑 Select Source:</span>
@@ -608,7 +686,6 @@ const InvoiceComponent = () => {
                                 }} 
                               />
 
-                              {/* Live Stock Suggestions Dropdown */}
                               {activeSuggestionRow === index && item.name && item.name.trim().length > 0 && (() => {
                                 const searchTerm = item.name.trim().toLowerCase();
                                 const filteredOfferProds = offerProductList.filter((p) =>

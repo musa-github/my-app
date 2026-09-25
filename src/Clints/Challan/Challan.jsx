@@ -11,7 +11,7 @@ import {
   fetchAllCompanies,
   fetchOffersByCompany,
   fetchSpecificOfferForChallan,
-  resetChallan // <-- ১. ইম্পোর্ট করা হলো
+  resetChallan
 } from '../../Fetures/Inventory/ChallanSlice';
 import './Challan.css';
 
@@ -83,7 +83,6 @@ const Challan = () => {
     dispatch(createCustomChallan());
   };
 
-  // ২. [নতুন] রিকুয়েস্ট রিসেট করার ফাংশন
   const handleReset = () => {
     setSelectedCompany('');
     setSelectedOfferId('');
@@ -115,41 +114,108 @@ const Challan = () => {
     setEditableHeader(prev => ({ ...prev, [field]: value }));
   };
 
+  // --- PDF Download Function Fixed for Header and Footer ---
   const handleDownloadPDF = () => {
     if (!challanData) return;
 
     setIsPdfPrinting(true);
+    window.scrollTo(0, 0);
 
     setTimeout(() => {
       const element = challanRef.current;
-      
+
       const options = {
-        margin:       0,
-        filename:     `Delivery_Challan_${challanData.challanNo}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { 
-          scale: 2, 
-          useCORS: true, 
-          scrollX: 0, 
-          scrollY: 0 
+        margin: [35, 8, 30, 8], // Top, Right, Bottom, Left margins reserved for Header/Footer
+        filename: `Delivery_Challan_${challanData.challanNo}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const pdfElement = clonedDoc.querySelector('.pdf-mode');
+            if (pdfElement) {
+              pdfElement.style.width = '100%';
+              const inputs = pdfElement.querySelectorAll('input, textarea');
+              inputs.forEach((input) => {
+                const span = clonedDoc.createElement('span');
+                span.innerText = input.value || input.placeholder || '';
+                span.style.display = 'inline-block';
+                span.style.fontFamily = 'inherit';
+                span.style.fontSize = window.getComputedStyle(input).fontSize;
+                span.style.fontWeight = window.getComputedStyle(input).fontWeight;
+                span.style.color = window.getComputedStyle(input).color;
+                span.style.lineHeight = '1.4';
+                span.style.paddingBottom = '3px';
+                span.style.verticalAlign = 'bottom';
+                span.style.wordBreak = 'break-word';
+                span.style.whiteSpace = 'pre-wrap';
+
+                if (input.parentNode) {
+                  input.parentNode.replaceChild(span, input);
+                }
+              });
+            }
+          }
         },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: {
+          mode: ['avoid-all', 'css', 'legacy'],
+          avoid: ['.page-break-avoid', '.footer-section-wrap']
+        }
       };
 
-      html2pdf().set(options).from(element).save().then(() => {
-        setIsPdfPrinting(false);
-      });
-    }, 150);
+      html2pdf()
+        .from(element)
+        .set(options)
+        .toPdf()
+        .get('pdf')
+        .then((pdf) => {
+          const totalPages = pdf.internal.getNumberOfPages();
+          const headerImg = new Image();
+          const footerImg = new Image();
+          headerImg.src = header;
+          footerImg.src = footer;
+
+          return new Promise((resolve) => {
+            let loadedCount = 0;
+            const checkLoaded = () => {
+              loadedCount++;
+              if (loadedCount === 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                  pdf.setPage(i);
+                  // Dynamic Header & Footer for every page
+                  pdf.addImage(headerImg, 'PNG', 5, 4, 200, 30);
+                  pdf.addImage(footerImg, 'PNG', 5, 268, 200, 24);
+                }
+                resolve(pdf);
+              }
+            };
+
+            headerImg.onload = checkLoaded;
+            footerImg.onload = checkLoaded;
+            if (headerImg.complete) checkLoaded();
+            if (footerImg.complete) checkLoaded();
+          });
+        })
+        .then((pdf) => {
+          pdf.save(`Delivery_Challan_${challanData.challanNo}.pdf`);
+          setIsPdfPrinting(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setIsPdfPrinting(false);
+        });
+    }, 200);
   };
 
   return (
     <div className="main-wrapper">
       
-      {/* ১. ড্রপডাউন, র‍্যান্ডম ক্রিয়েট, রিসেট ও ডাউনলোড কন্ট্রোল বক্স */}
+      {/* 1. Control Card */}
       <div className="challan-search-card no-print">
         <div className="dropdown-filter-group">
-          
-          {/* Company Dropdown */}
           <div className="select-box">
             <label className="select-label">1. Select Company Name:</label>
             <select 
@@ -169,7 +235,6 @@ const Challan = () => {
             </select>
           </div>
 
-          {/* Offer ID Dropdown */}
           <div className="select-box">
             <label className="select-label">2. Select Offer ID:</label>
             <select 
@@ -189,7 +254,6 @@ const Challan = () => {
             </select>
           </div>
 
-          {/* বাটনের গ্রুপ (Create Random & Reset) */}
           <div className="select-box" style={{ justifyContent: 'flex-end', gap: '8px' }}>
             <label className="select-label">Actions:</label>
             <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
@@ -202,7 +266,6 @@ const Challan = () => {
                 ➕ Create Blank
               </button>
 
-              {/* [নতুন যোগ করা হয়েছে] Reset Button */}
               <button 
                 type="button" 
                 className="btn-download-challan" 
@@ -213,7 +276,6 @@ const Challan = () => {
               </button>
             </div>
           </div>
-
         </div>
 
         {error && <p className="error-text">{error}</p>}
@@ -227,7 +289,7 @@ const Challan = () => {
         )}
       </div>
 
-      {/* ২. চালানের বডি */}
+      {/* 2. Challan Body */}
       {loadingChallan ? (
         <div className="no-data-placeholder">Generating Delivery Challan...</div>
       ) : challanData ? (
@@ -235,12 +297,11 @@ const Challan = () => {
           
           <div className="challan-content-wrap">
             
-            {/* Header */}
-            <div className="company-header">
+            {/* Screen View Header Logo */}
+            <div className="company-header no-print-in-pdf">
               <div className="logo-box">
-                <img src={header} alt="Company Logo" className="logo-img" />
+                <img src={header} alt="Company Logo" className="logo-img" style={{ width: '100%' }} />
               </div>
-              
             </div>
 
             <div className="document-type">DELIVERY CHALLAN</div>
@@ -398,7 +459,7 @@ const Challan = () => {
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer Section */}
           <div className="page-break-avoid footer-section-wrap">
             <div className="invoice-footer">
               <div className="footer-left">
@@ -413,8 +474,9 @@ const Challan = () => {
               </div>
             </div>
 
-            <div className="bottom-contact">
-              <img src={footer} alt="footer" style={{width:"100%"}}/>
+            {/* Screen View Footer Image */}
+            <div className="bottom-contact no-print-in-pdf">
+              <img src={footer} alt="footer" style={{ width: "100%" }} />
             </div>
           </div>
 
