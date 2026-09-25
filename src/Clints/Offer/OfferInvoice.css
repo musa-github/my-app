@@ -48,7 +48,6 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 /* Watermark Overlay */
@@ -386,9 +385,8 @@ input:focus {
    PERFECT PDF PRINTING MODE SETTINGS
    ========================================== */
 
-/* Explicit Page Break Protections */
+/* Page Break Control Rules */
 .page-break-avoid,
-.invoice-table tr,
 .in-words-section,
 .notes-section,
 .invoice-footer,
@@ -408,16 +406,19 @@ input:focus {
 }
 
 .invoice-table tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
   page-break-after: auto !important;
   break-after: auto !important;
 }
 
+/* PDF Mode Specific Styling */
 .pdf-mode {
-  width: 210mm !important;
+  width: 100% !important;
   height: auto !important;
   min-height: 0 !important;
   margin: 0 auto !important;
-  padding: 38mm 10mm 32mm 10mm !important;
+  padding: 0mm 5mm 0mm 5mm !important;
   background: #ffffff !important;
   box-shadow: none !important;
   box-sizing: border-box !important;
@@ -431,7 +432,9 @@ input:focus {
 .pdf-mode .add-row-container,
 .pdf-mode .btn-delete,
 .pdf-mode .inline-delete,
-.pdf-mode .suggestions-dropdown {
+.pdf-mode .suggestions-dropdown,
+.pdf-mode .company-header,
+.pdf-mode .bottom-contact {
   display: none !important;
 }
 

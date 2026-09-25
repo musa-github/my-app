@@ -482,23 +482,76 @@
   margin: 20px auto;
 }
 
-.page-break-avoid {
+/* ==========================================
+   PERFECT PDF PRINTING MODE SETTINGS
+   ========================================== */
+
+/* Page Break Control Rules */
+.page-break-avoid,
+.in-words-section,
+.notes-section,
+.invoice-footer,
+.seal-box,
+.receiver-sign-box {
   page-break-inside: avoid !important;
   break-inside: avoid !important;
 }
 
-@media print {
-  .no-print {
-    display: none !important;
-  }
+.invoice-table {
+  page-break-inside: auto !important;
+  break-inside: auto !important;
 }
 
+.invoice-table thead {
+  display: table-header-group !important;
+}
+
+.invoice-table tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  page-break-after: auto !important;
+  break-after: auto !important;
+}
+
+/* PDF Mode Specific Styling */
 .pdf-mode {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  /* Top 0mm and Bottom 0mm since html2pdf margins handle the content spacing */
+  padding: 0mm 5mm 0mm 5mm !important;
+  background: #ffffff !important;
   box-shadow: none !important;
-  margin: 0 !important;
-  padding: 12mm !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
 }
 
-.pdf-mode .no-print {
+.pdf-mode .no-print,
+.pdf-mode .pad-header,
+.pdf-mode .bottom-services-container,
+.pdf-mode .btn-action,
+.pdf-mode .add-row-container,
+.pdf-mode .btn-delete,
+.pdf-mode .inline-delete,
+.pdf-mode .suggestions-dropdown,
+.pdf-mode .company-header,
+.pdf-mode .bottom-contact {
   display: none !important;
+}
+
+.pdf-mode * {
+  box-sizing: border-box !important;
+}
+
+.pdf-mode input,
+.pdf-mode textarea {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }

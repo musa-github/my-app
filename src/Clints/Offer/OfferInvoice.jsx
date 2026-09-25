@@ -248,7 +248,8 @@ const OfferInvoice = () => {
       const element = invoiceRef.current;
 
       const opt = {
-        margin: [5, 5, 20, 5],
+        // [top, left, bottom, right] - Top 42mm and Bottom 38mm space reserved for Header & Footer
+        margin: [42, 5, 38, 5], 
         filename: `Offer_${headerData.toCompany || 'Invoice'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -283,7 +284,7 @@ const OfferInvoice = () => {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: {
           mode: ['avoid-all', 'css', 'legacy'],
-          avoid: ['tr', '.page-break-avoid', '.invoice-footer']
+          avoid: ['tr', '.page-break-avoid', '.invoice-footer', '.in-words-section', '.notes-section']
         }
       };
 
@@ -306,8 +307,9 @@ const OfferInvoice = () => {
               if (loadedCount === 2) {
                 for (let i = 1; i <= totalPages; i++) {
                   pdf.setPage(i);
-                  pdf.addImage(headerImg, 'PNG', 10, 10, 190, 30);
-                  pdf.addImage(footerImg, 'PNG', 10, 267, 190, 30);
+                  // Dynamic Page Header and Footer Overlay
+                  pdf.addImage(headerImg, 'PNG', 5, 5, 200, 32);
+                  pdf.addImage(footerImg, 'PNG', 5, 262, 200, 30);
                 }
                 resolve(pdf);
               }
