@@ -1,11 +1,12 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import html2pdf from "html2pdf.js";
 import { useEffect, useRef, useState } from "react";
 import { db } from "../../Firebase/Firebase";
 import styles from "./UserAttendanceRecord.module.css";
 
-function UserAttendanceRecord({ employeeName, employeeEmail }) {
+function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [activeKey, setActiveKey] = useState("");
   const [employeeDetails, setEmployeeDetails] = useState({
     name: employeeName || "Employee",
     designation: "N/A",
@@ -32,13 +33,35 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
   const [loading, setLoading] = useState(true);
   const reportRef = useRef();
 
-  const currentMonth = new Date().toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
+  // Admin Modals State
+  const [editProfileModal, setEditProfileModal] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({
+    designation: "",
+    baseSalary: 0,
+    advanceDeduction: 0,
   });
 
+  const [editAttendanceModal, setEditAttendanceModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+
+  const now = new Date();
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const currentMonth = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+  // Helper Function: Decimal Hours-কে Hours & Minutes ফরম্যাটে রূপান্তর
+  const formatHoursToHM = (decimalHours) => {
+    const total = parseFloat(decimalHours);
+    if (isNaN(total) || total <= 0) return "0h 0m";
+    const h = Math.floor(total);
+    const m = Math.round((total - h) * 60);
+    return `${h}h ${m}m`;
+  };
+
   const parseTimeToHours = (timeStr) => {
-    if (!timeStr) return null;
+    if (!timeStr || timeStr === "--") return null;
     const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
     if (!match) return null;
 
@@ -52,24 +75,24 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
     return hours + minutes / 60;
   };
 
-  useEffect(() => {
-    const fetchAttendanceAndPayroll = async () => {
-      setLoading(true);
+  const fetchAttendanceAndPayroll = async () => {
+    setLoading(true);
 
-      try {
-        let baseSalary = 0;
-        let advanceDeduction = 0;
-        let designation = "N/A";
-        let fetchedName = employeeName || "";
+    try {
+      let baseSalary = 0;
+      let advanceDeduction = 0;
+      let designation = "N/A";
+      let fetchedName = (employeeName || "").trim();
+      const rawEmail = (employeeEmail || "").trim().toLowerCase();
 
-        if (!employeeEmail) {
-          setLoading(false);
-          return;
-        }
+      if (!rawEmail && !fetchedName) {
+        setLoading(false);
+        return;
+      }
 
-        const cleanEmailKey = employeeEmail.trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+      const cleanEmailKey = rawEmail ? rawEmail.replace(/[^a-zA-Z0-9]/g, "_") : "";
 
-        // 1. Fetch from 'employees' collection using Email Document ID
+      if (cleanEmailKey) {
         const empRef = doc(db, "employees", cleanEmailKey);
         const empSnap = await getDoc(empRef);
 
@@ -80,7 +103,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
           baseSalary = Number(empData.baseSalary || 0);
           advanceDeduction = Number(empData.advanceDeduction || 0);
           designation = empData.designation || "N/A";
-          fetchedName = empData.name || employeeName;
+          fetchedName = (empData.name || employeeName || "").trim();
 
           setEmployeeDetails({
             name: fetchedName,
@@ -88,37 +111,49 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
             baseSalary,
             advanceDeduction,
           });
+
+          setProfileFormData({
+            designation,
+            baseSalary,
+            advanceDeduction,
+          });
         }
+      }
 
-        // 2. Fetch Attendance Records using Email Key (NOT Name)
-        // Primary path: attendance/{cleanEmailKey}/{currentMonth}
-        let monthAttRef = collection(db, "attendance", cleanEmailKey, currentMonth);
-        let attSnap = await getDocs(monthAttRef);
+      const searchKeys = [];
+      if (cleanEmailKey) searchKeys.push(cleanEmailKey);
+      if (fetchedName) {
+        searchKeys.push(fetchedName.replace(/\s+/g, "_") + "_");
+        searchKeys.push(fetchedName.replace(/\s+/g, "_"));
+        searchKeys.push(fetchedName.replace(/[^a-zA-Z0-9]/g, "_"));
+      }
 
-        // Fallback for backward compatibility (If data is stored using clean name)
-        if (attSnap.empty && fetchedName) {
-          const cleanNameKey = fetchedName.trim().replace(/[^a-zA-Z0-9]/g, "_");
-          monthAttRef = collection(db, "attendance", cleanNameKey, currentMonth);
-          attSnap = await getDocs(monthAttRef);
+      let attSnap = null;
+      let foundKey = "";
+
+      for (const key of searchKeys) {
+        if (!key) continue;
+        const attRef = collection(db, "attendance", key, currentMonth);
+        const snap = await getDocs(attRef);
+        if (!snap.empty) {
+          attSnap = snap;
+          foundKey = key;
+          break;
         }
+      }
 
-        const records = [];
-        let sumHours = 0;
-        let sumOT = 0;
-        let presentCount = 0;
-        let leaveCount = 0;
-        let workedFridays = 0;
+      setActiveKey(foundKey || searchKeys[0] || "");
 
+      const records = [];
+      let sumHours = 0;
+      let sumOT = 0;
+      let presentCount = 0;
+      let leaveCount = 0;
+      let workedFridays = 0;
+
+      if (attSnap && !attSnap.empty) {
         attSnap.forEach((docSnap) => {
           const data = docSnap.data();
-
-          // Extra safety check: Email match validation[cite: 2, 3]
-          if (
-            data.employeeEmail &&
-            data.employeeEmail.toLowerCase() !== employeeEmail.toLowerCase()
-          ) {
-            return;
-          }
 
           const inHrs = parseTimeToHours(data.inTime);
           const outHrs = parseTimeToHours(data.outTime);
@@ -129,7 +164,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
           const isApproved =
             data.statusIn === "Approved" || data.statusOut === "Approved";
 
-          if (isApproved || data.inTime) {
+          if (isApproved || (data.inTime && data.inTime !== "--")) {
             presentCount += 1;
           } else if (data.status === "Leave") {
             leaveCount += 1;
@@ -144,7 +179,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
 
           const dayOfWeek = new Date(data.date).getDay();
           const isFriday = dayOfWeek === 5;
-          if (isFriday && (isApproved || data.inTime)) {
+          if (isFriday && (isApproved || (data.inTime && data.inTime !== "--"))) {
             workedFridays += 1;
           }
 
@@ -156,48 +191,106 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
             date: data.date,
             inTime: data.inTime || "--",
             outTime: data.outTime || "--",
-            totalHours: totalHrs.toFixed(2),
-            overtimeHours: overtimeHrs.toFixed(2),
+            totalHours: totalHrs,
+            overtimeHours: overtimeHrs,
             status: data.status || (isApproved ? "Present" : "Pending"),
+            statusIn: data.statusIn || "Pending",
+            statusOut: data.statusOut || "Pending",
             isFriday,
           });
         });
-
-        records.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // 3. Calculation Logic
-        const totalMonthDays = 30;
-        const dailyRate = baseSalary > 0 ? baseSalary / totalMonthDays : 0;
-        const absentCount = Math.max(0, totalMonthDays - (presentCount + leaveCount));
-        const grossPayable = Math.round(dailyRate * Math.min(presentCount + leaveCount, totalMonthDays));
-        const fridayAllowance = Math.round(workedFridays * dailyRate);
-        const netPayable = Math.max(0, grossPayable + fridayAllowance - advanceDeduction);
-
-        setAttendanceRecords(records);
-        setSummary({
-          totalHours: sumHours.toFixed(2),
-          totalOvertime: sumOT.toFixed(2),
-          fridayCount: workedFridays,
-          presentDays: presentCount,
-          leaveDays: leaveCount,
-          absentDays: absentCount,
-          totalPayableDays: presentCount + leaveCount + workedFridays,
-          baseSalary,
-          dailyRate: Math.round(dailyRate),
-          grossPayable,
-          fridayAllowance,
-          advanceDeduction,
-          netPayable,
-        });
-      } catch (err) {
-        console.error("Firestore Error:", err);
-      } finally {
-        setLoading(false);
       }
-    };
 
+      records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const totalMonthDays = 30;
+      const dailyRate = baseSalary > 0 ? baseSalary / totalMonthDays : 0;
+      const absentCount = Math.max(0, totalMonthDays - (presentCount + leaveCount));
+      const grossPayable = Math.round(dailyRate * Math.min(presentCount + leaveCount, totalMonthDays));
+      const fridayAllowance = Math.round(workedFridays * dailyRate);
+      const netPayable = Math.max(0, grossPayable + fridayAllowance - advanceDeduction);
+
+      setAttendanceRecords(records);
+      setSummary({
+        totalHours: sumHours,
+        totalOvertime: sumOT,
+        fridayCount: workedFridays,
+        presentDays: presentCount,
+        leaveDays: leaveCount,
+        absentDays: absentCount,
+        totalPayableDays: presentCount + leaveCount + workedFridays,
+        baseSalary,
+        dailyRate: Math.round(dailyRate),
+        grossPayable,
+        fridayAllowance,
+        advanceDeduction,
+        netPayable,
+      });
+    } catch (err) {
+      console.error("Firestore Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAttendanceAndPayroll();
   }, [employeeName, employeeEmail, currentMonth]);
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    const rawEmail = (employeeEmail || "").trim().toLowerCase();
+    const cleanEmailKey = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
+
+    if (!cleanEmailKey) return alert("Employee email missing!");
+
+    try {
+      const empRef = doc(db, "employees", cleanEmailKey);
+      await updateDoc(empRef, {
+        designation: profileFormData.designation,
+        baseSalary: Number(profileFormData.baseSalary),
+        advanceDeduction: Number(profileFormData.advanceDeduction),
+      });
+
+      alert("Employee details updated successfully!");
+      setEditProfileModal(false);
+      fetchAttendanceAndPayroll();
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      alert("Failed to update profile details.");
+    }
+  };
+
+  const handleUpdateAttendance = async (e) => {
+    e.preventDefault();
+    if (!activeKey || !selectedRecord) return alert("Attendance path missing!");
+
+    try {
+      const attDocRef = doc(
+        db,
+        "attendance",
+        activeKey,
+        currentMonth,
+        selectedRecord.id
+      );
+
+      await updateDoc(attDocRef, {
+        inTime: selectedRecord.inTime,
+        outTime: selectedRecord.outTime,
+        status: selectedRecord.status,
+        statusIn: selectedRecord.statusIn,
+        statusOut: selectedRecord.statusOut,
+      });
+
+      alert("Attendance record updated successfully!");
+      setEditAttendanceModal(false);
+      fetchAttendanceAndPayroll();
+    } catch (err) {
+      console.error("Error updating attendance:", err);
+      alert("Failed to update attendance record.");
+    }
+  };
 
   const handleDownloadPDF = () => {
     const element = reportRef.current;
@@ -220,6 +313,14 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
         <button onClick={handleDownloadPDF} className={styles.downloadPdfBtn}>
           Download PDF Statement
         </button>
+        {isAdmin && (
+          <button
+            onClick={() => setEditProfileModal(true)}
+            className={styles.editProfileBtn}
+          >
+            ⚙️ Edit Employee Salary/Profile
+          </button>
+        )}
       </div>
 
       <div ref={reportRef} className={styles.pdfArea}>
@@ -261,11 +362,11 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
           </div>
           <div className={styles.summaryCard}>
             <span>Total Duty</span>
-            <strong>{summary.totalHours} hrs</strong>
+            <strong>{formatHoursToHM(summary.totalHours)}</strong>
           </div>
           <div className={styles.summaryCard}>
             <span>Overtime</span>
-            <strong>{summary.totalOvertime} hrs</strong>
+            <strong>{formatHoursToHM(summary.totalOvertime)}</strong>
           </div>
         </div>
 
@@ -308,12 +409,13 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
                 <th>Duty Hours</th>
                 <th>Overtime</th>
                 <th>Status</th>
+                {isAdmin && <th>Action</th>}
               </tr>
             </thead>
             <tbody>
               {attendanceRecords.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className={styles.noData}>
+                  <td colSpan={isAdmin ? "7" : "6"} className={styles.noData}>
                     No records found for this month.
                   </td>
                 </tr>
@@ -327,12 +429,12 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
                     <td>{item.inTime}</td>
                     <td>{item.outTime}</td>
                     <td>
-                      <strong>{item.totalHours} hrs</strong>
+                      <strong>{formatHoursToHM(item.totalHours)}</strong>
                     </td>
                     <td>
-                      {parseFloat(item.overtimeHours) > 0 ? (
+                      {item.overtimeHours > 0 ? (
                         <span className={styles.otBadge}>
-                          +{item.overtimeHours} hrs
+                          +{formatHoursToHM(item.overtimeHours)}
                         </span>
                       ) : (
                         "--"
@@ -345,6 +447,19 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
                         item.status
                       )}
                     </td>
+                    {isAdmin && (
+                      <td>
+                        <button
+                          className={styles.actionEditBtn}
+                          onClick={() => {
+                            setSelectedRecord(item);
+                            setEditAttendanceModal(true);
+                          }}
+                        >
+                          ✏️ Edit
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -352,6 +467,114 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
           </table>
         </div>
       </div>
+
+      {/* --- ADMIN MODALS --- */}
+      {editProfileModal && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalBox}>
+            <h3>Edit Employee Profile</h3>
+            <form onSubmit={handleUpdateProfile}>
+              <label>Designation:</label>
+              <input
+                type="text"
+                value={profileFormData.designation}
+                onChange={(e) =>
+                  setProfileFormData({ ...profileFormData, designation: e.target.value })
+                }
+              />
+
+              <label>Base Salary (৳):</label>
+              <input
+                type="number"
+                value={profileFormData.baseSalary}
+                onChange={(e) =>
+                  setProfileFormData({ ...profileFormData, baseSalary: e.target.value })
+                }
+              />
+
+              <label>Advance Deduction (৳):</label>
+              <input
+                type="number"
+                value={profileFormData.advanceDeduction}
+                onChange={(e) =>
+                  setProfileFormData({
+                    ...profileFormData,
+                    advanceDeduction: e.target.value,
+                  })
+                }
+              />
+
+              <div className={styles.modalActions}>
+                <button type="submit" className={styles.saveBtn}>
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditProfileModal(false)}
+                  className={styles.cancelBtn}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editAttendanceModal && selectedRecord && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalBox}>
+            <h3>Edit Attendance ({selectedRecord.date})</h3>
+            <form onSubmit={handleUpdateAttendance}>
+              <label>In Time:</label>
+              <input
+                type="text"
+                value={selectedRecord.inTime}
+                onChange={(e) =>
+                  setSelectedRecord({ ...selectedRecord, inTime: e.target.value })
+                }
+                placeholder="e.g. 09:00 AM"
+              />
+
+              <label>Out Time:</label>
+              <input
+                type="text"
+                value={selectedRecord.outTime}
+                onChange={(e) =>
+                  setSelectedRecord({ ...selectedRecord, outTime: e.target.value })
+                }
+                placeholder="e.g. 06:00 PM"
+              />
+
+              <label>Status:</label>
+              <select
+                value={selectedRecord.status}
+                onChange={(e) =>
+                  setSelectedRecord({ ...selectedRecord, status: e.target.value })
+                }
+              >
+                <option value="Present">Present</option>
+                <option value="Leave">Leave</option>
+                <option value="Absent">Absent</option>
+                <option value="Pending">Pending</option>
+              </select>
+
+              <div className={styles.modalActions}>
+                <button type="submit" className={styles.saveBtn}>
+                  Update Record
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditAttendanceModal(false)}
+                  className={styles.cancelBtn}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

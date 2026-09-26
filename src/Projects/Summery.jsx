@@ -76,10 +76,13 @@ const Summery = () => {
     return false;
   };
 
+  // ১. initialFormState-এ address এবং phone যুক্ত করা হয়েছে
   const initialFormState = {
     projectName: '',
     liftQty: '', 
     whoseProjects: '',
+    address: '',
+    phone: '',
     servicingDate: '',
     servicingBill: '',
     sparePartsBill: '',
@@ -119,10 +122,13 @@ const Summery = () => {
     const activeMonth = selectedMonth === 'All' ? 'August' : selectedMonth;
     const currentBill = (proj.billList || []).find(b => b.month === activeMonth) || {};
 
+    // ২. Edit করার সময় address এবং phone ফিল্ড সেভ থাকা তথ্য দিয়ে ফিল করা হবে
     setFormData({
       projectName: proj.projectName || '',
       liftQty: proj.liftQty || '',
       whoseProjects: proj.whoseProjects || '',
+      address: proj.address || '',
+      phone: proj.phone || '',
       servicingDate: currentBill.servicingDate || currentBill.lastServicingDate || proj.servicingDate || '',
       servicingBill: currentBill.servicingBill || '',
       sparePartsBill: currentBill.sparePartsBill || '',
@@ -473,6 +479,22 @@ const Summery = () => {
                   name="whoseProjects" 
                   placeholder="Whose Project (e.g., HRE, MM)" 
                   value={formData.whoseProjects} 
+                  onChange={handleInputChange} 
+                />
+
+                {/* ৩. Address এবং Phone Number ইনপুট ফিল্ড যুক্ত করা হয়েছে */}
+                <input 
+                  type="text" 
+                  name="address" 
+                  placeholder="Project Address" 
+                  value={formData.address} 
+                  onChange={handleInputChange} 
+                />
+                <input 
+                  type="tel" 
+                  name="phone" 
+                  placeholder="Phone Number" 
+                  value={formData.phone} 
                   onChange={handleInputChange} 
                 />
 
