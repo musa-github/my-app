@@ -56,13 +56,15 @@ function AdminPanel() {
     { key: "projects_action_update", label: "Projects -> Action: Update Servicing Schedule", category: "Projects Actions" },
     { key: "projects_action_delete", label: "Projects -> Action: Delete Project", category: "Projects Actions" },
 
-    // 4. Employee Portal (Sidebar & Actions)
+    // 4. Employee & Attendance Portal Access Control
     { key: "emp_tab_profile", label: "Employee -> Sidebar: Your Profile Page", category: "Employee Portal" },
     { key: "emp_tab_attendance", label: "Employee -> Sidebar: Attendance Page", category: "Employee Portal" },
     { key: "emp_tab_list", label: "Employee -> Sidebar: Employee List Page", category: "Employee Portal" },
     { key: "emp_tab_payroll", label: "Employee -> Sidebar: Payroll & Salary Page", category: "Employee Portal" },
-    { key: "emp_action_edit_profile", label: "Employee -> Action: Edit Profile Info", category: "Employee Actions" },
-    { key: "emp_action_download_pdf", label: "Employee -> Action: Download PDF Statement", category: "Employee Actions" },
+    { key: "emp_action_edit_profile", label: "Attendance -> Edit Employee Profile Modal", category: "Employee Actions" },
+    { key: "emp_action_add_attendance", label: "Attendance -> Add Manual/Backdate Attendance Modal", category: "Employee Actions" },
+    { key: "emp_action_edit_attendance", label: "Attendance -> Table Action: Edit Daily Attendance Log", category: "Employee Actions" },
+    { key: "emp_action_download_pdf", label: "Attendance -> Action: Download PDF Statement", category: "Employee Actions" },
   ];
 
   const fetchData = async () => {
@@ -108,7 +110,6 @@ function AdminPanel() {
         }
       });
 
-      // Owner ইমেইল অ্যাডমিন লিস্টে না থাকলেও লিস্টে অ্যাডমিন হিসেবে গ্রান্টেড থাকবে
       if (!admins.includes(OWNER_EMAIL.toLowerCase())) {
         admins.push(OWNER_EMAIL.toLowerCase());
       }
@@ -121,11 +122,9 @@ function AdminPanel() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
-  // Owner ইমেইল অ্যাডমিন লিস্টে থাকুক বা না থাকুক, সে সর্বদাই Full Admin Permission পাবে
   const isAdmin = currentUserEmail === OWNER_EMAIL.toLowerCase() || adminList.includes(currentUserEmail);
 
   const handleAddAdmin = async (e) => {
@@ -136,14 +135,12 @@ function AdminPanel() {
     const cleanEmail = targetEmail.replace(/[^a-zA-Z0-9]/g, "_");
 
     try {
-      // ১. app_admins টেবিল/কালেকশনে অ্যাডমিন ইমেইল যুক্ত করা
       await setDoc(doc(db, "app_admins", cleanEmail), {
         email: targetEmail,
         addedBy: currentUserEmail,
         createdAt: serverTimestamp(),
       });
 
-      // ২. নতুন Admin-কে স্বয়ংক্রিয়ভাবে সব ধরণের Access (Permissions) true করে দেওয়া
       const fullPermissions = availableFeatures.reduce((acc, feat) => {
         acc[feat.key] = true;
         return acc;
@@ -157,7 +154,6 @@ function AdminPanel() {
 
       await setDoc(doc(db, "user_permissions", cleanEmail), adminPermsPayload, { merge: true });
 
-      // Local state আপডেট
       setAdminList((prev) => [...prev, targetEmail]);
       setPermissions((prev) => ({
         ...prev,
@@ -304,7 +300,6 @@ function AdminPanel() {
       const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, req.password);
       const uid = userCredential.user.uid;
 
-      // eslint-disable-next-line no-unused-vars
       const { password, ...safeData } = req;
       const approvedPayload = {
         ...safeData,
@@ -375,7 +370,6 @@ function AdminPanel() {
     <div className={styles.adminContainer}>
       <h2 className={styles.heading}>Admin Control Panel</h2>
 
-      {/* Tab Navigation Section */}
       <div className={styles.tabWrapper}>
         <div className={styles.tabButtons}>
           <button
@@ -405,7 +399,6 @@ function AdminPanel() {
         </div>
       </div>
 
-      {/* Access Control / Permissions Tab */}
       {activeTab === "permissions" && (
         <div className={styles.cardGrid}>
           {employees.map((emp) => {
@@ -445,7 +438,6 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Signup Requests Tab */}
       {activeTab === "signupRequests" && (
         <div>
           {signupRequests.length === 0 ? (
@@ -480,7 +472,6 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Attendance & Other Requests Tab */}
       {activeTab === "requests" && (
         <div>
           {requests.length === 0 ? (
@@ -538,7 +529,6 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Manage Admins Tab */}
       {activeTab === "admins" && (
         <div>
           <form onSubmit={handleAddAdmin} className={styles.adminForm}>

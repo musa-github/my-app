@@ -1,10 +1,16 @@
-import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
 import html2pdf from "html2pdf.js";
 import { useEffect, useRef, useState } from "react";
-import { db } from "../../Firebase/Firebase";
+import { useSelector } from "react-redux";
+import { auth, db } from "../../Firebase/Firebase";
 import styles from "./UserAttendanceRecord.module.css";
 
-function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
+const OWNER_EMAIL = "smabumusa98@gmail.com";
+
+function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = false }) {
+  const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
+  const currentUserEmail = (reduxUserEmail || auth.currentUser?.email || "").toLowerCase();
+
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [activeKey, setActiveKey] = useState("");
   const [employeeDetails, setEmployeeDetails] = useState({
@@ -33,6 +39,14 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
   const [loading, setLoading] = useState(true);
   const reportRef = useRef();
 
+  // Fine-grained Permissions state
+  const [userPermissions, setUserPermissions] = useState({
+    canEditProfile: false,
+    canAddAttendance: false,
+    canEditAttendance: false,
+    canDownloadPdf: true,
+  });
+
   // Admin Modals State
   const [editProfileModal, setEditProfileModal] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
@@ -44,6 +58,17 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
   const [editAttendanceModal, setEditAttendanceModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
 
+  // Manual / Backdate Attendance Modal State
+  const [addAttendanceModal, setAddAttendanceModal] = useState(false);
+  const [manualFormData, setManualFormData] = useState({
+    date: new Date().toISOString().split("T")[0],
+    inTime: "09:00 AM",
+    outTime: "06:00 PM",
+    status: "Present",
+    statusIn: "Approved",
+    statusOut: "Approved"
+  });
+
   const now = new Date();
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -51,13 +76,12 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
   ];
   const currentMonth = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
 
-  // Helper Function: Decimal Hours-কে Hours & Minutes ফরম্যাটে রূপান্তর
   const formatHoursToHM = (decimalHours) => {
     const total = parseFloat(decimalHours);
     if (isNaN(total) || total <= 0) return "0h 0m";
     const h = Math.floor(total);
     const m = Math.round((total - h) * 60);
-    return `${h}h ${m}m`;
+    return `${h}h ${m}`;
   };
 
   const parseTimeToHours = (timeStr) => {
@@ -75,10 +99,56 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
     return hours + minutes / 60;
   };
 
+  const checkUserPermissions = async () => {
+    // Only Owner gets full access automatically
+    if (currentUserEmail === OWNER_EMAIL.toLowerCase()) {
+      setUserPermissions({
+        canEditProfile: true,
+        canAddAttendance: true,
+        canEditAttendance: true,
+        canDownloadPdf: true,
+      });
+      return;
+    }
+
+    try {
+      const cleanEmail = currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_");
+      const permRef = doc(db, "user_permissions", cleanEmail);
+      const permSnap = await getDoc(permRef);
+
+      if (permSnap.exists()) {
+        const data = permSnap.data();
+        setUserPermissions({
+          canEditProfile: Boolean(data.emp_action_edit_profile),
+          canAddAttendance: Boolean(data.emp_action_add_attendance),
+          canEditAttendance: Boolean(data.emp_action_edit_attendance),
+          canDownloadPdf: Boolean(data.emp_action_download_pdf ?? true),
+        });
+      } else {
+        setUserPermissions({
+          canEditProfile: false,
+          canAddAttendance: false,
+          canEditAttendance: false,
+          canDownloadPdf: true,
+        });
+      }
+    } catch (error) {
+      console.error("Permission check error:", error);
+      setUserPermissions({
+        canEditProfile: false,
+        canAddAttendance: false,
+        canEditAttendance: false,
+        canDownloadPdf: true,
+      });
+    }
+  };
+
   const fetchAttendanceAndPayroll = async () => {
     setLoading(true);
 
     try {
+      await checkUserPermissions();
+
       let baseSalary = 0;
       let advanceDeduction = 0;
       let designation = "N/A";
@@ -234,12 +304,15 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAttendanceAndPayroll();
   }, [employeeName, employeeEmail, currentMonth]);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    if (!userPermissions.canEditProfile) {
+      return alert("You don't have permission to update profile!");
+    }
+
     const rawEmail = (employeeEmail || "").trim().toLowerCase();
     const cleanEmailKey = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
 
@@ -264,6 +337,10 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
 
   const handleUpdateAttendance = async (e) => {
     e.preventDefault();
+    if (!userPermissions.canEditAttendance) {
+      return alert("You don't have permission to edit attendance!");
+    }
+
     if (!activeKey || !selectedRecord) return alert("Attendance path missing!");
 
     try {
@@ -292,6 +369,44 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
     }
   };
 
+  const handleAddManualAttendance = async (e) => {
+    e.preventDefault();
+    if (!userPermissions.canAddAttendance) {
+      return alert("You don't have permission to add manual attendance!");
+    }
+
+    if (!activeKey) return alert("Attendance path key is missing!");
+
+    try {
+      const selectedDateObj = new Date(manualFormData.date);
+      const targetMonth = `${monthNames[selectedDateObj.getMonth()]} ${selectedDateObj.getFullYear()}`;
+      const docId = manualFormData.date;
+
+      const attDocRef = doc(db, "attendance", activeKey, targetMonth, docId);
+
+      await setDoc(
+        attDocRef,
+        {
+          date: manualFormData.date,
+          inTime: manualFormData.inTime,
+          outTime: manualFormData.outTime,
+          status: manualFormData.status,
+          statusIn: manualFormData.statusIn,
+          statusOut: manualFormData.statusOut,
+          isManualEntry: true,
+        },
+        { merge: true }
+      );
+
+      alert(`Attendance for ${manualFormData.date} added successfully!`);
+      setAddAttendanceModal(false);
+      fetchAttendanceAndPayroll();
+    } catch (err) {
+      console.error("Error adding manual attendance:", err);
+      alert("Failed to add manual attendance record.");
+    }
+  };
+
   const handleDownloadPDF = () => {
     const element = reportRef.current;
     const opt = {
@@ -310,15 +425,27 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
   return (
     <div className={styles.attendanceWrapper}>
       <div className={styles.topActions}>
-        <button onClick={handleDownloadPDF} className={styles.downloadPdfBtn}>
-          Download PDF Statement
-        </button>
-        {isAdmin && (
+        {userPermissions.canDownloadPdf && (
+          <button onClick={handleDownloadPDF} className={styles.downloadPdfBtn}>
+            📄 Download PDF
+          </button>
+        )}
+
+        {userPermissions.canAddAttendance && (
+          <button
+            onClick={() => setAddAttendanceModal(true)}
+            className={styles.addAttendanceBtn}
+          >
+            ➕ Add Attendance
+          </button>
+        )}
+
+        {userPermissions.canEditProfile && (
           <button
             onClick={() => setEditProfileModal(true)}
             className={styles.editProfileBtn}
           >
-            ⚙️ Edit Employee Salary/Profile
+            ⚙️ Edit Profile
           </button>
         )}
       </div>
@@ -409,13 +536,13 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
                 <th>Duty Hours</th>
                 <th>Overtime</th>
                 <th>Status</th>
-                {isAdmin && <th>Action</th>}
+                {userPermissions.canEditAttendance && <th>Action</th>}
               </tr>
             </thead>
             <tbody>
               {attendanceRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? "7" : "6"} className={styles.noData}>
+                  <td colSpan={userPermissions.canEditAttendance ? "7" : "6"} className={styles.noData}>
                     No records found for this month.
                   </td>
                 </tr>
@@ -447,7 +574,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
                         item.status
                       )}
                     </td>
-                    {isAdmin && (
+                    {userPermissions.canEditAttendance && (
                       <td>
                         <button
                           className={styles.actionEditBtn}
@@ -468,8 +595,76 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
         </div>
       </div>
 
-      {/* --- ADMIN MODALS --- */}
-      {editProfileModal && (
+      {/* --- MODALS --- */}
+      {/* 1. Add Manual / Backdate Attendance Modal */}
+      {addAttendanceModal && userPermissions.canAddAttendance && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalBox}>
+            <h3>Add Manual / Backdate Attendance</h3>
+            <form onSubmit={handleAddManualAttendance}>
+              <label>Select Date:</label>
+              <input
+                type="date"
+                required
+                value={manualFormData.date}
+                onChange={(e) =>
+                  setManualFormData({ ...manualFormData, date: e.target.value })
+                }
+              />
+
+              <label>In Time:</label>
+              <input
+                type="text"
+                required
+                value={manualFormData.inTime}
+                onChange={(e) =>
+                  setManualFormData({ ...manualFormData, inTime: e.target.value })
+                }
+                placeholder="e.g. 09:00 AM"
+              />
+
+              <label>Out Time:</label>
+              <input
+                type="text"
+                required
+                value={manualFormData.outTime}
+                onChange={(e) =>
+                  setManualFormData({ ...manualFormData, outTime: e.target.value })
+                }
+                placeholder="e.g. 06:00 PM"
+              />
+
+              <label>Status:</label>
+              <select
+                value={manualFormData.status}
+                onChange={(e) =>
+                  setManualFormData({ ...manualFormData, status: e.target.value })
+                }
+              >
+                <option value="Present">Present</option>
+                <option value="Leave">Leave</option>
+                <option value="Absent">Absent</option>
+              </select>
+
+              <div className={styles.modalActions}>
+                <button type="submit" className={styles.saveBtn}>
+                  Save Attendance
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddAttendanceModal(false)}
+                  className={styles.cancelBtn}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Edit Employee Profile Modal */}
+      {editProfileModal && userPermissions.canEditProfile && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalBox}>
             <h3>Edit Employee Profile</h3>
@@ -521,7 +716,8 @@ function UserAttendanceRecord({ employeeName, employeeEmail, isAdmin = true }) {
         </div>
       )}
 
-      {editAttendanceModal && selectedRecord && (
+      {/* 3. Edit Attendance Modal */}
+      {editAttendanceModal && selectedRecord && userPermissions.canEditAttendance && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalBox}>
             <h3>Edit Attendance ({selectedRecord.date})</h3>
