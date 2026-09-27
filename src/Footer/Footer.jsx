@@ -14,8 +14,7 @@ export const Footer = () => {
           </div>
           <div className="info-text">
             <span className="label">WhatsApp & Call</span>
-            <a href="https://wa.me/8801711131536" className="value" target="_blank" rel="noreferrer">
-              +880 1711-131536
+            <a href="https://wa.me/+8801610989538" className="value" target="_blank" rel="noreferrer">
             </a>
           </div>
         </div>
@@ -27,8 +26,8 @@ export const Footer = () => {
           </div>
           <div className="info-text">
             <span className="label">Official Mail</span>
-            <a href="mailto:hrengineersbd@gmail.com" className="value">
-              hrengineersbd@gmail.com
+            <a href="mailto:osanlift@gmail.com" className="value">
+              osanlift@gmail.com
             </a>
           </div>
         </div>
