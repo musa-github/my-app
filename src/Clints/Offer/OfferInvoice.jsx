@@ -19,6 +19,27 @@ const OfferInvoice = () => {
   const invoiceRef = useRef(null);
   const dispatch = useDispatch();
 
+  // Logged in user info ebong admin list Redux/Auth state theke retrieve
+  const currentUserEmail = useSelector((state) => state.auth?.user?.email || state.auth?.email || '');
+  const adminList = useSelector((state) => state.auth?.appAdmins || state.auth?.adminList || []); // Firestore 'app_admins' list
+
+  // Owner Email declaration
+  const OWNER_EMAIL = 'osanlift@gmail.com';
+
+  // Role Validation Logic
+  const isOwner = currentUserEmail.trim().toLowerCase() === OWNER_EMAIL.toLowerCase();
+  
+  // Checking if current user exists in 'app_admins' collection
+  const isAdmin = Array.isArray(adminList) && adminList.some((admin) => {
+    if (typeof admin === 'string') {
+      return admin.toLowerCase() === currentUserEmail.toLowerCase();
+    }
+    return admin?.email?.toLowerCase() === currentUserEmail.toLowerCase();
+  });
+
+  // Authorization flag for delete functionality
+  const canDelete = isOwner || isAdmin;
+
   const {
     loading: isSaving,
     isUpdating,
@@ -96,14 +117,24 @@ const OfferInvoice = () => {
     const offerData = allSavedOffers.find((item) => item.docId === selectedDocId);
 
     if (offerData) {
-      const actualCompanyName = offerData.companyName || offerData.headerData?.toCompany || "Unknown";
+      const rawCompName = offerData.companyName || offerData.headerData?.toCompany || "Unassigned_Company";
+      const cleanCompKey = rawCompName.trim().replace(/\s+/g, '_');
       
-      dispatch(setSavedOfferInfo({ companyName: actualCompanyName, id: offerData.docId }));
+      dispatch(setSavedOfferInfo({ companyName: cleanCompKey, id: offerData.docId }));
       setHeaderData(offerData.headerData || defaultHeader);
-      setItems(offerData.items || []);
-      setNotes(offerData.notes || []);
-      setPaymentMode(offerData.paymentMode || {});
       
+      if (offerData.items && Array.isArray(offerData.items)) {
+        setItems(offerData.items.map((i) => ({ ...i })));
+      } else {
+        setItems([{ name: '', quantity: 1, unit: 'Pcs', price: 0 }]);
+      }
+
+      if (offerData.notes && Array.isArray(offerData.notes)) {
+        setNotes([...offerData.notes]);
+      }
+      
+      setPaymentMode(offerData.paymentMode || {});
+
       if (offerData.headerData?.toCompany) {
         setSelectedCompany(offerData.headerData.toCompany);
       }
@@ -120,8 +151,12 @@ const OfferInvoice = () => {
   };
 
   const handleItemChange = (index, field, value) => {
-    const updatedItems = [...items];
-    updatedItems[index][field] = value;
+    const updatedItems = items.map((item, i) => {
+      if (i === index) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    });
     setItems(updatedItems);
   };
 
@@ -134,14 +169,17 @@ const OfferInvoice = () => {
   };
 
   const handleSelectProduct = (index, selectedProduct) => {
-    const updatedItems = [...items];
-    
-    updatedItems[index].name = getProductName(selectedProduct);
-    if (selectedProduct.unit || selectedProduct.Unit) {
-      updatedItems[index].unit = selectedProduct.unit || selectedProduct.Unit;
-    }
-    
-    updatedItems[index].price = getProductPrice(selectedProduct);
+    const updatedItems = items.map((item, i) => {
+      if (i === index) {
+        return {
+          ...item,
+          name: getProductName(selectedProduct),
+          unit: selectedProduct.unit || selectedProduct.Unit || item.unit || 'Pcs',
+          price: getProductPrice(selectedProduct)
+        };
+      }
+      return item;
+    });
 
     setItems(updatedItems);
     setActiveSuggestionRow(null);
@@ -198,10 +236,11 @@ const OfferInvoice = () => {
       return;
     }
 
+    const currentCompany = headerData.toCompany.trim().replace(/\s+/g, '_') || savedOfferInfo.companyName;
     const offerPayload = { headerData, items, notes, paymentMode, grandTotal };
 
     dispatch(updateOfferInFirebase({
-      companyName: savedOfferInfo.companyName,
+      companyName: currentCompany,
       docId: savedOfferInfo.id,
       offerPayload
     }))
@@ -216,14 +255,21 @@ const OfferInvoice = () => {
   };
 
   const handleDeleteOffer = () => {
+    if (!canDelete) {
+      alert("Access Denied: Only owner and admin can delete offers!");
+      return;
+    }
+
     if (!savedOfferInfo?.id) {
       alert("No active saved offer selected to delete.");
       return;
     }
 
+    const currentCompany = headerData.toCompany.trim().replace(/\s+/g, '_') || savedOfferInfo.companyName;
+
     if (window.confirm("Are you sure you want to delete this offer?")) {
       dispatch(deleteOfferFromFirebase({
-        companyName: savedOfferInfo.companyName,
+        companyName: currentCompany,
         docId: savedOfferInfo.id
       }))
         .unwrap()
@@ -248,7 +294,7 @@ const OfferInvoice = () => {
       const element = invoiceRef.current;
 
       const opt = {
-        margin: [38, 8, 32, 8], 
+        margin: [38, 8, 32, 8],
         filename: `Offer_${headerData.toCompany || 'Invoice'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -269,8 +315,6 @@ const OfferInvoice = () => {
                 span.style.fontSize = window.getComputedStyle(input).fontSize;
                 span.style.fontWeight = window.getComputedStyle(input).fontWeight;
                 span.style.color = window.getComputedStyle(input).color;
-                
-                // --- লেটার কাটা পড়া বন্ধের জন্য লাইন হাইট ও প্যাডিং ফিক্স ---
                 span.style.lineHeight = '1.4';
                 span.style.paddingBottom = '3px';
                 span.style.marginBottom = '0px';
@@ -357,11 +401,9 @@ const OfferInvoice = () => {
 
   return (
     <div className="main-wrapper" onClick={() => setActiveSuggestionRow(null)}>
-      
       {/* Action Bar */}
       <div className="action-bar no-print">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto', flexWrap: 'wrap' }}>
-          
           <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Company:</label>
           <select
             onChange={handleCompanyChange}
@@ -393,7 +435,6 @@ const OfferInvoice = () => {
               );
             })}
           </select>
-
         </div>
 
         <button
@@ -414,24 +455,25 @@ const OfferInvoice = () => {
           {isUpdating ? 'Updating...' : '✏️ Update'}
         </button>
 
-        <button
-          className="btn-action"
-          onClick={handleDeleteOffer}
-          disabled={isDeleting || !savedOfferInfo?.id}
-          style={{ backgroundColor: savedOfferInfo?.id ? '#dc3545' : '#ccc' }}
-        >
-          {isDeleting ? 'Deleting...' : '🗑️ Delete'}
-        </button>
+        {/* Delete Button visibility control for Owner or Admin */}
+        {canDelete && (
+          <button
+            className="btn-action"
+            onClick={handleDeleteOffer}
+            disabled={isDeleting || !savedOfferInfo?.id}
+            style={{ backgroundColor: savedOfferInfo?.id ? '#dc3545' : '#ccc' }}
+          >
+            {isDeleting ? 'Deleting...' : '🗑️ Delete'}
+          </button>
+        )}
 
         <button className="btn-action" onClick={handleDownloadPDF}>
           📥 PDF
         </button>
       </div>
 
-      {/* Invoice Container */}
+      {/* Invoice Document Container */}
       <div className={`invoice-container ${isPdfPrinting ? 'pdf-mode' : ''}`} ref={invoiceRef}>
-        
-        {/* Company Header */}
         {!isPdfPrinting && (
           <div className="company-header no-pdf-img">
             <div style={{ width: "100%", height: "110px" }}>
@@ -451,7 +493,7 @@ const OfferInvoice = () => {
               name="date"
               className="inline-input"
               style={{ width: '120px' }}
-              value={headerData.date}
+              value={headerData.date || ''}
               onChange={handleHeaderChange}
             />
           </div>
@@ -462,7 +504,7 @@ const OfferInvoice = () => {
               name="toCompany"
               placeholder="Company Name"
               className="block-input bold"
-              value={headerData.toCompany}
+              value={headerData.toCompany || ''}
               onChange={handleHeaderChange}
             />
             <input
@@ -470,7 +512,7 @@ const OfferInvoice = () => {
               name="address"
               placeholder="Company Address"
               className="block-input"
-              value={headerData.address}
+              value={headerData.address || ''}
               onChange={handleHeaderChange}
             />
           </div>
@@ -482,7 +524,7 @@ const OfferInvoice = () => {
               placeholder="Enter subject"
               className="inline-input bold"
               style={{ width: '80%' }}
-              value={headerData.subject}
+              value={headerData.subject || ''}
               onChange={handleHeaderChange}
             />
           </div>
@@ -490,7 +532,7 @@ const OfferInvoice = () => {
           <p className="no-margin">We are pleased to submit our best price offer for your consideration:</p>
         </div>
 
-        {/* Invoice Table */}
+        {/* Dynamic Items Table */}
         <table className="invoice-table">
           <thead>
             <tr>
@@ -506,7 +548,7 @@ const OfferInvoice = () => {
           <tbody>
             {items.map((item, index) => {
               const totalItemPrice = (Number(item.quantity) || 0) * (Number(item.price) || 0);
-              const searchSearchTerm = item.name.trim().toLowerCase();
+              const searchSearchTerm = (item.name || '').trim().toLowerCase();
 
               const filteredOfferProds = offerProductList.filter((p) =>
                 getProductName(p).toLowerCase().includes(searchSearchTerm)
@@ -524,11 +566,8 @@ const OfferInvoice = () => {
                       type="text"
                       className="table-input"
                       placeholder="Item name / description"
-                      value={item.name}
-                      style={{
-                        color: '#000000',
-                        fontWeight: 'normal'
-                      }}
+                      value={item.name || ''}
+                      style={{ color: '#000000', fontWeight: 'normal' }}
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveSuggestionRow(index);
@@ -615,7 +654,7 @@ const OfferInvoice = () => {
                     <input
                       type="number"
                       className="table-input text-center"
-                      value={item.quantity}
+                      value={item.quantity ?? ''}
                       onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                     />
                   </td>
@@ -623,7 +662,7 @@ const OfferInvoice = () => {
                     <input
                       type="text"
                       className="table-input text-center"
-                      value={item.unit}
+                      value={item.unit || ''}
                       onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                     />
                   </td>
@@ -631,7 +670,7 @@ const OfferInvoice = () => {
                     <input
                       type="number"
                       className="table-input text-center"
-                      value={item.price}
+                      value={item.price ?? ''}
                       onChange={(e) => handleItemChange(index, 'price', e.target.value)}
                     />
                   </td>
@@ -662,7 +701,7 @@ const OfferInvoice = () => {
           <span>{numberToWords(grandTotal)}</span>
         </div>
 
-        {/* Notes & Terms Section */}
+        {/* Terms & Conditions Section */}
         <div className="notes-section page-break-avoid">
           <span className="bold">Terms & Conditions:</span>
           {notes.map((note, index) => (
@@ -671,7 +710,7 @@ const OfferInvoice = () => {
               <input
                 type="text"
                 className="note-input"
-                value={note}
+                value={note || ''}
                 onChange={(e) => handleNoteChange(index, e.target.value)}
               />
               <button className="btn-delete inline-delete no-print" onClick={() => removeNoteRow(index)}>✕</button>
@@ -688,7 +727,7 @@ const OfferInvoice = () => {
                 type="text"
                 name="mode"
                 className="block-input"
-                value={paymentMode.mode}
+                value={paymentMode.mode || ''}
                 onChange={handlePaymentChange}
               />
             </div>
@@ -697,7 +736,7 @@ const OfferInvoice = () => {
                 type="text"
                 name="advance"
                 className="block-input"
-                value={paymentMode.advance}
+                value={paymentMode.advance || ''}
                 onChange={handlePaymentChange}
               />
             </div>
@@ -706,14 +745,14 @@ const OfferInvoice = () => {
                 type="text"
                 name="handover"
                 className="block-input"
-                value={paymentMode.handover}
+                value={paymentMode.handover || ''}
                 onChange={handlePaymentChange}
               />
             </div>
           </div>
         </div>
 
-        {/* Footer Signatures */}
+        {/* Footer Section */}
         <div className="invoice-footer page-break-avoid">
           <div>
             <div className="seal-circle">osan</div>
@@ -725,7 +764,6 @@ const OfferInvoice = () => {
           </div>
         </div>
 
-        {/* Bottom Pad Contact Info */}
         {!isPdfPrinting && (
           <div className="bottom-contact no-pdf-img page-break-avoid">
             <img src={footer} alt="Footer" style={{ width: "100%" }} />
