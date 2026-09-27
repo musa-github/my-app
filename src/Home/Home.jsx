@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import AboutSection from "./components/AboutSection";
 import CtaSection from "./components/CtaSection";
 import ElevatorSection from "./components/ElevatorSection";
@@ -92,8 +93,32 @@ const Home = () => {
     window.location.href = `tel:${PHONE_NUMBER}`;
   };
 
+  // Structured Data (Schema.org) for Google Search
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Osan Lift",
+    "telephone": PHONE_NUMBER,
+    "description": "Professional elevator installation, passenger lift supply, Automatic Rescue Devices (ARD), and 24/7 maintenance services.",
+    "priceRange": "$$"
+  };
+
   return (
     <main className={Style.homeContainer}>
+      <Helmet>
+        <title>Osan Lift | Elevator Sales, Installation & Maintenance Services</title>
+        <meta 
+          name="description" 
+          content="Leading elevator solution provider offering passenger lifts, home lifts, ARD units, generators, and 24/7 technical support." 
+        />
+        <meta name="keywords" content="Osan Lift, Passenger Elevator, Home Lift, Hospital Lift, ARD, Elevator Maintenance, Elevator Spare Parts" />
+        <meta property="og:title" content="Osan Lift | Elevator Solutions & Services" />
+        <meta property="og:description" content="Precision installation of advanced passenger and freight elevators, ARD systems, and spare parts." />
+        <script type="application/ld+json">
+          {JSON.stringify(schemaData)}
+        </script>
+      </Helmet>
+
       <HeroSection Style={Style} onWhatsAppClick={handleOpenWhatsApp} />
       <StatsSection Style={Style} />
       <AboutSection Style={Style} onWhatsAppClick={handleOpenWhatsApp} />

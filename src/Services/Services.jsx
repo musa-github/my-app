@@ -11,6 +11,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import styles from './Services.module.css';
 
 const servicesData = [
@@ -93,6 +94,17 @@ function Services() {
 
   return (
     <section className={styles.servicesSection}>
+      <Helmet>
+        <title>Engineering & Elevator Services | Osan Lift</title>
+        <meta 
+          name="description" 
+          content="Explore Osan Lift's services including new lift installation, Automatic Rescue Devices (ARD), generator setup, controller spare parts, and 24/7 emergency support." 
+        />
+        <meta name="keywords" content="Elevator Installation, ARD System, Generator Backup, Fuji Inverter, Monarch Controller, Yaskawa, Lift Spare Parts" />
+        <meta property="og:title" content="Engineering & Elevator Services - Osan Lift" />
+        <meta property="og:description" content="High-grade elevator setup, ARD solutions, spare parts supply, and AMC maintenance contracts." />
+      </Helmet>
+
       <div className={styles.container}>
         
         {/* Header Section */}

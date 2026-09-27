@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Sitemap URL (Apnar original domain name ashle replace kore diben)
+Sitemap: https://yourdomain.com/sitemap.xml
