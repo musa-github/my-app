@@ -56,13 +56,15 @@ function AdminPanel() {
     { key: "projects_action_update", label: "Projects -> Action: Update Servicing Schedule", category: "Projects Actions" },
     { key: "projects_action_delete", label: "Projects -> Action: Delete Project", category: "Projects Actions" },
 
-    // 4. Employee Portal (Sidebar & Actions)
+    // 4. Employee & Attendance Portal Access Control
     { key: "emp_tab_profile", label: "Employee -> Sidebar: Your Profile Page", category: "Employee Portal" },
     { key: "emp_tab_attendance", label: "Employee -> Sidebar: Attendance Page", category: "Employee Portal" },
     { key: "emp_tab_list", label: "Employee -> Sidebar: Employee List Page", category: "Employee Portal" },
     { key: "emp_tab_payroll", label: "Employee -> Sidebar: Payroll & Salary Page", category: "Employee Portal" },
-    { key: "emp_action_edit_profile", label: "Employee -> Action: Edit Profile Info", category: "Employee Actions" },
-    { key: "emp_action_download_pdf", label: "Employee -> Action: Download PDF Statement", category: "Employee Actions" },
+    { key: "emp_action_edit_profile", label: "Attendance -> Edit Employee Profile Modal", category: "Employee Actions" },
+    { key: "emp_action_add_attendance", label: "Attendance -> Add Manual/Backdate Attendance Modal", category: "Employee Actions" },
+    { key: "emp_action_edit_attendance", label: "Attendance -> Table Action: Edit Daily Attendance Log", category: "Employee Actions" },
+    { key: "emp_action_download_pdf", label: "Attendance -> Action: Download PDF Statement", category: "Employee Actions" },
   ];
 
   const fetchData = async () => {
@@ -102,14 +104,20 @@ function AdminPanel() {
       const adminSnap = await getDocs(collection(db, "app_admins"));
       const admins = [];
       adminSnap.forEach((docSnap) => {
+<<<<<<< HEAD
         const adminData = docSnap.data();
         if (adminData && adminData.email) {
           admins.push(adminData.email.toLowerCase().trim());
+=======
+        const data = docSnap.data();
+        if (data?.email) {
+          admins.push(data.email.toLowerCase());
+>>>>>>> second-repo/version-1.7
         }
       });
 
-      if (!admins.includes(OWNER_EMAIL)) {
-        admins.push(OWNER_EMAIL);
+      if (!admins.includes(OWNER_EMAIL.toLowerCase())) {
+        admins.push(OWNER_EMAIL.toLowerCase());
       }
       setAdminList(admins);
     } catch (err) {
@@ -120,23 +128,35 @@ function AdminPanel() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
+<<<<<<< HEAD
   // Check current user is Admin or Owner
   const isAdmin = currentUserEmail === OWNER_EMAIL || adminList.includes(currentUserEmail);
+=======
+  const isAdmin = currentUserEmail === OWNER_EMAIL.toLowerCase() || adminList.includes(currentUserEmail);
+>>>>>>> second-repo/version-1.7
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     if (!newAdminEmail) return;
 
+<<<<<<< HEAD
     const rawEmail = newAdminEmail.trim().toLowerCase();
     const cleanEmail = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
 
     try {
       await setDoc(doc(db, "app_admins", cleanEmail), {
         email: rawEmail,
+=======
+    const targetEmail = newAdminEmail.trim().toLowerCase();
+    const cleanEmail = targetEmail.replace(/[^a-zA-Z0-9]/g, "_");
+
+    try {
+      await setDoc(doc(db, "app_admins", cleanEmail), {
+        email: targetEmail,
+>>>>>>> second-repo/version-1.7
         addedBy: currentUserEmail,
         createdAt: serverTimestamp(),
       });
@@ -146,6 +166,7 @@ function AdminPanel() {
         return acc;
       }, {});
 
+<<<<<<< HEAD
       const updatedUserPerms = {
         ...fullPermissions,
         userEmail: rawEmail,
@@ -160,8 +181,24 @@ function AdminPanel() {
       }));
 
       setAdminList((prev) => [...prev, rawEmail]);
+=======
+      const adminPermsPayload = {
+        ...fullPermissions,
+        userEmail: targetEmail,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await setDoc(doc(db, "user_permissions", cleanEmail), adminPermsPayload, { merge: true });
+
+      setAdminList((prev) => [...prev, targetEmail]);
+      setPermissions((prev) => ({
+        ...prev,
+        [cleanEmail]: adminPermsPayload,
+      }));
+
+>>>>>>> second-repo/version-1.7
       setNewAdminEmail("");
-      alert("New Admin added successfully!");
+      alert("New Admin added with full permissions successfully!");
     } catch (err) {
       console.error("Add Admin Error:", err);
       alert("Failed to add admin.");
@@ -169,7 +206,7 @@ function AdminPanel() {
   };
 
   const handleRemoveAdmin = async (targetEmail) => {
-    if (targetEmail === OWNER_EMAIL) {
+    if (targetEmail === OWNER_EMAIL.toLowerCase()) {
       alert("Owner account cannot be removed from Admin list!");
       return;
     }
@@ -300,7 +337,6 @@ function AdminPanel() {
       const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, req.password);
       const uid = userCredential.user.uid;
 
-      // eslint-disable-next-line no-unused-vars
       const { password, ...safeData } = req;
       const approvedPayload = {
         ...safeData,
@@ -371,7 +407,6 @@ function AdminPanel() {
     <div className={styles.adminContainer}>
       <h2 className={styles.heading}>Admin Control Panel</h2>
 
-      {/* Tab Navigation Section */}
       <div className={styles.tabWrapper}>
         <div className={styles.tabButtons}>
           <button
@@ -401,7 +436,6 @@ function AdminPanel() {
         </div>
       </div>
 
-      {/* Access Control / Permissions Tab */}
       {activeTab === "permissions" && (
         <div className={styles.cardGrid}>
           {employees.map((emp) => {
@@ -441,7 +475,6 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Signup Requests Tab */}
       {activeTab === "signupRequests" && (
         <div>
           {signupRequests.length === 0 ? (
@@ -476,7 +509,6 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Attendance & Other Requests Tab */}
       {activeTab === "requests" && (
         <div>
           {requests.length === 0 ? (
@@ -535,7 +567,6 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Manage Admins Tab */}
       {activeTab === "admins" && (
         <div>
           <form onSubmit={handleAddAdmin} className={styles.adminForm}>
@@ -553,7 +584,7 @@ function AdminPanel() {
             {adminList.map((email) => (
               <div key={email} className={styles.adminItem}>
                 <span className={styles.adminEmail}>{email}</span>
-                {email !== OWNER_EMAIL && (
+                {email !== OWNER_EMAIL.toLowerCase() && (
                   <button onClick={() => handleRemoveAdmin(email)} className={styles.removeBtn}>
                     Remove
                   </button>

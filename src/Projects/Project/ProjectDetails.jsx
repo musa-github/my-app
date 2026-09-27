@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router';
 
@@ -8,6 +9,7 @@ import {
   deleteMonthBill,
   saveBillToFirebase
 } from '../../Fetures/Inventory/ProjectsSlice';
+import { db } from '../../Firebase/Firebase'; // আপনার প্রজেক্টের Firebase Config Path অনুযায়ী ঠিক রাখুন
 
 import './ProjectDetails.css';
 
@@ -16,10 +18,63 @@ const monthsList = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+// Owner Email constant
+const OWNER_EMAIL = 'smabumusa98@gmail.com';
+
 const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
+
+  // Redux store থেকে বর্তমান ইউজারের ইমেইল বা তথ্য নেওয়া
+  const currentUser = useSelector((state) => state.auth?.user || state.user?.currentUser || null);
+  const userEmail = (currentUser?.email || '').trim().toLowerCase();
+
+  // Firestore app_admins চেক করে Admin/Owner নির্ণয়
+  useEffect(() => {
+    const checkAdminOrOwner = async () => {
+      if (!userEmail) {
+        setIsAdminOrOwner(false);
+        return;
+      }
+
+      // ১. Owner চেক
+      if (userEmail === OWNER_EMAIL.toLowerCase()) {
+        setIsAdminOrOwner(true);
+        return;
+      }
+
+      // ২. Firestore app_admins কালেকশন থেকে Admin লিস্ট চেক
+      try {
+        const adminsSnap = await getDocs(collection(db, 'app_admins'));
+        const adminEmails = [];
+
+        adminsSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.email) {
+            adminEmails.push(data.email.toLowerCase());
+          }
+          // ডকুমেন্ট আইডি থেকেও ইমেইল ফরম্যাট চেক
+          const formattedDocId = docSnap.id.replace(/_/g, '.').replace('.gmail.com', '@gmail.com');
+          adminEmails.push(formattedDocId.toLowerCase());
+        });
+
+        const cleanUserKey = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
+        const isAdmin = adminEmails.some(
+          (adm) => adm === userEmail || adm.replace(/[^a-zA-Z0-9]/g, '_') === cleanUserKey
+        );
+
+        setIsAdminOrOwner(isAdmin);
+      } catch (error) {
+        console.error('Error fetching admins from Firestore:', error);
+        setIsAdminOrOwner(false);
+      }
+    };
+
+    checkAdminOrOwner();
+  }, [userEmail]);
 
   const projects = useSelector((state) => state.project?.projects || state.projectDetails?.projects || []);
   const project = projects.find((p) => String(p.id) === String(id));
@@ -191,15 +246,22 @@ const ProjectDetails = () => {
                     <td>{bill.approvedBy || '-'}</td>
                     <td>{bill.servicedBy || '-'}</td>
                     <td className="action-buttons">
+                      {/* Generate Bill Button */}
                       <button className="btn-action btn-print" title="Generate Bill" onClick={() => handleGenerateBill(bill)}>
                         📄 Bill
                       </button>
-                      <button className="btn-action btn-edit" title="Edit Bill" onClick={() => handleOpenMakeBill(bill)}>
-                        ✏️ Edit
+
+                      {/* Update Button (সবাই ব্যবহার করতে পারবে) */}
+                      <button className="btn-action btn-update" title="Update Bill" onClick={() => handleOpenMakeBill(bill)}>
+                        🔄 Update
                       </button>
-                      <button className="btn-action btn-delete" title="Delete Bill" onClick={() => handleDeleteBill(bill.month)}>
-                        🗑️
-                      </button>
+
+                      {/* Delete Button (শুধুমাত্র Admin অথবা Owner এর জন্য দৃশ্যমান) */}
+                      {isAdminOrOwner && (
+                        <button className="btn-action btn-delete" title="Delete Bill" onClick={() => handleDeleteBill(bill.month)}>
+                          🗑️ Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

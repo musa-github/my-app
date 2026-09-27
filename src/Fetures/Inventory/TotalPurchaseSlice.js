@@ -25,7 +25,6 @@ export const fetchTotalPurchase = createAsyncThunk(
   async () => {
     const querySnapshot = await getDocs(collection(db, 'purchase'));
     const items = [];
-
     querySnapshot.forEach((docSnap) => {
       const rawData = docSnap.data();
       const safeData = convertTimestamps(rawData);
@@ -40,15 +39,13 @@ export const fetchTotalPurchase = createAsyncThunk(
   }
 );
 
-// Update Purchase Item in Firestore & Redux State
+// Data Edit/Update Thunk
 export const updatePurchaseItem = createAsyncThunk(
   'totalPurchase/updatePurchaseItem',
-  async ({ id, updatedFields }) => {
-    if (id) {
-      const docRef = doc(db, 'purchase', id);
-      await updateDoc(docRef, updatedFields);
-    }
-    return { id, updatedFields };
+  async ({ id, updatedData }) => {
+    const docRef = doc(db, 'purchase', id);
+    await updateDoc(docRef, updatedData);
+    return { id, updatedData };
   }
 );
 
@@ -62,7 +59,7 @@ const totalPurchaseSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch Handlers
+      // Fetch Reducers
       .addCase(fetchTotalPurchase.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -75,12 +72,12 @@ const totalPurchaseSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
       })
-      // Update Handlers
+      // Update Reducers
       .addCase(updatePurchaseItem.fulfilled, (state, action) => {
-        const { id, updatedFields } = action.payload;
+        const { id, updatedData } = action.payload;
         const index = state.items.findIndex((item) => item.id === id);
         if (index !== -1) {
-          state.items[index] = { ...state.items[index], ...updatedFields };
+          state.items[index] = { ...state.items[index], ...updatedData };
         }
       });
   },

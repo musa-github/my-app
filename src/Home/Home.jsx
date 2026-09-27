@@ -77,14 +77,18 @@ const portfolioData = [
   }
 ];
 
-const PHONE_NUMBER = "01610989538";
-const WHATSAPP_NUMBER = "8801610989538";
+const PHONE_NUMBER = "01711131536";
+const WHATSAPP_NUMBER = "8801711131536";
 
 const Home = () => {
   const [selectedModalItem, setSelectedModalItem] = useState(null);
 
   const handleOpenWhatsApp = (title) => {
+<<<<<<< HEAD
     const text = encodeURIComponent(`Hello Osan Lift! I need information about: ${title || 'Services'}`);
+=======
+    const text = encodeURIComponent(`Hello H.R Engineers! I need information about: ${title || 'Services'}`);
+>>>>>>> second-repo/version-1.7
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank');
   };
 

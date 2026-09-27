@@ -7,22 +7,56 @@
 .topActions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 15px;
+}
+
+.downloadPdfBtn,
+.addAttendanceBtn,
+.editProfileBtn {
+  border: none;
+  padding: 10px 16px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
 }
 
 .downloadPdfBtn {
   background-color: #2563eb;
   color: #ffffff;
-  border: none;
-  padding: 10px 18px;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s ease;
 }
 
 .downloadPdfBtn:hover {
   background-color: #1d4ed8;
+}
+
+.addAttendanceBtn {
+  background-color: #28a745;
+  color: #ffffff;
+}
+
+.addAttendanceBtn:hover {
+  background-color: #218838;
+}
+
+.editProfileBtn {
+  background-color: #475569;
+  color: #ffffff;
+}
+
+.editProfileBtn:hover {
+  background-color: #334155;
 }
 
 .pdfArea {
@@ -31,6 +65,7 @@
   padding: 25px;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
 }
 
 .companyHeader {
@@ -66,6 +101,7 @@
   color: #334155;
   font-size: 14px;
   margin: 0;
+  word-break: break-word;
 }
 
 .designationBadge {
@@ -74,8 +110,10 @@
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 600;
+  display: inline-block;
 }
 
+/* Grids with Responsive Minmax width */
 .summaryGrid,
 .salaryGrid {
   display: grid;
@@ -88,9 +126,10 @@
 .salaryCard {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  padding: 12px;
+  padding: 12px 8px;
   border-radius: 8px;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .summaryCard span,
@@ -105,8 +144,9 @@
 .summaryCard strong,
 .salaryCard strong {
   display: block;
-  font-size: 16px;
+  font-size: 15px;
   color: #0f172a;
+  word-break: break-word;
 }
 
 .highlightCard {
@@ -126,29 +166,35 @@
   color: #16a34a !important;
 }
 
+/* Responsive Table Wrapper */
 .tableResponsive {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .attTable {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  min-width: 600px; /* Table won't squish on small screens */
 }
 
 .attTable th {
   background-color: #1e293b;
   color: #ffffff;
-  padding: 10px;
+  padding: 10px 12px;
   font-size: 13px;
   text-align: left;
+  white-space: nowrap;
 }
 
 .attTable td {
-  padding: 10px;
+  padding: 10px 12px;
   border-bottom: 1px solid #e2e8f0;
   color: #334155;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .fridayRow {
@@ -169,8 +215,209 @@
   font-weight: 600;
 }
 
+.actionEditBtn {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: 0.2s ease;
+}
+
+.actionEditBtn:hover {
+  background-color: #e2e8f0;
+}
+
+.noData {
+  text-align: center;
+  color: #64748b;
+  padding: 20px !important;
+}
+
 .loading {
   color: #ffffff;
   text-align: center;
   padding: 20px;
+}
+
+/* Modal Backdrop & Popup Fixes */
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.modalBox {
+  background: #ffffff;
+  padding: 20px 24px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  color: #333333;
+  animation: fadeIn 0.2s ease-in-out;
+  box-sizing: border-box;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalBox h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.15rem;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.modalBox form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modalBox label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.modalBox input,
+.modalBox select {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modalBox input:focus,
+.modalBox select:focus {
+  border-color: #2563eb;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.saveBtn {
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  flex: 1;
+}
+
+.saveBtn:hover {
+  background-color: #1d4ed8;
+}
+
+.cancelBtn {
+  background-color: #64748b;
+  color: #ffffff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  flex: 1;
+}
+
+.cancelBtn:hover {
+  background-color: #475569;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* --- Media Queries for Mobile Responsiveness --- */
+
+@media (max-width: 768px) {
+  .attendanceWrapper {
+    padding: 10px;
+  }
+
+  .pdfArea {
+    padding: 15px;
+  }
+
+  .topActions {
+    justify-content: stretch;
+  }
+
+  .downloadPdfBtn,
+  .addAttendanceBtn,
+  .editProfileBtn {
+    flex: 1 1 100%;
+    text-align: center;
+  }
+
+  .summaryGrid,
+  .salaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .companyHeader h2 {
+    font-size: 18px;
+  }
+
+  .companyHeader p {
+    font-size: 12px;
+  }
+
+  .summaryGrid,
+  .salaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .summaryCard,
+  .salaryCard {
+    padding: 10px 6px;
+  }
+
+  .summaryCard strong,
+  .salaryCard strong {
+    font-size: 14px;
+  }
+
+  .modalBox {
+    padding: 16px;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
 }

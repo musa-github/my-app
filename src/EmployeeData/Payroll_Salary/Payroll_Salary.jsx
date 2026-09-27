@@ -1,4 +1,3 @@
-
 import html2pdf from "html2pdf.js";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -28,6 +27,7 @@ const Payroll_Salary = () => {
   const [editingId, setEditingId] = useState(null);
   const [editBaseSalary, setEditBaseSalary] = useState(0);
   const [editAdvance, setEditAdvance] = useState(0);
+  const [editPresentDays, setEditPresentDays] = useState(0);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
@@ -38,6 +38,7 @@ const Payroll_Salary = () => {
     setEditingId(emp.id);
     setEditBaseSalary(emp.baseSalary);
     setEditAdvance(emp.advanceDeduction);
+    setEditPresentDays(emp.presentDays);
   };
 
   const handleSaveSalary = (empId) => {
@@ -46,6 +47,7 @@ const Payroll_Salary = () => {
         empId,
         baseSalary: editBaseSalary,
         advanceDeduction: editAdvance,
+        presentDays: editPresentDays,
       })
     );
     setEditingId(null);
@@ -62,12 +64,12 @@ const Payroll_Salary = () => {
       margin: [5, 2, 5, 2],
       filename: `Salary_Sheet_${selectedMonth.replace(/\s+/g, "_")}.pdf`,
       image: { type: "jpeg", quality: 1.0 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
-        windowWidth: 1200 
+        windowWidth: 1200,
       },
       jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
     };
@@ -84,7 +86,7 @@ const Payroll_Salary = () => {
     }
   };
 
-  // মাসভিত্তিক সব কর্মচারীর সর্বমোট টাকার হিসাব
+  // Total calculation for bottom row
   const totals = payrollData.reduce(
     (acc, emp) => {
       acc.baseSalary += Number(emp.baseSalary || 0);
@@ -191,7 +193,21 @@ const Payroll_Salary = () => {
                         )}
                       </td>
 
-                      <td>{emp.presentDays}</td>
+                      {/* Present Days Inline Input */}
+                      <td>
+                        {editingId === emp.id ? (
+                          <input
+                            type="number"
+                            value={editPresentDays}
+                            onChange={(e) => setEditPresentDays(e.target.value)}
+                            className={styles.inlineInput}
+                            style={{ width: "55px", textAlign: "center" }}
+                          />
+                        ) : (
+                          emp.presentDays
+                        )}
+                      </td>
+
                       <td>{emp.leaveDays}</td>
 
                       <td>
@@ -260,11 +276,13 @@ const Payroll_Salary = () => {
                 )}
               </tbody>
 
-              {/* সর্বমোট হিসাবের TFOOT অংশ */}
               {payrollData.length > 0 && (
                 <tfoot className={styles.tableFooter}>
                   <tr style={{ fontWeight: "bold", backgroundColor: "#f8fafc" }}>
-                    <td colSpan="3" style={{ textAlign: "right", paddingRight: "10px" }}>
+                    <td
+                      colSpan="3"
+                      style={{ textAlign: "right", paddingRight: "10px" }}
+                    >
                       <strong>Total:</strong>
                     </td>
                     <td>৳ {totals.baseSalary.toLocaleString()}</td>
@@ -290,15 +308,15 @@ const Payroll_Salary = () => {
             <div className={styles.printFooter}>
               <div className={styles.signBlock}>
                 <div className={styles.line}></div>
-                <p style={{color:"black"}}>Prepared By</p>
+                <p style={{ color: "black" }}>Prepared By</p>
               </div>
               <div className={styles.signBlock}>
                 <div className={styles.line}></div>
-                <p style={{color:"black"}}>Checked By</p>
+                <p style={{ color: "black" }}>Checked By</p>
               </div>
               <div className={styles.signBlock}>
                 <div className={styles.line}></div>
-                <p style={{color:"black"}}>Managing Director / Owner</p>
+                <p style={{ color: "black" }}>Managing Director / Owner</p>
               </div>
             </div>
           </div>
