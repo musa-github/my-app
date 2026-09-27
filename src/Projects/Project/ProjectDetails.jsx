@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router';
+import { auth, db } from '../../Firebase/Firebase';
 
 import {
   addOrUpdateBill,
@@ -10,6 +12,8 @@ import {
 } from '../../Fetures/Inventory/ProjectsSlice';
 
 import './ProjectDetails.css';
+
+const OWNER_EMAIL = "osanlift@gmail.com";
 
 const monthsList = [
   'January', 'February', 'March', 'April', 'May', 'June', 
@@ -25,6 +29,45 @@ const ProjectDetails = () => {
   const project = projects.find((p) => String(p.id) === String(id));
 
   const [showBillModal, setShowBillModal] = useState(false);
+  const [adminList, setAdminList] = useState([]);
+
+  // Logged-in User Info and Role Verification
+  const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
+  const reduxUserRole = useSelector((state) => state.auth?.user?.role);
+  
+  const currentUserEmail = (
+    reduxUserEmail ||
+    auth.currentUser?.email ||
+    ""
+  ).toLowerCase().trim();
+
+  // Fetch Admin Emails from Firebase
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const adminSnap = await getDocs(collection(db, "app_admins"));
+        const admins = [OWNER_EMAIL];
+        adminSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data && data.email) {
+            admins.push(data.email.toLowerCase().trim());
+          }
+        });
+        setAdminList(admins);
+      } catch (err) {
+        console.error("Error fetching admin list:", err);
+      }
+    };
+    fetchAdmins();
+  }, []);
+
+  // Strict Check: User is Owner or Admin
+  const normalizedRole = String(reduxUserRole || "").toLowerCase().trim();
+  const isAdminOrOwner =
+    currentUserEmail === OWNER_EMAIL ||
+    adminList.includes(currentUserEmail) ||
+    normalizedRole === "admin" ||
+    normalizedRole === "owner";
 
   const [billForm, setBillForm] = useState({
     month: 'January',
@@ -91,8 +134,15 @@ const ProjectDetails = () => {
 
   const handleBillSubmit = (e) => {
     e.preventDefault();
-    dispatch(addOrUpdateBill({ projectId: project.id, billData: billForm }));
-    dispatch(saveBillToFirebase({ projectId: project.id, billData: billForm }));
+
+    // Protection logic: Admin/Owner chara dynamic field tampering prevent kora
+    const updatedForm = {
+      ...billForm,
+      approvedBy: isAdminOrOwner ? billForm.approvedBy : (billForm.approvedBy || 'Pending Admin Approval')
+    };
+
+    dispatch(addOrUpdateBill({ projectId: project.id, billData: updatedForm }));
+    dispatch(saveBillToFirebase({ projectId: project.id, billData: updatedForm }));
     setShowBillModal(false);
   };
 
@@ -265,9 +315,23 @@ const ProjectDetails = () => {
                   <input type="text" placeholder="Name" name="collectedBy" value={billForm.collectedBy} onChange={handleBillInputChange} />
                 </div>
 
+                {/* Restricted Input: Only Admin / Owner can edit */}
                 <div className="input-field">
-                  <label>Approved By</label>
-                  <input type="text" placeholder="Name" name="approvedBy" value={billForm.approvedBy} onChange={handleBillInputChange} />
+                  <label>
+                    Approved By {!isAdminOrOwner && <small style={{ color: '#d9534f' }}>(Admin/Owner Only)</small>}
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder={isAdminOrOwner ? "Approver Name" : "Only Admin/Owner can approve"} 
+                    name="approvedBy" 
+                    value={billForm.approvedBy} 
+                    onChange={handleBillInputChange}
+                    disabled={!isAdminOrOwner}
+                    style={{
+                      backgroundColor: !isAdminOrOwner ? "#f2f2f2" : "#fff",
+                      cursor: !isAdminOrOwner ? "not-allowed" : "text"
+                    }}
+                  />
                 </div>
 
                 <div className="input-field">

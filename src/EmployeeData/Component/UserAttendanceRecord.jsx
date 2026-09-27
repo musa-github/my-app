@@ -1,11 +1,15 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import html2pdf from "html2pdf.js";
 import { useEffect, useRef, useState } from "react";
-import { db } from "../../Firebase/Firebase";
+import { useSelector } from "react-redux";
+import { auth, db } from "../../Firebase/Firebase";
 import styles from "./UserAttendanceRecord.module.css";
 
-function UserAttendanceRecord({ employeeName, employeeEmail }) {
+const OWNER_EMAIL = "osanlift@gmail.com";
+
+function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [adminList, setAdminList] = useState([]);
   const [employeeDetails, setEmployeeDetails] = useState({
     name: employeeName || "Employee",
     designation: "N/A",
@@ -32,6 +36,52 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
   const [loading, setLoading] = useState(true);
   const reportRef = useRef();
 
+  // --- Backdate Modal State ---
+  const [showBackdateModal, setShowBackdateModal] = useState(false);
+  const [backdateForm, setBackdateForm] = useState({
+    date: new Date().toISOString().split("T")[0],
+    inTime: "09:00 AM",
+    outTime: "06:00 PM",
+    status: "Present",
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Get Current Logged-in User Email
+  const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
+  const currentUserEmail = (
+    reduxUserEmail ||
+    auth.currentUser?.email ||
+    ""
+  ).toLowerCase().trim();
+
+  // Fetch Admin List from Firebase
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const adminSnap = await getDocs(collection(db, "app_admins"));
+        const admins = [OWNER_EMAIL];
+        adminSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data && data.email) {
+            admins.push(data.email.toLowerCase().trim());
+          }
+        });
+        setAdminList(admins);
+      } catch (err) {
+        console.error("Error fetching admin list:", err);
+      }
+    };
+    fetchAdmins();
+  }, []);
+
+  // Strict Check: Current User Must Be Owner or Listed Admin
+  const normalizedRole = String(userRole || "").toLowerCase().trim();
+  const isAdminOrOwner =
+    currentUserEmail === OWNER_EMAIL ||
+    adminList.includes(currentUserEmail) ||
+    normalizedRole === "admin" ||
+    normalizedRole === "owner";
+
   const currentMonth = new Date().toLocaleString("en-US", {
     month: "long",
     year: "numeric",
@@ -52,24 +102,25 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
     return hours + minutes / 60;
   };
 
-  useEffect(() => {
-    const fetchAttendanceAndPayroll = async () => {
-      setLoading(true);
+  const fetchAttendanceAndPayroll = async () => {
+    setLoading(true);
 
-      try {
-        let baseSalary = 0;
-        let advanceDeduction = 0;
-        let designation = "N/A";
-        let fetchedName = employeeName || "";
+    try {
+      let baseSalary = 0;
+      let advanceDeduction = 0;
+      let designation = "N/A";
+      let fetchedName = (employeeName || "").trim();
+      const rawEmail = (employeeEmail || "").trim().toLowerCase();
 
-        if (!employeeEmail) {
-          setLoading(false);
-          return;
-        }
+      if (!rawEmail && !fetchedName) {
+        setLoading(false);
+        return;
+      }
 
-        const cleanEmailKey = employeeEmail.trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+      const cleanEmailKey = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
 
-        // 1. Fetch from 'employees' collection using Email Document ID
+      // 1. Fetch Employee Details
+      if (cleanEmailKey) {
         const empRef = doc(db, "employees", cleanEmailKey);
         const empSnap = await getDoc(empRef);
 
@@ -80,7 +131,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
           baseSalary = Number(empData.baseSalary || 0);
           advanceDeduction = Number(empData.advanceDeduction || 0);
           designation = empData.designation || "N/A";
-          fetchedName = empData.name || employeeName;
+          fetchedName = (empData.name || employeeName || "").trim();
 
           setEmployeeDetails({
             name: fetchedName,
@@ -89,34 +140,42 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
             advanceDeduction,
           });
         }
+      }
 
-        // 2. Fetch Attendance Records using Email Key (NOT Name)
-        // Primary path: attendance/{cleanEmailKey}/{currentMonth}
-        let monthAttRef = collection(db, "attendance", cleanEmailKey, currentMonth);
-        let attSnap = await getDocs(monthAttRef);
+      // 2. Fetch Attendance Records
+      let attSnap = null;
 
-        // Fallback for backward compatibility (If data is stored using clean name)
-        if (attSnap.empty && fetchedName) {
-          const cleanNameKey = fetchedName.trim().replace(/[^a-zA-Z0-9]/g, "_");
-          monthAttRef = collection(db, "attendance", cleanNameKey, currentMonth);
-          attSnap = await getDocs(monthAttRef);
-        }
+      if (cleanEmailKey) {
+        const emailAttRef = collection(db, "attendance", cleanEmailKey, currentMonth);
+        const snap = await getDocs(emailAttRef);
+        if (!snap.empty) attSnap = snap;
+      }
 
-        const records = [];
-        let sumHours = 0;
-        let sumOT = 0;
-        let presentCount = 0;
-        let leaveCount = 0;
-        let workedFridays = 0;
+      if ((!attSnap || attSnap.empty) && fetchedName) {
+        const cleanNameKey = fetchedName.replace(/[^a-zA-Z0-9]/g, "_");
+        const nameAttRef = collection(db, "attendance", cleanNameKey, currentMonth);
+        const snap = await getDocs(nameAttRef);
+        if (!snap.empty) attSnap = snap;
+      }
 
+      const records = [];
+      let sumHours = 0;
+      let sumOT = 0;
+      let presentCount = 0;
+      let leaveCount = 0;
+      let workedFridays = 0;
+
+      if (attSnap && !attSnap.empty) {
         attSnap.forEach((docSnap) => {
           const data = docSnap.data();
 
-          // Extra safety check: Email match validation[cite: 2, 3]
-          if (
-            data.employeeEmail &&
-            data.employeeEmail.toLowerCase() !== employeeEmail.toLowerCase()
-          ) {
+          const docEmail = (data.employeeEmail || "").trim().toLowerCase();
+          const docName = (data.employeeName || "").trim().toLowerCase();
+
+          const isEmailMatch = rawEmail && docEmail && docEmail === rawEmail;
+          const isNameMatch = fetchedName && docName && docName === fetchedName.toLowerCase();
+
+          if (rawEmail && docEmail && !isEmailMatch && !isNameMatch) {
             return;
           }
 
@@ -127,7 +186,9 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
           let overtimeHrs = 0;
 
           const isApproved =
-            data.statusIn === "Approved" || data.statusOut === "Approved";
+            data.statusIn === "Approved" ||
+            data.statusOut === "Approved" ||
+            data.status === "Present";
 
           if (isApproved || data.inTime) {
             presentCount += 1;
@@ -162,42 +223,101 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
             isFriday,
           });
         });
-
-        records.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // 3. Calculation Logic
-        const totalMonthDays = 30;
-        const dailyRate = baseSalary > 0 ? baseSalary / totalMonthDays : 0;
-        const absentCount = Math.max(0, totalMonthDays - (presentCount + leaveCount));
-        const grossPayable = Math.round(dailyRate * Math.min(presentCount + leaveCount, totalMonthDays));
-        const fridayAllowance = Math.round(workedFridays * dailyRate);
-        const netPayable = Math.max(0, grossPayable + fridayAllowance - advanceDeduction);
-
-        setAttendanceRecords(records);
-        setSummary({
-          totalHours: sumHours.toFixed(2),
-          totalOvertime: sumOT.toFixed(2),
-          fridayCount: workedFridays,
-          presentDays: presentCount,
-          leaveDays: leaveCount,
-          absentDays: absentCount,
-          totalPayableDays: presentCount + leaveCount + workedFridays,
-          baseSalary,
-          dailyRate: Math.round(dailyRate),
-          grossPayable,
-          fridayAllowance,
-          advanceDeduction,
-          netPayable,
-        });
-      } catch (err) {
-        console.error("Firestore Error:", err);
-      } finally {
-        setLoading(false);
       }
-    };
 
+      records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      // 3. Calculation Logic
+      const totalMonthDays = 30;
+      const dailyRate = baseSalary > 0 ? baseSalary / totalMonthDays : 0;
+      const absentCount = Math.max(0, totalMonthDays - (presentCount + leaveCount));
+      const grossPayable = Math.round(dailyRate * Math.min(presentCount + leaveCount, totalMonthDays));
+      const fridayAllowance = Math.round(workedFridays * dailyRate);
+      const netPayable = Math.max(0, grossPayable + fridayAllowance - advanceDeduction);
+
+      setAttendanceRecords(records);
+      setSummary({
+        totalHours: sumHours.toFixed(2),
+        totalOvertime: sumOT.toFixed(2),
+        fridayCount: workedFridays,
+        presentDays: presentCount,
+        leaveDays: leaveCount,
+        absentDays: absentCount,
+        totalPayableDays: presentCount + leaveCount + workedFridays,
+        baseSalary,
+        dailyRate: Math.round(dailyRate),
+        grossPayable,
+        fridayAllowance,
+        advanceDeduction,
+        netPayable,
+      });
+    } catch (err) {
+      console.error("Firestore Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAttendanceAndPayroll();
   }, [employeeName, employeeEmail, currentMonth]);
+
+  // --- Handle Backdate Attendance Submit ---
+  const handleBackdateSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!isAdminOrOwner) {
+      alert("Access Denied: Only Admin or Owner can update backdate attendance!");
+      return;
+    }
+
+    if (!employeeEmail) {
+      alert("Employee email is missing.");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const cleanEmailKey = employeeEmail.trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+      
+      const targetDate = new Date(backdateForm.date);
+      const targetMonthYear = targetDate.toLocaleString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+
+      const dateDocId = backdateForm.date; // Format: YYYY-MM-DD
+      const attDocRef = doc(db, "attendance", cleanEmailKey, targetMonthYear, dateDocId);
+
+      await setDoc(
+        attDocRef,
+        {
+          date: backdateForm.date,
+          employeeEmail: employeeEmail.trim().toLowerCase(),
+          employeeName: employeeDetails.name || employeeName,
+          inTime: backdateForm.inTime,
+          outTime: backdateForm.outTime,
+          status: backdateForm.status,
+          statusIn: "Approved",
+          statusOut: "Approved",
+          monthYear: targetMonthYear,
+          updatedByAdmin: true,
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
+
+      alert(`Attendance updated successfully for ${backdateForm.date}`);
+      setShowBackdateModal(false);
+      fetchAttendanceAndPayroll();
+    } catch (error) {
+      console.error("Error updating backdate attendance:", error);
+      alert("Failed to update attendance. Please try again.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleDownloadPDF = () => {
     const element = reportRef.current;
@@ -216,7 +336,18 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
 
   return (
     <div className={styles.attendanceWrapper}>
-      <div className={styles.topActions}>
+      <div className={styles.topActions} style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+        {/* Strictly Only Admin or Owner Can See This Button */}
+        {isAdminOrOwner && (
+          <button
+            onClick={() => setShowBackdateModal(true)}
+            className={styles.downloadPdfBtn}
+            style={{ backgroundColor: "#28a745" }}
+          >
+            + Add / Update Backdate
+          </button>
+        )}
+
         <button onClick={handleDownloadPDF} className={styles.downloadPdfBtn}>
           Download PDF Statement
         </button>
@@ -352,6 +483,121 @@ function UserAttendanceRecord({ employeeName, employeeEmail }) {
           </table>
         </div>
       </div>
+
+      {/* --- BACKDATE MODAL FORM (ADMIN/OWNER ONLY) --- */}
+      {showBackdateModal && isAdminOrOwner && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              padding: "24px",
+              borderRadius: "8px",
+              width: "100%",
+              maxWidth: "420px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            }}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: "16px" }}>
+              Update Backdate Attendance
+            </h3>
+
+            <form onSubmit={handleBackdateSubmit}>
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px" }}>Select Date:</label>
+                <input
+                  type="date"
+                  value={backdateForm.date}
+                  onChange={(e) =>
+                    setBackdateForm({ ...backdateForm, date: e.target.value })
+                  }
+                  required
+                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px" }}>In Time:</label>
+                <input
+                  type="text"
+                  placeholder="09:00 AM"
+                  value={backdateForm.inTime}
+                  onChange={(e) =>
+                    setBackdateForm({ ...backdateForm, inTime: e.target.value })
+                  }
+                  required
+                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px" }}>Out Time:</label>
+                <input
+                  type="text"
+                  placeholder="06:00 PM"
+                  value={backdateForm.outTime}
+                  onChange={(e) =>
+                    setBackdateForm({ ...backdateForm, outTime: e.target.value })
+                  }
+                  required
+                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "4px" }}>Status:</label>
+                <select
+                  value={backdateForm.status}
+                  onChange={(e) =>
+                    setBackdateForm({ ...backdateForm, status: e.target.value })
+                  }
+                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                >
+                  <option value="Present">Present</option>
+                  <option value="Leave">Leave</option>
+                  <option value="Absent">Absent</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowBackdateModal(false)}
+                  style={{ padding: "8px 16px", borderRadius: "4px", border: "none", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "4px",
+                    border: "none",
+                    backgroundColor: "#007bff",
+                    color: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  {isUpdating ? "Saving..." : "Save Record"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
