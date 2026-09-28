@@ -2,49 +2,88 @@
    MAIN CONTAINER
 ========================================= */
 .projectsContainer {
+  position: relative;
   display: flex;
-  height: calc(100vh - 70px); /* স্ক্রিনের উচ্চতা অনুযায়ী ফিক্সড সাইজ */
+  height: calc(100vh - 70px);
   background-color: #0b0f17;
   color: #e2e8f0;
   width: 100%;
-  overflow: hidden; /* পুরো পেজের মূল স্ক্রলবার বন্ধ থাকবে */
+  overflow: hidden;
 }
 
 /* =========================================
-   SIDEBAR (FIXED - STAYS ON SCREEN)
+   SIDEBAR (COLLAPSIBLE)
 ========================================= */
 .aside {
   width: 240px;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(15, 23, 42, 0.98);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  padding: 20px 0;
+  padding: 16px 0;
   flex-shrink: 0;
   height: 100%;
-  overflow-y: auto; /* সাইডবার লিঙ্ক বেশি হলে সাইডবারের ভেতরেই স্ক্রল হবে */
+  overflow-y: auto;
   box-sizing: border-box;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 20;
+}
+
+/* Collapsed State (Width shrinks to 65px) */
+.asideCollapsed {
+  width: 65px;
 }
 
 .asideHeader {
-  padding: 0 20px 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 12px;
+  min-height: 24px;
 }
 
-.asideHeader span {
-  font-size: 0.75rem;
+.asideCollapsed .asideHeader {
+  justify-content: center;
+  padding: 0 0 14px 0;
+}
+
+.titleText {
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   color: #38bdf8;
+  white-space: nowrap;
+}
+
+/* Toggle Icon Button */
+.toggleBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #38bdf8;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggleBtn:hover {
+  color: #ffffff;
+  background: #0284c7;
+  border-color: #0284c7;
 }
 
 .asideNav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 0 10px;
+  gap: 6px;
+  padding: 0 8px;
 }
 
 /* Sidebar Links */
@@ -52,28 +91,48 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 14px;
   font-size: 0.9rem;
   font-weight: 500;
   color: #94a3b8;
   text-decoration: none;
   border-radius: 8px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
   white-space: nowrap;
+}
+
+.asideCollapsed .asideLink {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.navIcon {
+  font-size: 1.1rem;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asideCollapsed .navIcon {
+  margin-right: 0;
+}
+
+.linkText {
+  letter-spacing: 0.3px;
 }
 
 .asideLink:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .active {
   color: #ffffff !important;
   background: linear-gradient(
     90deg,
-    rgba(229, 12, 122, 0.15) 0%,
-    rgba(229, 12, 122, 0.02) 100%
+    rgba(229, 12, 122, 0.25) 0%,
+    rgba(229, 12, 122, 0.05) 100%
   ) !important;
   font-weight: 600;
 }
@@ -91,85 +150,14 @@
 }
 
 /* =========================================
-   MAIN CONTENT AREA (OUTLET - SCROLLABLE)
+   MAIN CONTENT AREA (FULL SCREEN AUTOMATIC)
 ========================================= */
-.main,
-.formContainer,
-.content,
-.inventoryFormContainer {
+.content {
   flex: 1;
-  padding: 30px 20px;
+  padding: 20px;
   background-color: #0f172a;
   height: 100%;
-  overflow-y: auto; /* কনটেন্ট বড় হলে শুধু এই অংশটি স্ক্রল হবে */
+  overflow-y: auto;
   box-sizing: border-box !important;
-}
-
-/* =========================================
-   MOBILE & TABLET RESPONSIVE BREAKPOINTS
-========================================= */
-
-/* Mobile & Tablet Screens (<= 768px) */
-@media screen and (max-width: 768px) {
-  .projectsContainer {
-    flex-direction: column;
-    height: auto;
-    min-height: calc(100vh - 60px);
-    overflow: visible;
-  }
-
-  .aside {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 10px 0;
-  }
-
-  .asideHeader {
-    padding: 0 12px 8px 12px;
-    margin-bottom: 6px;
-  }
-
-  .asideNav {
-    flex-direction: row;
-    overflow-x: auto; /* মোবাইলে ট্যাবগুলো ডানে-বামে স্ক্রল করা যাবে */
-    white-space: nowrap;
-    padding: 0 12px 6px 12px;
-    gap: 8px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .asideLink {
-    padding: 8px 14px;
-    font-size: 0.85rem;
-  }
-
-  /* মোবাইলে এক্টিভ বর্ডার বামের বদলে নিচে আসবে */
-  .active::before {
-    left: 15%;
-    top: auto;
-    bottom: 0;
-    width: 70%;
-    height: 3px;
-    border-radius: 4px 4px 0 0;
-  }
-
-  .main,
-  .formContainer,
-  .content,
-  .inventoryFormContainer {
-    padding: 16px 12px;
-    height: auto;
-  }
-}
-
-/* Small Mobile Screens (<= 480px) */
-@media screen and (max-width: 480px) {
-  .main,
-  .formContainer,
-  .content,
-  .inventoryFormContainer {
-    padding: 12px 8px;
-  }
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

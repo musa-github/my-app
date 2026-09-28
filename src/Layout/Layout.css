@@ -83,7 +83,7 @@ aside {
 .main-content {
   flex: 1;
   padding: 20px;
-  margin-top: 10px; /* ডেক্সটপ ফ্রেন্ডলি মার্জিন */
+  margin-top: 60px;
   width: 100%;
   max-width: 100%;
 }

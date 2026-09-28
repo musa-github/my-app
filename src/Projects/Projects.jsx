@@ -10,6 +10,9 @@ const OWNER_EMAIL = "osanlift@gmail.com";
 function Projects() {
   const { user } = useSelector((state) => state.auth || {});
 
+  // Sidebar Open/Collapsed state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   // Permission & Admin States
   const [permissions, setPermissions] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
@@ -52,49 +55,61 @@ function Projects() {
     fetchPermissions();
   }, [currentUserEmail]);
 
-  // Updated Flexible Permission Checker Helper Function
+  // Permission Checker
   const hasPermission = (primaryKey, ...fallbackKeys) => {
-    if (isAdmin) return true; // Admins have full access
+    if (isAdmin) return true;
     if (permissions[primaryKey]) return true;
     return fallbackKeys.some((key) => permissions[key]);
   };
 
   return (
     <div className={Style.projectsContainer}>
-      <aside className={Style.aside}>
+      {/* Sidebar Section */}
+      <aside className={`${Style.aside} ${!isSidebarOpen ? Style.asideCollapsed : ""}`}>
         <div className={Style.asideHeader}>
-          <span>Projects Portal</span>
+          {isSidebarOpen && <span className={Style.titleText}>Projects Portal</span>}
+          <button
+            type="button"
+            className={Style.toggleBtn}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+          >
+            {isSidebarOpen ? "◀" : "▶"}
+          </button>
         </div>
 
         {!loading && (
           <nav className={Style.asideNav}>
-            {/* Summary Tab Check (projects_tab_summary) */}
             {hasPermission("projects_tab_summary", "projects_summary", "canAccessSummary") && (
               <NavLink
                 to="Summery"
+                title="Summary"
                 className={({ isActive }) =>
                   isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
                 }
               >
-                Summary
+                <span className={Style.navIcon}>📊</span>
+                {isSidebarOpen && <span className={Style.linkText}>Summary</span>}
               </NavLink>
             )}
 
-            {/* Serviced & Schedule Tab Check (projects_tab_serviced) */}
             {hasPermission("projects_tab_serviced", "projects_schedule", "canAccessSchedule") && (
               <NavLink
                 to="Serviced_and_Schedule"
+                title="Serviced and Schedule"
                 className={({ isActive }) =>
                   isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
                 }
               >
-                Serviced and Schedule
+                <span className={Style.navIcon}>📅</span>
+                {isSidebarOpen && <span className={Style.linkText}>Serviced and Schedule</span>}
               </NavLink>
             )}
           </nav>
         )}
       </aside>
 
+      {/* Main Content Area */}
       <main className={Style.content}>
         <Outlet />
       </main>

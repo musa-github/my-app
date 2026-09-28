@@ -1,8 +1,10 @@
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import html2pdf from "html2pdf.js";
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { auth, db } from "../../Firebase/Firebase";
+import MonthFilter from "./MonthFilter";
 import styles from "./UserAttendanceRecord.module.css";
 
 const OWNER_EMAIL = "osanlift@gmail.com";
@@ -36,7 +38,6 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
   const [loading, setLoading] = useState(true);
   const reportRef = useRef();
 
-  // --- Backdate Modal State ---
   const [showBackdateModal, setShowBackdateModal] = useState(false);
   const [backdateForm, setBackdateForm] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -46,15 +47,17 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
   });
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Get Current Logged-in User Email
+  // Redux Selectors
   const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
+  const currentMonth = useSelector((state) => state.attendance?.selectedMonthYear) || "September 2026";
+
   const currentUserEmail = (
     reduxUserEmail ||
     auth.currentUser?.email ||
     ""
   ).toLowerCase().trim();
 
-  // Fetch Admin List from Firebase
+  // Fetch Admin List
   useEffect(() => {
     const fetchAdmins = async () => {
       try {
@@ -74,18 +77,12 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
     fetchAdmins();
   }, []);
 
-  // Strict Check: Current User Must Be Owner or Listed Admin
   const normalizedRole = String(userRole || "").toLowerCase().trim();
   const isAdminOrOwner =
     currentUserEmail === OWNER_EMAIL ||
     adminList.includes(currentUserEmail) ||
     normalizedRole === "admin" ||
     normalizedRole === "owner";
-
-  const currentMonth = new Date().toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
 
   const parseTimeToHours = (timeStr) => {
     if (!timeStr) return null;
@@ -119,7 +116,6 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
 
       const cleanEmailKey = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
 
-      // 1. Fetch Employee Details
       if (cleanEmailKey) {
         const empRef = doc(db, "employees", cleanEmailKey);
         const empSnap = await getDoc(empRef);
@@ -142,7 +138,6 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
         }
       }
 
-      // 2. Fetch Attendance Records
       let attSnap = null;
 
       if (cleanEmailKey) {
@@ -227,7 +222,6 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
 
       records.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      // 3. Calculation Logic
       const totalMonthDays = 30;
       const dailyRate = baseSalary > 0 ? baseSalary / totalMonthDays : 0;
       const absentCount = Math.max(0, totalMonthDays - (presentCount + leaveCount));
@@ -259,16 +253,49 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAttendanceAndPayroll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employeeName, employeeEmail, currentMonth]);
 
-  // --- Handle Backdate Attendance Submit ---
+  const handleEditRow = (record) => {
+    setBackdateForm({
+      date: record.date,
+      inTime: record.inTime !== "--" ? record.inTime : "09:00 AM",
+      outTime: record.outTime !== "--" ? record.outTime : "06:00 PM",
+      status: record.status || "Present",
+    });
+    setShowBackdateModal(true);
+  };
+
+  const handleDeleteAttendanceRow = async (docId, date) => {
+    if (!isAdminOrOwner) {
+      alert("Access Denied: Only Admin or Owner can delete attendance records!");
+      return;
+    }
+
+    const confirmDelete = window.confirm(`Are you sure you want to delete attendance record for date: ${date}?`);
+    if (!confirmDelete) return;
+
+    try {
+      const rawEmail = (employeeEmail || "").trim().toLowerCase();
+      const cleanEmailKey = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
+
+      const dateDocRef = doc(db, "attendance", cleanEmailKey, currentMonth, docId);
+      await deleteDoc(dateDocRef);
+
+      alert(`Attendance record for ${date} has been deleted successfully!`);
+      fetchAttendanceAndPayroll();
+    } catch (error) {
+      console.error("Error deleting attendance record:", error);
+      alert("Failed to delete record. Please try again.");
+    }
+  };
+
   const handleBackdateSubmit = async (e) => {
     e.preventDefault();
 
     if (!isAdminOrOwner) {
-      alert("Access Denied: Only Admin or Owner can update backdate attendance!");
+      alert("Access Denied: Only Admin or Owner can update attendance!");
       return;
     }
 
@@ -287,7 +314,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
         year: "numeric",
       });
 
-      const dateDocId = backdateForm.date; // Format: YYYY-MM-DD
+      const dateDocId = backdateForm.date;
       const attDocRef = doc(db, "attendance", cleanEmailKey, targetMonthYear, dateDocId);
 
       await setDoc(
@@ -308,7 +335,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
         { merge: true }
       );
 
-      alert(`Attendance updated successfully for ${backdateForm.date}`);
+      alert(`Attendance saved/updated successfully for ${backdateForm.date}`);
       setShowBackdateModal(false);
       fetchAttendanceAndPayroll();
     } catch (error) {
@@ -332,17 +359,23 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
     html2pdf().set(opt).from(element).save();
   };
 
-  if (loading) return <p className={styles.loading}>Loading Data...</p>;
-
   return (
     <div className={styles.attendanceWrapper}>
-      <div className={styles.topActions} style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-        {/* Strictly Only Admin or Owner Can See This Button */}
+      <MonthFilter />
+
+      <div className={styles.topActions}>
         {isAdminOrOwner && (
           <button
-            onClick={() => setShowBackdateModal(true)}
-            className={styles.downloadPdfBtn}
-            style={{ backgroundColor: "#28a745" }}
+            onClick={() => {
+              setBackdateForm({
+                date: new Date().toISOString().split("T")[0],
+                inTime: "09:00 AM",
+                outTime: "06:00 PM",
+                status: "Present",
+              });
+              setShowBackdateModal(true);
+            }}
+            className={styles.addBackdateBtn}
           >
             + Add / Update Backdate
           </button>
@@ -353,170 +386,171 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
         </button>
       </div>
 
-      <div ref={reportRef} className={styles.pdfArea}>
-        <div className={styles.companyHeader}>
-          <h2>H.R.ENGINEERS</h2>
-          <p>Monthly Employee Statement & Salary Payslip</p>
-        </div>
+      {loading ? (
+        <p className={styles.loading}>Loading Data...</p>
+      ) : (
+        <div ref={reportRef} className={styles.pdfArea}>
+          <div className={styles.companyHeader}>
+            <h2>OSAN LIFT</h2>
+            <p>Monthly Employee Statement & Salary Payslip</p>
+          </div>
 
-        <div className={styles.headerFlex}>
-          <div>
-            <h3 className={styles.sectionTitle}>Month: {currentMonth}</h3>
-            <p className={styles.subTitle}>
-              Employee: <strong>{employeeDetails.name}</strong> (
-              <span className={styles.designationBadge}>
-                {employeeDetails.designation}
-              </span>
-              )
-            </p>
+          <div className={styles.headerFlex}>
+            <div>
+              <h3 className={styles.sectionTitle}>Month: {currentMonth}</h3>
+              <p className={styles.subTitle}>
+                Employee: <strong>{employeeDetails.name}</strong> (
+                <span className={styles.designationBadge}>
+                  {employeeDetails.designation}
+                </span>
+                )
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Attendance Summary */}
-        <div className={styles.summaryGrid}>
-          <div className={styles.summaryCard}>
-            <span>Present Days</span>
-            <strong>{summary.presentDays} Days</strong>
+          {/* Summary Grid */}
+          <div className={styles.summaryGrid}>
+            <div className={styles.summaryCard}>
+              <span>Present Days</span>
+              <strong>{summary.presentDays} Days</strong>
+            </div>
+            <div className={styles.summaryCard}>
+              <span>Leave Days</span>
+              <strong>{summary.leaveDays} Days</strong>
+            </div>
+            <div className={styles.summaryCard}>
+              <span>Absent Days</span>
+              <strong className={styles.dangerText}>{summary.absentDays} Days</strong>
+            </div>
+            <div className={styles.summaryCard}>
+              <span>Friday Duty</span>
+              <strong>{summary.fridayCount} Days</strong>
+            </div>
+            <div className={styles.summaryCard}>
+              <span>Total Duty</span>
+              <strong>{summary.totalHours} hrs</strong>
+            </div>
+            <div className={styles.summaryCard}>
+              <span>Overtime</span>
+              <strong>{summary.totalOvertime} hrs</strong>
+            </div>
           </div>
-          <div className={styles.summaryCard}>
-            <span>Leave Days</span>
-            <strong>{summary.leaveDays} Days</strong>
-          </div>
-          <div className={styles.summaryCard}>
-            <span>Absent Days</span>
-            <strong className={styles.dangerText}>{summary.absentDays} Days</strong>
-          </div>
-          <div className={styles.summaryCard}>
-            <span>Friday Duty</span>
-            <strong>{summary.fridayCount} Days</strong>
-          </div>
-          <div className={styles.summaryCard}>
-            <span>Total Duty</span>
-            <strong>{summary.totalHours} hrs</strong>
-          </div>
-          <div className={styles.summaryCard}>
-            <span>Overtime</span>
-            <strong>{summary.totalOvertime} hrs</strong>
-          </div>
-        </div>
 
-        {/* Payroll Breakdown */}
-        <div className={styles.salaryGrid}>
-          <div className={styles.salaryCard}>
-            <span>Base Salary</span>
-            <strong>৳ {summary.baseSalary.toLocaleString()}</strong>
+          {/* Salary Grid */}
+          <div className={styles.salaryGrid}>
+            <div className={styles.salaryCard}>
+              <span>Base Salary</span>
+              <strong>৳ {summary.baseSalary.toLocaleString()}</strong>
+            </div>
+            <div className={styles.salaryCard}>
+              <span>Daily Rate</span>
+              <strong>৳ {summary.dailyRate.toLocaleString()}</strong>
+            </div>
+            <div className={styles.salaryCard}>
+              <span>Friday Bonus (+)</span>
+              <strong className={styles.successText}>
+                +৳ {summary.fridayAllowance.toLocaleString()}
+              </strong>
+            </div>
+            <div className={styles.salaryCard}>
+              <span>Advance (-)</span>
+              <strong className={styles.dangerText}>
+                -৳ {summary.advanceDeduction.toLocaleString()}
+              </strong>
+            </div>
+            <div className={`${styles.salaryCard} ${styles.highlightCard}`}>
+              <span>Net Payable Salary</span>
+              <strong>৳ {summary.netPayable.toLocaleString()}</strong>
+            </div>
           </div>
-          <div className={styles.salaryCard}>
-            <span>Daily Rate</span>
-            <strong>৳ {summary.dailyRate.toLocaleString()}</strong>
-          </div>
-          <div className={styles.salaryCard}>
-            <span>Friday Bonus (+)</span>
-            <strong className={styles.successText}>
-              +৳ {summary.fridayAllowance.toLocaleString()}
-            </strong>
-          </div>
-          <div className={styles.salaryCard}>
-            <span>Advance (-)</span>
-            <strong className={styles.dangerText}>
-              -৳ {summary.advanceDeduction.toLocaleString()}
-            </strong>
-          </div>
-          <div className={`${styles.salaryCard} ${styles.highlightCard}`}>
-            <span>Net Payable Salary</span>
-            <strong>৳ {summary.netPayable.toLocaleString()}</strong>
-          </div>
-        </div>
 
-        {/* Daily Logs Table */}
-        <div className={styles.tableResponsive}>
-          <table className={styles.attTable}>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>In Time</th>
-                <th>Out Time</th>
-                <th>Duty Hours</th>
-                <th>Overtime</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attendanceRecords.length === 0 ? (
+          {/* Attendance Table */}
+          <div className={styles.tableResponsive}>
+            <table className={styles.attTable}>
+              <thead>
                 <tr>
-                  <td colSpan="6" className={styles.noData}>
-                    No records found for this month.
-                  </td>
+                  <th>Date</th>
+                  <th>In Time</th>
+                  <th>Out Time</th>
+                  <th>Duty Hours</th>
+                  <th>Overtime</th>
+                  <th>Status</th>
+                  {isAdminOrOwner && <th>Action</th>}
                 </tr>
-              ) : (
-                attendanceRecords.map((item) => (
-                  <tr
-                    key={item.id}
-                    className={item.isFriday ? styles.fridayRow : ""}
-                  >
-                    <td>{item.date}</td>
-                    <td>{item.inTime}</td>
-                    <td>{item.outTime}</td>
-                    <td>
-                      <strong>{item.totalHours} hrs</strong>
-                    </td>
-                    <td>
-                      {parseFloat(item.overtimeHours) > 0 ? (
-                        <span className={styles.otBadge}>
-                          +{item.overtimeHours} hrs
-                        </span>
-                      ) : (
-                        "--"
-                      )}
-                    </td>
-                    <td>
-                      {item.isFriday ? (
-                        <span className={styles.fridayBadge}>Friday (Payable)</span>
-                      ) : (
-                        item.status
-                      )}
+              </thead>
+              <tbody>
+                {attendanceRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan={isAdminOrOwner ? "7" : "6"} className={styles.noData}>
+                      No records found for this month.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  attendanceRecords.map((item) => (
+                    <tr
+                      key={item.id}
+                      className={item.isFriday ? styles.fridayRow : ""}
+                    >
+                      <td>{item.date}</td>
+                      <td>{item.inTime}</td>
+                      <td>{item.outTime}</td>
+                      <td>
+                        <strong>{item.totalHours} hrs</strong>
+                      </td>
+                      <td>
+                        {parseFloat(item.overtimeHours) > 0 ? (
+                          <span className={styles.otBadge}>
+                            +{item.overtimeHours} hrs
+                          </span>
+                        ) : (
+                          "--"
+                        )}
+                      </td>
+                      <td>
+                        {item.isFriday ? (
+                          <span className={styles.fridayBadge}>Friday (Payable)</span>
+                        ) : (
+                          item.status
+                        )}
+                      </td>
+                      {isAdminOrOwner && (
+                        <td>
+                          <div className={styles.actionGroup}>
+                            <button
+                              onClick={() => handleEditRow(item)}
+                              className={styles.editBtn}
+                            >
+                              ✏ Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAttendanceRow(item.id, item.date)}
+                              className={styles.deleteBtn}
+                            >
+                              🗑 Delete
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* --- BACKDATE MODAL FORM (ADMIN/OWNER ONLY) --- */}
+      {/* Edit / Backdate Modal */}
       {showBackdateModal && isAdminOrOwner && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "#fff",
-              padding: "24px",
-              borderRadius: "8px",
-              width: "100%",
-              maxWidth: "420px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            }}
-          >
-            <h3 style={{ marginTop: 0, marginBottom: "16px" }}>
-              Update Backdate Attendance
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3 className={styles.modalTitle}>
+              Add / Edit Attendance Record
             </h3>
 
             <form onSubmit={handleBackdateSubmit}>
-              <div style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", marginBottom: "4px" }}>Select Date:</label>
+              <div className={styles.formGroup}>
+                <label>Select Date:</label>
                 <input
                   type="date"
                   value={backdateForm.date}
@@ -524,12 +558,12 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                     setBackdateForm({ ...backdateForm, date: e.target.value })
                   }
                   required
-                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                  className={styles.formInput}
                 />
               </div>
 
-              <div style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", marginBottom: "4px" }}>In Time:</label>
+              <div className={styles.formGroup}>
+                <label>In Time:</label>
                 <input
                   type="text"
                   placeholder="09:00 AM"
@@ -538,12 +572,12 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                     setBackdateForm({ ...backdateForm, inTime: e.target.value })
                   }
                   required
-                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                  className={styles.formInput}
                 />
               </div>
 
-              <div style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", marginBottom: "4px" }}>Out Time:</label>
+              <div className={styles.formGroup}>
+                <label>Out Time:</label>
                 <input
                   type="text"
                   placeholder="06:00 PM"
@@ -552,18 +586,18 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                     setBackdateForm({ ...backdateForm, outTime: e.target.value })
                   }
                   required
-                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                  className={styles.formInput}
                 />
               </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "4px" }}>Status:</label>
+              <div className={styles.formGroup}>
+                <label>Status:</label>
                 <select
                   value={backdateForm.status}
                   onChange={(e) =>
                     setBackdateForm({ ...backdateForm, status: e.target.value })
                   }
-                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                  className={styles.formSelect}
                 >
                   <option value="Present">Present</option>
                   <option value="Leave">Leave</option>
@@ -571,25 +605,18 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                 </select>
               </div>
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <div className={styles.modalActions}>
                 <button
                   type="button"
                   onClick={() => setShowBackdateModal(false)}
-                  style={{ padding: "8px 16px", borderRadius: "4px", border: "none", cursor: "pointer" }}
+                  className={styles.cancelBtn}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isUpdating}
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: "4px",
-                    border: "none",
-                    backgroundColor: "#007bff",
-                    color: "#fff",
-                    cursor: "pointer",
-                  }}
+                  className={styles.saveBtn}
                 >
                   {isUpdating ? "Saving..." : "Save Record"}
                 </button>

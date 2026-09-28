@@ -35,11 +35,9 @@ function YourProfile() {
         setLoading(true);
         const cleanEmail = currentUserEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
 
-        // ১. Admin Panel Access Permission Check
         const permSnap = await getDoc(doc(db, "user_permissions", cleanEmail));
         if (permSnap.exists()) {
           const permData = permSnap.data();
-          // canAccessProfile false হলে অ্যাক্সেস ব্লক করবে
           if (permData.canAccessProfile === false) {
             setHasAccess(false);
             setLoading(false);
@@ -47,7 +45,6 @@ function YourProfile() {
           }
         }
 
-        // ২. Employee Data Fetch
         const employeesRef = collection(db, "employees");
         const querySnapshot = await getDocs(employeesRef);
 
@@ -108,6 +105,7 @@ function YourProfile() {
       setErrorMsg("");
 
       const updatedPayload = {
+        ...profileData,
         name,
         designation,
         phone,
@@ -147,7 +145,6 @@ function YourProfile() {
 
   return (
     <div className={styles.pageLayout}>
-      {/* Compact Profile Card Section */}
       <div className={styles.compactCard}>
         {profileData && !isEditing ? (
           <div className={styles.profileRow}>
@@ -174,7 +171,7 @@ function YourProfile() {
                 setIsEditing(true);
               }}
             >
-              Edit
+              Edit Profile
             </button>
           </div>
         ) : (
@@ -198,7 +195,6 @@ function YourProfile() {
         )}
       </div>
 
-      {/* Attendance Record Component */}
       {profileData?.name && (
         <UserAttendanceRecord 
           employeeName={profileData.name} 

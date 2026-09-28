@@ -19,7 +19,7 @@ import SummaryCards from '../Project/Component/SummaryCards';
 import UpcomingScheduleAlert from '../Project/Component/UpcomingScheduleAlert';
 
 const monthsList = ['All', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const OWNER_EMAIL = "smabumusa98@gmail.com";
+const OWNER_EMAIL = "osanlift@gmail.com";
 
 const Serviced_and_Schedule = () => {
   const dispatch = useDispatch();

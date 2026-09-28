@@ -1,49 +1,74 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router";
 import Style from "./Clints.module.css";
 
 function Clints() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   return (
     <div className={Style.clintsContainer}>
-      <aside className={Style.aside}>
+      {/* Sidebar Section */}
+      <aside className={`${Style.aside} ${!isSidebarOpen ? Style.asideCollapsed : ""}`}>
         <div className={Style.asideHeader}>
-          <span>Client Portal</span>
+          {isSidebarOpen && <span className={Style.titleText}>Client Portal</span>}
+          <button
+            type="button"
+            className={Style.toggleBtn}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+          >
+            {isSidebarOpen ? "◀" : "▶"}
+          </button>
         </div>
+
         <nav className={Style.asideNav}>
           <NavLink
             to="ClintList"
+            title="Client List"
             className={({ isActive }) =>
               isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
             }
           >
-            Client List
+            <span className={Style.navIcon}>👥</span>
+            {isSidebarOpen && <span className={Style.linkText}>Client List</span>}
           </NavLink>
+
           <NavLink
             to="Offer"
+            title="Offer"
             className={({ isActive }) =>
               isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
             }
           >
-            Offer
+            <span className={Style.navIcon}>🏷️</span>
+            {isSidebarOpen && <span className={Style.linkText}>Offer</span>}
           </NavLink>
+
           <NavLink
             to="Challan"
+            title="Challan"
             className={({ isActive }) =>
               isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
             }
           >
-            Challan
+            <span className={Style.navIcon}>📦</span>
+            {isSidebarOpen && <span className={Style.linkText}>Challan</span>}
           </NavLink>
+
           <NavLink
             to="Invoice"
+            title="Invoice"
             className={({ isActive }) =>
               isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
             }
           >
-            Invoice
+            <span className={Style.navIcon}>📄</span>
+            {isSidebarOpen && <span className={Style.linkText}>Invoice</span>}
           </NavLink>
         </nav>
       </aside>
 
+      {/* Main Content Area */}
       <main className={Style.formContainer}>
         <Outlet />
       </main>

@@ -3,6 +3,7 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  setDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -23,7 +24,17 @@ function EmployeeList() {
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  // Redux/Auth state for logged in user email
+  // Edit Profile Modal State
+  const [editingEmp, setEditingEmp] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    designation: "",
+    phone: "",
+    address: "",
+    baseSalary: 0,
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
   const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
   const currentUserEmail = (reduxUserEmail || auth.currentUser?.email || "").toLowerCase().trim();
 
@@ -32,7 +43,6 @@ function EmployeeList() {
       try {
         setLoading(true);
 
-        // 1. Fetch Admin List
         const adminSnap = await getDocs(collection(db, "app_admins"));
         const adminList = [];
         adminSnap.forEach((docSnap) => {
@@ -46,7 +56,6 @@ function EmployeeList() {
           currentUserEmail === OWNER_EMAIL || adminList.includes(currentUserEmail);
         setIsAdmin(checkIsAdmin);
 
-        // 2. Fetch Employee List
         const querySnapshot = await getDocs(collection(db, "employees"));
         const employeeList = [];
         querySnapshot.forEach((docSnap) => {
@@ -67,9 +76,8 @@ function EmployeeList() {
     fetchEmployeesAndAdminStatus();
   }, [currentUserEmail]);
 
-  // Handle Employee Delete Functionality
   const handleDeleteEmployee = async (e, emp) => {
-    e.stopPropagation(); // Card Click / Modal open off rakhar jonno
+    e.stopPropagation();
 
     const confirmDelete = window.confirm(
       `Are you sure you want to delete ${emp.name || emp.email}?`
@@ -79,7 +87,6 @@ function EmployeeList() {
     try {
       const cleanEmail = (emp.email || "").toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
 
-      // Delete from employees, signUpData, user_permissions collections
       if (emp.id) {
         await deleteDoc(doc(db, "employees", emp.id));
       }
@@ -93,6 +100,56 @@ function EmployeeList() {
     } catch (err) {
       console.error("Delete Employee Error:", err);
       alert("Failed to delete employee. Please try again.");
+    }
+  };
+
+  const handleOpenEdit = (e, emp) => {
+    e.stopPropagation();
+    setEditingEmp(emp);
+    setEditForm({
+      name: emp.name || "",
+      designation: emp.designation || "",
+      phone: emp.phone || "",
+      address: emp.address || "",
+      baseSalary: emp.baseSalary || 0,
+    });
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!editingEmp) return;
+
+    setIsSaving(true);
+    try {
+      const docId = editingEmp.id || editingEmp.email.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+      
+      const updatedData = {
+        ...editingEmp,
+        name: editForm.name,
+        designation: editForm.designation,
+        phone: editForm.phone,
+        address: editForm.address,
+        baseSalary: Number(editForm.baseSalary),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await setDoc(doc(db, "employees", docId), { data: updatedData }, { merge: true });
+
+      setEmployees((prev) =>
+        prev.map((item) => (item.id === docId ? updatedData : item))
+      );
+
+      if (selectedEmployee?.id === docId) {
+        setSelectedEmployee(updatedData);
+      }
+
+      alert("Employee profile updated successfully!");
+      setEditingEmp(null);
+    } catch (err) {
+      console.error("Update Profile Error:", err);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -141,14 +198,25 @@ function EmployeeList() {
                 </p>
               </div>
 
-              {/* Only Show Delete Button if current user is Admin */}
               {isAdmin && (
-                <button
+                <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                  <button
                   className={styles.deleteBtn}
-                  onClick={(e) => handleDeleteEmployee(e, emp)}
-                >
-                  Delete Employee
-                </button>
+                    onClick={(e) => handleOpenEdit(e, emp)}
+                    style={{
+                      flex: 1,
+                    }}
+                  >
+                    Edit Profile
+                  </button>
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={(e) => handleDeleteEmployee(e, emp)}
+                    style={{ flex: 1 }}
+                  >
+                    Delete
+                  </button>
+                </div>
               )}
             </div>
           ))}
@@ -172,7 +240,6 @@ function EmployeeList() {
               ✖
             </button>
 
-            {/* Selected User Compact Header */}
             <div className={styles.modalUserHeader}>
               <img
                 src={selectedEmployee.avatar || DEFAULT_AVATAR}
@@ -194,11 +261,120 @@ function EmployeeList() {
               </div>
             </div>
 
-            {/* UserAttendanceRecord Fetch Component */}
             <UserAttendanceRecord
               employeeName={selectedEmployee.name}
               employeeEmail={selectedEmployee.email}
+              userRole={isAdmin ? "admin" : "employee"}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Admin Edit Modal */}
+      {editingEmp && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              padding: "24px",
+              borderRadius: "8px",
+              width: "100%",
+              maxWidth: "400px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            }}
+          >
+            <h3>Edit Employee Profile</h3>
+            <form onSubmit={handleSaveProfile}>
+              <div style={{ marginBottom: "10px" }}>
+                <label style={{ display: "block", fontSize: "12px" }}>Full Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: "10px" }}>
+                <label style={{ display: "block", fontSize: "12px" }}>Designation</label>
+                <input
+                  type="text"
+                  value={editForm.designation}
+                  onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
+                  style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: "10px" }}>
+                <label style={{ display: "block", fontSize: "12px" }}>Phone Number</label>
+                <input
+                  type="text"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: "10px" }}>
+                <label style={{ display: "block", fontSize: "12px" }}>Address</label>
+                <input
+                  type="text"
+                  value={editForm.address}
+                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", fontSize: "12px" }}>Base Salary</label>
+                <input
+                  type="number"
+                  value={editForm.baseSalary}
+                  onChange={(e) => setEditForm({ ...editForm, baseSalary: e.target.value })}
+                  style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingEmp(null)}
+                  style={{ padding: "8px 16px", borderRadius: "4px", border: "none", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "4px",
+                    border: "none",
+                    backgroundColor: "#007bff",
+                    color: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

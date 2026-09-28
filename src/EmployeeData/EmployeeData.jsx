@@ -10,6 +10,9 @@ const OWNER_EMAIL = "osanlift@gmail.com";
 function EmployeeData() {
   const { user } = useSelector((state) => state.auth || {});
 
+  // Sidebar Open/Collapsed state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   // Permission & Admin States
   const [permissions, setPermissions] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
@@ -60,9 +63,18 @@ function EmployeeData() {
 
   return (
     <div className={Style.employeeContainer}>
-      <aside className={Style.aside}>
+      {/* Sidebar Section */}
+      <aside className={`${Style.aside} ${!isSidebarOpen ? Style.asideCollapsed : ""}`}>
         <div className={Style.asideHeader}>
-          <span>Employee Portal</span>
+          {isSidebarOpen && <span className={Style.titleText}>Employee Portal</span>}
+          <button
+            type="button"
+            className={Style.toggleBtn}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+          >
+            {isSidebarOpen ? "◀" : "▶"}
+          </button>
         </div>
 
         {!loading && (
@@ -70,22 +82,26 @@ function EmployeeData() {
             {/* Your Profile Link */}
             <NavLink
               to="YourProfile"
+              title="Your Profile"
               className={({ isActive }) =>
                 isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
               }
             >
-              Your Profile
+              <span className={Style.navIcon}>👤</span>
+              {isSidebarOpen && <span className={Style.linkText}>Your Profile</span>}
             </NavLink>
 
             {/* Attendance Link */}
             {(hasPermission("emp_tab_attendance") || hasPermission("canGiveAttendance")) && (
               <NavLink
                 to="Attendance"
+                title="Attendance"
                 className={({ isActive }) =>
                   isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
                 }
               >
-                Attendance
+                <span className={Style.navIcon}>📋</span>
+                {isSidebarOpen && <span className={Style.linkText}>Attendance</span>}
               </NavLink>
             )}
 
@@ -93,11 +109,13 @@ function EmployeeData() {
             {hasPermission("emp_tab_list") && (
               <NavLink
                 to="EmployeeList"
+                title="Employee List"
                 className={({ isActive }) =>
                   isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
                 }
               >
-                Employee List
+                <span className={Style.navIcon}>👥</span>
+                {isSidebarOpen && <span className={Style.linkText}>Employee List</span>}
               </NavLink>
             )}
 
@@ -105,17 +123,20 @@ function EmployeeData() {
             {hasPermission("emp_tab_payroll") && (
               <NavLink
                 to="Payroll"
+                title="Payroll & Salary"
                 className={({ isActive }) =>
                   isActive ? `${Style.asideLink} ${Style.active}` : Style.asideLink
                 }
               >
-                Payroll & Salary
+                <span className={Style.navIcon}>💳</span>
+                {isSidebarOpen && <span className={Style.linkText}>Payroll & Salary</span>}
               </NavLink>
             )}
           </nav>
         )}
       </aside>
 
+      {/* Main Content Area */}
       <main className={Style.main}>
         <Outlet />
       </main>
