@@ -25,20 +25,18 @@ const ProjectTableRow = ({ proj, idx, selectedMonth, monthsList, getLastServicin
       </td>
       <td className={styles.textCenter}>{proj.whoseProjects || '-'}</td>
       <td className={styles.textCenter}>{proj.liftQty}</td>
-      <td>{proj.address || '-'}</td>
-      <td className={styles.textCenter}>{proj.phoneNo || '-'}</td>
       <td className={styles.textCenter}>{servicingDateDisplay}</td>
       <td className={styles.textCenter}>
         <span className={currentStatus.toLowerCase() === 'complete' ? styles.badgeComplete : styles.badgePending}>
           {currentStatus}
         </span>
       </td>
-      <td className={styles.textRight}>{servicingBill.toLocaleString()}</td>
-      <td className={styles.textRight}>{sparePartsBill.toLocaleString()}</td>
-      <td className={styles.textRight}>{lastMonthDue.toLocaleString()}</td>
-      <td className={`${styles.textRight} ${styles.bold}`}>{totalBill.toLocaleString()}</td>
-      <td className={styles.textRight}>{collectedBill.toLocaleString()}</td>
-      <td className={`${styles.textRight} ${styles.bold} ${styles.textDanger}`}>{totalDue.toLocaleString()}</td>
+      <td className={styles.textCenter}>{servicingBill.toLocaleString()}</td>
+      <td className={styles.textCenter}>{sparePartsBill.toLocaleString()}</td>
+      <td className={styles.textCenter}>{lastMonthDue.toLocaleString()}</td>
+      <td className={`${styles.textCenter} ${styles.bold}`}>{totalBill.toLocaleString()}</td>
+      <td className={styles.textCenter}>{collectedBill.toLocaleString()}</td>
+      <td className={`${styles.textCenter} ${styles.bold} ${styles.textDanger}`}>{totalDue.toLocaleString()}</td>
       <td className={styles.textCenter}>{bill.collectedBy || '-'}</td>
       <td className={styles.textCenter}>{bill.approvedBy || '-'}</td>
       <td className={`${styles.textCenter} ${styles.actionButtons}`}>

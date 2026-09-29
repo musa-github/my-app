@@ -18,8 +18,6 @@ const MainProjectTable = ({
             <th>Project Name</th>
             <th className={styles.textCenter}>Whose</th>
             <th className={styles.textCenter}>Lift Qty</th>
-            <th>Address</th>
-            <th className={styles.textCenter}>Phone No</th>
             <th className={styles.textCenter}>Last Servicing Date</th>
             <th className={styles.textCenter}>Servicing Status</th>
             <th className={styles.textRight}>Servicing Bill</th>
