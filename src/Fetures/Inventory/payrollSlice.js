@@ -45,6 +45,7 @@ export const fetchPayrollData = createAsyncThunk(
       let workedFridays = 0;
       let leaveDays = 0;
       let fridayAbsents = 0;
+      let totalAttendanceAdvance = 0; // Sum of all daily advance entries in attendance collection
 
       if (attSnap && !attSnap.empty) {
         attSnap.forEach((docSnap) => {
@@ -52,6 +53,11 @@ export const fetchPayrollData = createAsyncThunk(
           const attDateStr = att.date || docSnap.id;
           const statusText = att.status || "Present";
           const isApproved = att.statusIn === "Approved" || att.statusOut === "Approved";
+
+          // Accumulate daily advance deductions
+          if (att.advanceDeduction) {
+            totalAttendanceAdvance += Number(att.advanceDeduction || 0);
+          }
 
           const attDate = new Date(attDateStr);
           const isFriday = !isNaN(attDate.getTime()) && attDate.getDay() === 5;
@@ -92,13 +98,18 @@ export const fetchPayrollData = createAsyncThunk(
       const fridayAllowance = Math.round(workedFridays * dailyRate);
 
       const totalPayableDays = generalWorkedDays + leaveDays + workedFridays;
-      const advanceDeduction = Number(emp.advanceDeduction || 0);
+
+      // Use attendance subcollection sum as primary advance deduction source
+      const advanceDeduction = totalAttendanceAdvance > 0 
+        ? totalAttendanceAdvance 
+        : Number(emp.advanceDeduction || 0);
 
       // Net Payable Formula
       const netPayable = Math.max(0, grossPayable + fridayAllowance - advanceDeduction);
 
       processedPayroll.push({
         id: emp.id,
+        email: emp.email || emp.employeeEmail || emp.id,
         cleanName: cleanEmailKey || cleanNameKey,
         name: emp.name || emp.employeeName || emp.id,
         designation: emp.designation || "N/A",
@@ -122,7 +133,11 @@ export const fetchPayrollData = createAsyncThunk(
 
 export const updateEmployeeSalaryDetails = createAsyncThunk(
   "payroll/updateSalary",
-  async ({ empId, baseSalary, advanceDeduction }, { dispatch, getState }) => {
+  async (
+    { empId, email, baseSalary, advanceDeduction, date },
+    { dispatch, getState }
+  ) => {
+    // 1. Update main Employee document base salary
     await setDoc(
       doc(db, "employees", empId),
       {
@@ -130,6 +145,40 @@ export const updateEmployeeSalaryDetails = createAsyncThunk(
           baseSalary: Number(baseSalary),
           advanceDeduction: Number(advanceDeduction),
         },
+      },
+      { merge: true }
+    );
+
+    // 2. Save Advance Entry in Attendance Collection for exact date sync
+    const targetDateStr = date || new Date().toISOString().split("T")[0];
+    const targetDateObj = new Date(targetDateStr);
+    
+    const targetMonthYear = targetDateObj.toLocaleString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+
+    const cleanKey = (email || empId)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-zA-Z0-9]/g, "_");
+
+    const attDocRef = doc(
+      db,
+      "attendance",
+      cleanKey,
+      targetMonthYear,
+      targetDateStr
+    );
+
+    await setDoc(
+      attDocRef,
+      {
+        date: targetDateStr,
+        employeeEmail: email || empId,
+        monthYear: targetMonthYear,
+        advanceDeduction: Number(advanceDeduction),
+        updatedAt: new Date(),
       },
       { merge: true }
     );

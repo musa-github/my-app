@@ -44,6 +44,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
     inTime: "09:00 AM",
     outTime: "06:00 PM",
     status: "Present",
+    advanceDeduction: 0,
   });
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -159,10 +160,15 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
       let leaveCount = 0;
       let workedFridays = 0;
       let fridayAbsents = 0;
+      let monthlyAdvanceSum = 0;
 
       if (attSnap && !attSnap.empty) {
         attSnap.forEach((docSnap) => {
           const data = docSnap.data();
+
+          if (data.advanceDeduction) {
+            monthlyAdvanceSum += Number(data.advanceDeduction || 0);
+          }
 
           const docEmail = (data.employeeEmail || "").trim().toLowerCase();
           const docName = (data.employeeName || "").trim().toLowerCase();
@@ -218,6 +224,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
             totalHours: totalHrs.toFixed(2),
             overtimeHours: overtimeHrs.toFixed(2),
             status: currentStatus,
+            advanceDeduction: Number(data.advanceDeduction || 0),
             isFriday,
           });
         });
@@ -225,27 +232,19 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
 
       records.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      // ---------------- SALARY CALCULATION LOGIC ----------------
       const totalMonthDays = 30;
-      const totalGeneralWorkingDays = 26; // 30 days - 4 Fridays
+      const totalGeneralWorkingDays = 26;
       const dailyRate = baseSalary > 0 ? baseSalary / totalMonthDays : 0;
 
-      // Regular working days duty (excluding Friday attendance)
       const generalWorkedDays = presentCount - workedFridays;
-
-      // Absent calculation: General day absents + Friday manual absents
       const generalAbsentDays = Math.max(0, totalGeneralWorkingDays - (generalWorkedDays + leaveCount));
       const absentCount = generalAbsentDays + fridayAbsents;
 
-      // Base Gross Salary Calculation
       const grossPayable = Math.max(0, Math.round(baseSalary - (absentCount * dailyRate)));
-
-      // Extra Allowance for Worked Fridays
       const fridayAllowance = Math.round(workedFridays * dailyRate);
 
-      // Final Net Payable Salary
-      const netPayable = Math.max(0, grossPayable + fridayAllowance - advanceDeduction);
-      // -----------------------------------------------------------
+      const finalAdvanceDeduction = monthlyAdvanceSum > 0 ? monthlyAdvanceSum : advanceDeduction;
+      const netPayable = Math.max(0, grossPayable + fridayAllowance - finalAdvanceDeduction);
 
       setAttendanceRecords(records);
       setSummary({
@@ -260,7 +259,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
         dailyRate: Math.round(dailyRate),
         grossPayable,
         fridayAllowance,
-        advanceDeduction,
+        advanceDeduction: finalAdvanceDeduction,
         netPayable,
       });
     } catch (err) {
@@ -281,6 +280,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
       inTime: record.inTime !== "--" ? record.inTime : "09:00 AM",
       outTime: record.outTime !== "--" ? record.outTime : "06:00 PM",
       status: record.status || "Present",
+      advanceDeduction: record.advanceDeduction || 0,
     });
     setShowBackdateModal(true);
   };
@@ -344,6 +344,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
           inTime: backdateForm.inTime,
           outTime: backdateForm.outTime,
           status: backdateForm.status,
+          advanceDeduction: Number(backdateForm.advanceDeduction || 0),
           statusIn: "Approved",
           statusOut: "Approved",
           monthYear: targetMonthYear,
@@ -390,6 +391,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                 inTime: "09:00 AM",
                 outTime: "06:00 PM",
                 status: "Present",
+                advanceDeduction: 0,
               });
               setShowBackdateModal(true);
             }}
@@ -409,7 +411,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
       ) : (
         <div ref={reportRef} className={styles.pdfArea}>
           <div className={styles.companyHeader}>
-            <h2>MM. Engineering</h2>
+            <h2>OSAN LIFT</h2>
             <p>Monthly Employee Statement & Salary Payslip</p>
           </div>
 
@@ -492,6 +494,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                   <th>Out Time</th>
                   <th>Duty Hours</th>
                   <th>Overtime</th>
+                  <th>Advance</th>
                   <th>Status</th>
                   {isAdminOrOwner && <th>Action</th>}
                 </tr>
@@ -499,7 +502,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
               <tbody>
                 {attendanceRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdminOrOwner ? "7" : "6"} className={styles.noData}>
+                    <td colSpan={isAdminOrOwner ? "8" : "7"} className={styles.noData}>
                       No records found for this month.
                     </td>
                   </tr>
@@ -520,6 +523,15 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                           <span className={styles.otBadge}>
                             +{item.overtimeHours} hrs
                           </span>
+                        ) : (
+                          "--"
+                        )}
+                      </td>
+                      <td>
+                        {item.advanceDeduction > 0 ? (
+                          <strong className={styles.dangerText}>
+                            ৳ {item.advanceDeduction}
+                          </strong>
                         ) : (
                           "--"
                         )}
@@ -563,7 +575,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <h3 className={styles.modalTitle}>
-              Add / Edit Attendance Record
+              Add / Edit Attendance & Advance Record
             </h3>
 
             <form onSubmit={handleBackdateSubmit}>
@@ -604,6 +616,22 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                     setBackdateForm({ ...backdateForm, outTime: e.target.value })
                   }
                   required
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Advance Deduction (Tk):</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={backdateForm.advanceDeduction}
+                  onChange={(e) =>
+                    setBackdateForm({
+                      ...backdateForm,
+                      advanceDeduction: e.target.value,
+                    })
+                  }
                   className={styles.formInput}
                 />
               </div>

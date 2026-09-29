@@ -1,4 +1,3 @@
-
 import html2pdf from "html2pdf.js";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -28,6 +27,8 @@ const Payroll_Salary = () => {
   const [editingId, setEditingId] = useState(null);
   const [editBaseSalary, setEditBaseSalary] = useState(0);
   const [editAdvance, setEditAdvance] = useState(0);
+  const [editDate, setEditDate] = useState(new Date().toISOString().split("T")[0]); // New State for Date
+  const [editEmail, setEditEmail] = useState(""); // New State for Email
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
@@ -38,14 +39,18 @@ const Payroll_Salary = () => {
     setEditingId(emp.id);
     setEditBaseSalary(emp.baseSalary);
     setEditAdvance(emp.advanceDeduction);
+    setEditEmail(emp.email || emp.id); // Employee email dynamic load
+    setEditDate(new Date().toISOString().split("T")[0]); // Default today's date
   };
 
   const handleSaveSalary = (empId) => {
     dispatch(
       updateEmployeeSalaryDetails({
         empId,
+        email: editEmail,            // Dynamic email passed
         baseSalary: editBaseSalary,
         advanceDeduction: editAdvance,
+        date: editDate,              // Specific date passed for attendance collection
       })
     );
     setEditingId(null);
@@ -142,7 +147,7 @@ const Payroll_Salary = () => {
 
       <div ref={printRef} className={styles.pdfArea}>
         <div className={styles.header}>
-          <h2>H.R.ENGINEERS</h2>
+          <h2>OSAN LIFT</h2>
           <h3>Monthly Salary Sheet ({selectedMonth})</h3>
         </div>
 
@@ -212,12 +217,22 @@ const Payroll_Salary = () => {
 
                       <td>
                         {editingId === emp.id ? (
-                          <input
-                            type="number"
-                            value={editAdvance}
-                            onChange={(e) => setEditAdvance(e.target.value)}
-                            className={styles.inlineInput}
-                          />
+                          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                            <input
+                              type="number"
+                              value={editAdvance}
+                              onChange={(e) => setEditAdvance(e.target.value)}
+                              className={styles.inlineInput}
+                              placeholder="Amount"
+                            />
+                            <input
+                              type="date"
+                              value={editDate}
+                              onChange={(e) => setEditDate(e.target.value)}
+                              className={styles.inlineInput}
+                              title="Advance Entry Date"
+                            />
+                          </div>
                         ) : (
                           `৳ ${emp.advanceDeduction.toLocaleString()}`
                         )}
