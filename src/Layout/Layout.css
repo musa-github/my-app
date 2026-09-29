@@ -101,7 +101,7 @@ aside {
 
   .main-content {
     padding: 16px;
-    margin-top: 10px;
+    margin-top: 60px;
   }
 }
 
@@ -130,7 +130,7 @@ aside {
 
   .main-content {
     padding: 12px;
-    margin-top: 0px; /* মোবাইলে অতিরিক্ত মার্জিন রিমুভ করা হয়েছে */
+    margin-top: 60px; /* মোবাইলে অতিরিক্ত মার্জিন রিমুভ করা হয়েছে */
   }
 }
 
@@ -138,6 +138,6 @@ aside {
 @media screen and (max-width: 480px) {
   .main-content {
     padding: 8px;
-    margin-top: 20px;
+    margin-top: 60px;
   }
 }

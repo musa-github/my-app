@@ -161,3 +161,87 @@
   box-sizing: border-box !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* =========================================
+   MOBILE RESPONSIVE STYLES (<= 768px)
+========================================= */
+@media (max-width: 768px) {
+  /* Layout Column-e convert kora hoyeche jate content top-to-bottom ashe */
+  .clintsContainer {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: calc(100vh - 70px);
+    overflow: visible !important;
+  }
+
+  /* Sidebar top navigation bar hoye jabe */
+  .aside,
+  .asideCollapsed {
+    width: 100% !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 0 !important;
+  }
+
+  .asideHeader {
+    padding: 0 16px 8px 16px !important;
+    margin-bottom: 6px !important;
+    justify-content: space-between !important;
+  }
+
+  /* Mobile screen-e sidebar collapse arrow button dorkar nei */
+
+  /* Menu items pashapashi (row) horizontal bar-e asbe */
+  .asideNav {
+    flex-direction: row !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 4px 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .asideNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .asideLink,
+  .asideCollapsed .asideLink {
+    padding: 8px 14px !important;
+    font-size: 0.85rem !important;
+    justify-content: flex-start !important;
+    flex-shrink: 0;
+  }
+
+  /* Mobile view-e collapsed thakleo text dekhabe */
+  .asideCollapsed .linkText,
+  .linkText {
+    display: inline !important;
+  }
+
+  .asideCollapsed .navIcon,
+  .navIcon {
+    margin-right: 6px !important;
+  }
+
+  /* Active line position bottom-e thakbe */
+  .active::before {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 10% !important;
+    width: 80% !important;
+    height: 3px !important;
+    border-radius: 4px 4px 0 0 !important;
+  }
+
+  /* Content area adjustment */
+  .main,
+  .content,
+  .formContainer,
+  .inventoryFormContainer {
+    width: 100% !important;
+    height: auto !important;
+    padding: 12px !important;
+  }
+}
