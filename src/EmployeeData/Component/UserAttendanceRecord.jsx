@@ -57,7 +57,6 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
     ""
   ).toLowerCase().trim();
 
-  // Fetch Admin List
   useEffect(() => {
     const fetchAdmins = async () => {
       try {
@@ -85,7 +84,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
     normalizedRole === "owner";
 
   const parseTimeToHours = (timeStr) => {
-    if (!timeStr) return null;
+    if (!timeStr || timeStr === "--") return null;
     const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
     if (!match) return null;
 
@@ -159,6 +158,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
       let presentCount = 0;
       let leaveCount = 0;
       let workedFridays = 0;
+      let fridayAbsents = 0;
 
       if (attSnap && !attSnap.empty) {
         attSnap.forEach((docSnap) => {
@@ -181,27 +181,30 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
           let overtimeHrs = 0;
 
           const isApproved =
-            data.statusIn === "Approved" ||
-            data.statusOut === "Approved" ||
-            data.status === "Present";
+            data.statusIn === "Approved" || data.statusOut === "Approved";
 
-          if (isApproved || data.inTime) {
-            presentCount += 1;
-          } else if (data.status === "Leave") {
+          const dayOfWeek = new Date(data.date).getDay();
+          const isFriday = dayOfWeek === 5;
+          const currentStatus = data.status || (isApproved ? "Present" : "Pending");
+
+          if (currentStatus === "Absent") {
+            if (isFriday) {
+              fridayAbsents += 1;
+            }
+          } else if (currentStatus === "Leave") {
             leaveCount += 1;
+          } else if (isApproved || (data.inTime && data.inTime !== "--") || currentStatus === "Present") {
+            presentCount += 1;
+            if (isFriday) {
+              workedFridays += 1;
+            }
           }
 
-          if (inHrs !== null && outHrs !== null && outHrs > inHrs) {
+          if (inHrs !== null && outHrs !== null && outHrs > inHrs && currentStatus !== "Leave" && currentStatus !== "Absent") {
             totalHrs = outHrs - inHrs;
             if (totalHrs > 9) {
               overtimeHrs = totalHrs - 9;
             }
-          }
-
-          const dayOfWeek = new Date(data.date).getDay();
-          const isFriday = dayOfWeek === 5;
-          if (isFriday && (isApproved || data.inTime)) {
-            workedFridays += 1;
           }
 
           sumHours += totalHrs;
@@ -214,7 +217,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
             outTime: data.outTime || "--",
             totalHours: totalHrs.toFixed(2),
             overtimeHours: overtimeHrs.toFixed(2),
-            status: data.status || (isApproved ? "Present" : "Pending"),
+            status: currentStatus,
             isFriday,
           });
         });
@@ -222,12 +225,27 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
 
       records.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+      // ---------------- SALARY CALCULATION LOGIC ----------------
       const totalMonthDays = 30;
+      const totalGeneralWorkingDays = 26; // 30 days - 4 Fridays
       const dailyRate = baseSalary > 0 ? baseSalary / totalMonthDays : 0;
-      const absentCount = Math.max(0, totalMonthDays - (presentCount + leaveCount));
-      const grossPayable = Math.round(dailyRate * Math.min(presentCount + leaveCount, totalMonthDays));
+
+      // Regular working days duty (excluding Friday attendance)
+      const generalWorkedDays = presentCount - workedFridays;
+
+      // Absent calculation: General day absents + Friday manual absents
+      const generalAbsentDays = Math.max(0, totalGeneralWorkingDays - (generalWorkedDays + leaveCount));
+      const absentCount = generalAbsentDays + fridayAbsents;
+
+      // Base Gross Salary Calculation
+      const grossPayable = Math.max(0, Math.round(baseSalary - (absentCount * dailyRate)));
+
+      // Extra Allowance for Worked Fridays
       const fridayAllowance = Math.round(workedFridays * dailyRate);
+
+      // Final Net Payable Salary
       const netPayable = Math.max(0, grossPayable + fridayAllowance - advanceDeduction);
+      // -----------------------------------------------------------
 
       setAttendanceRecords(records);
       setSummary({
@@ -237,7 +255,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
         presentDays: presentCount,
         leaveDays: leaveCount,
         absentDays: absentCount,
-        totalPayableDays: presentCount + leaveCount + workedFridays,
+        totalPayableDays: generalWorkedDays + leaveCount + workedFridays,
         baseSalary,
         dailyRate: Math.round(dailyRate),
         grossPayable,
@@ -391,7 +409,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
       ) : (
         <div ref={reportRef} className={styles.pdfArea}>
           <div className={styles.companyHeader}>
-            <h2>OSAN LIFT</h2>
+            <h2>MM. Engineering</h2>
             <p>Monthly Employee Statement & Salary Payslip</p>
           </div>
 
@@ -507,7 +525,7 @@ function UserAttendanceRecord({ employeeName, employeeEmail, userRole }) {
                         )}
                       </td>
                       <td>
-                        {item.isFriday ? (
+                        {item.isFriday && item.status === "Present" ? (
                           <span className={styles.fridayBadge}>Friday (Payable)</span>
                         ) : (
                           item.status

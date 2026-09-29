@@ -15,64 +15,98 @@ export const fetchPayrollData = createAsyncThunk(
 
     const processedPayroll = [];
 
-    // 2. Process Salary & Friday Attendance for each employee
+    // 2. Process Salary & Attendance for each employee
     for (const emp of employees) {
-      const cleanName = (emp.name || emp.employeeName || emp.id).replace(/[^a-zA-Z0-9]/g, "_");
-      const monthlyAttRef = collection(db, "attendance", cleanName, selectedMonth);
-      const attSnap = await getDocs(monthlyAttRef);
+      const rawEmail = (emp.email || emp.employeeEmail || emp.id || "").trim().toLowerCase();
+      const rawName = (emp.name || emp.employeeName || "").trim();
+
+      const cleanEmailKey = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
+      const cleanNameKey = rawName.replace(/[^a-zA-Z0-9]/g, "_");
+
+      let attSnap = null;
+
+      if (cleanEmailKey) {
+        const emailAttRef = collection(db, "attendance", cleanEmailKey, selectedMonth);
+        const snap = await getDocs(emailAttRef);
+        if (!snap.empty) {
+          attSnap = snap;
+        }
+      }
+
+      if ((!attSnap || attSnap.empty) && cleanNameKey) {
+        const nameAttRef = collection(db, "attendance", cleanNameKey, selectedMonth);
+        const snap = await getDocs(nameAttRef);
+        if (!snap.empty) {
+          attSnap = snap;
+        }
+      }
 
       let totalPresentDays = 0;
-      let workedFridays = 0; // Extra Friday work counter
+      let workedFridays = 0;
       let leaveDays = 0;
+      let fridayAbsents = 0;
 
-      attSnap.forEach((docSnap) => {
-        const att = docSnap.data();
-        const attDateStr = att.date || docSnap.id; // e.g. "2026-09-18" or timestamp
-        const isApproved = att.statusIn === "Approved" || att.statusOut === "Approved";
+      if (attSnap && !attSnap.empty) {
+        attSnap.forEach((docSnap) => {
+          const att = docSnap.data();
+          const attDateStr = att.date || docSnap.id;
+          const statusText = att.status || "Present";
+          const isApproved = att.statusIn === "Approved" || att.statusOut === "Approved";
 
-        if (isApproved) {
-          totalPresentDays += 1;
-
-          // Check if this attendance date was a Friday
           const attDate = new Date(attDateStr);
-          if (!isNaN(attDate.getTime()) && attDate.getDay() === 5) { // 5 = Friday
-            workedFridays += 1;
+          const isFriday = !isNaN(attDate.getTime()) && attDate.getDay() === 5;
+
+          // Strict check for Absent status
+          if (statusText === "Absent") {
+            if (isFriday) {
+              fridayAbsents += 1;
+            }
+          } else if (statusText === "Leave") {
+            leaveDays += 1;
+          } else if (statusText === "Present" || isApproved) {
+            totalPresentDays += 1;
+
+            if (isFriday) {
+              workedFridays += 1;
+            }
           }
-        } else if (att.status === "Leave") {
-          leaveDays += 1;
-        }
-      });
+        });
+      }
 
       const baseSalary = Number(emp.baseSalary || 0);
-      const totalMonthDays = 30; // Standard month basis
+      const totalMonthDays = 30;
+      const totalGeneralWorkingDays = 26; // 30 days - 4 Fridays
       const dailyRate = baseSalary > 0 ? baseSalary / totalMonthDays : 0;
 
-      // Base Gross Salary for 30 Days scale
-      const standardPayableDays = totalPresentDays + leaveDays;
-      const grossPayable = Math.round(dailyRate * Math.min(standardPayableDays, totalMonthDays));
+      // Regular working days duty (excluding Friday attendance)
+      const generalWorkedDays = totalPresentDays - workedFridays;
 
-      // Extra Friday Allowance (1 extra day salary per worked Friday)
+      // Absent calculation: General day absents + Friday manual absents
+      const generalAbsentDays = Math.max(0, totalGeneralWorkingDays - (generalWorkedDays + leaveDays));
+      const absentDays = generalAbsentDays + fridayAbsents;
+
+      // Base Gross Salary Calculation (Deducting total Absent Days)
+      const grossPayable = Math.max(0, Math.round(baseSalary - (absentDays * dailyRate)));
+
+      // Friday Allowance (Only for present Fridays)
       const fridayAllowance = Math.round(workedFridays * dailyRate);
 
-      // Total Payable Days (Can exceed 30 if worked on Friday)
-      const totalPayableDays = standardPayableDays + workedFridays;
-      const absentDays = Math.max(0, totalMonthDays - standardPayableDays);
-
+      const totalPayableDays = generalWorkedDays + leaveDays + workedFridays;
       const advanceDeduction = Number(emp.advanceDeduction || 0);
 
-      // Net Payable = Base Gross + Extra Friday Allowance - Advance
+      // Net Payable Formula
       const netPayable = Math.max(0, grossPayable + fridayAllowance - advanceDeduction);
 
       processedPayroll.push({
         id: emp.id,
-        cleanName: cleanName,
-        name: emp.name || emp.employeeName || cleanName,
+        cleanName: cleanEmailKey || cleanNameKey,
+        name: emp.name || emp.employeeName || emp.id,
         designation: emp.designation || "N/A",
         baseSalary: baseSalary,
         presentDays: totalPresentDays,
         leaveDays: leaveDays,
-        workedFridays: workedFridays, // Friday worked count
-        fridayAllowance: fridayAllowance, // Extra Friday money
+        workedFridays: workedFridays,
+        fridayAllowance: fridayAllowance,
         absentDays: absentDays,
         totalPayableDays: totalPayableDays,
         dailyRate: Math.round(dailyRate),
