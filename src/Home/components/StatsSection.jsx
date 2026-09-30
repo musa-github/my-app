@@ -1,27 +1,9 @@
-const StatsSection = ({ Style }) => {
-  return (
-    <section className={Style.statsSection}>
-      <div className={Style.statItem}>
-        <strong className={Style.statNumber}>100+</strong>
-        <span className={Style.statLabel}>Projects Completed</span>
-      </div>
-
-      <div className={Style.statItem}>
-        <strong className={Style.statNumber}>10+</strong>
-        <span className={Style.statLabel}>Years Experience</span>
-      </div>
-
-      <div className={Style.statItem}>
-        <strong className={Style.statNumber}>24/7</strong>
-        <span className={Style.statLabel}>Technical Support</span>
-      </div>
-
-      <div className={Style.statItem}>
-        <strong className={Style.statNumber}>100%</strong>
-        <span className={Style.statLabel}>Safety Record</span>
-      </div>
-    </section>
-  );
-};
-
+const StatsSection = ({ Style }) => (
+  <section className={Style.statsSection} aria-label="OSAN LIFT capabilities">
+    <div className={Style.statItem}><strong className={Style.statNumber}>24/7</strong><span className={Style.statLabel}>Support Focus</span></div>
+    <div className={Style.statItem}><strong className={Style.statNumber}>01</strong><span className={Style.statLabel}>Complete Service Partner</span></div>
+    <div className={Style.statItem}><strong className={Style.statNumber}>250+</strong><span className={Style.statLabel}>Nice & Arkel Solutions</span></div>
+    <div className={Style.statItem}><strong className={Style.statNumber}>360°</strong><span className={Style.statLabel}>Lift Service Approach</span></div>
+  </section>
+);
 export default StatsSection;

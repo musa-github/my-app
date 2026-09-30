@@ -1,44 +1,21 @@
 import Carousel from "../Carousel";
 
-const AboutSection = ({ Style, onWhatsAppClick }) => {
-  return (
-    <section className={Style.aboutSection}>
-      <div className={Style.sectionHeading}>
+const AboutSection = ({ Style, onWhatsAppClick }) => (
+  <section className={Style.aboutSection} id="about">
+    <div className={Style.aboutGrid}>
+      <div>
         <span className={Style.sectionTag}>WHO WE ARE</span>
-        <h2>
-          Engineering the Future of
-          <br />
-          <span className={Style.accentText}>Vertical Transportation</span>
-        </h2>
-      </div>
-
-      <div className={Style.aboutGrid}>
+        <h2 className={Style.sectionTitle}>Engineering dependable <span>vertical transportation.</span></h2>
         <div className={Style.aboutText}>
-          <p className={Style.introText}>
-            We provide end-to-end elevator engineering—from modern installations 
-            and control modernization to preventive maintenance and rapid emergency care.
-          </p>
-
-          <p>
-            Our engineering standards leverage cutting-edge control architectures, 
-            precision drives, and redundant safety systems to guarantee smooth, 
-            quiet, and uninterrupted vertical movement.
-          </p>
-
-          <button className={Style.outlineBtn} onClick={() => onWhatsAppClick("Company Consultation")}>
-            Discover More
-            <span>→</span>
-          </button>
+          <p className={Style.introText}>OSAN LIFT focuses on practical elevator solutions—from installation and maintenance to modernization and control-system support.</p>
+          <p>Our approach combines field experience, careful commissioning and responsive technical service. We work around the building, lift equipment and control requirements instead of forcing a one-size-fits-all solution.</p>
         </div>
-
-        <div className={Style.aboutMedia}>
-          <div className={Style.mediaFrame}>
-            <Carousel />
-          </div>
-        </div>
+        <button className={Style.outlineBtn} onClick={() => onWhatsAppClick("Company Consultation")}>Talk to OSAN LIFT <span>→</span></button>
       </div>
-    </section>
-  );
-};
-
+      <div className={Style.aboutMedia}>
+        <div className={Style.mediaFrame}><Carousel /></div>
+      </div>
+    </div>
+  </section>
+);
 export default AboutSection;

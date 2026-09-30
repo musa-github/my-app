@@ -136,6 +136,7 @@ function Services() {
               <div 
                 className={styles.cardFooter} 
                 onClick={() => setSelectedService(service)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedService(service); }}
                 role="button"
                 tabIndex={0}
               >
@@ -164,8 +165,8 @@ function Services() {
 
         {/* Details Modal / Popup */}
         {selectedService && (
-          <div className={styles.modalOverlay} onClick={() => setSelectedService(null)}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalOverlay} onClick={() => setSelectedService(null)} role="presentation">
+            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="service-modal-title">
               <button className={styles.closeBtn} onClick={() => setSelectedService(null)}>
                 <X size={20} />
               </button>
@@ -176,7 +177,7 @@ function Services() {
                 </div>
                 <div>
                   <span className={styles.tag}>{selectedService.tag}</span>
-                  <h3 className={styles.modalTitle}>{selectedService.title}</h3>
+                  <h3 id="service-modal-title" className={styles.modalTitle}>{selectedService.title}</h3>
                 </div>
               </div>
 
