@@ -25,6 +25,7 @@ import Serviced_and_Schedule from "../Projects/Project/Serviced_and_Schedule";
 import Projects from "../Projects/Projects";
 import Summery from "../Projects/Summery";
 import Services from "../Services/Services";
+import SupportDetailsPage from "../Services/SupportDetailsPage"; // Newly added import
 import "./Main.css";
 
 export const Main = () => {
@@ -33,6 +34,9 @@ export const Main = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/Services" element={<Services />} />
+
+        {/* Dynamic Support Request View Route */}
+        <Route path="/support-request/:requestId" element={<SupportDetailsPage />} />
 
         {/* Authentication Routes */}
         <Route path="/Login" element={<Login />} />

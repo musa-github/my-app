@@ -9,19 +9,19 @@ import { auth, db } from "../../Firebase/Firebase";
 
 const savedUser = JSON.parse(localStorage.getItem("authUser")) || null;
 
-// ওনার বা এডমিনের ইমেইল
+// Owner ba admin er email
 const OWNER_EMAIL = "osanlift@gmail.com";
 
-// ১. Async Thunk: Sign Up Request Handler
+// 1. Async Thunk: Sign Up Request Handler
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (signUpData, { rejectWithValue }) => {
     try {
       const cleanEmail = signUpData.email.trim().toLowerCase();
 
-      // ** যদি ওনার বা এডমিন অ্যাকাউন্ট ক্রিয়েট করে **
+      // ** Owner ba Admin account create korle **
       if (cleanEmail === OWNER_EMAIL) {
-        // ১. সরাসরি Firebase Auth এ অ্যাকাউন্ট তৈরি
+        // Firebase Auth-e account create
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           cleanEmail,
@@ -29,7 +29,7 @@ export const registerUser = createAsyncThunk(
         );
         const user = userCredential.user;
 
-        // ২. signUpData কালেকশনে ইউজারের প্রোফাইল ডাটা সেভ
+        // signUpData collection-e user profile save
         const userPayload = {
           name: signUpData.name,
           email: cleanEmail,
@@ -39,7 +39,7 @@ export const registerUser = createAsyncThunk(
 
         await setDoc(doc(db, "signUpData", cleanEmail), { data: userPayload });
 
-        // ৩. সরাসরি অটো-লগইন প্রোফাইল রিটার্ন
+        // Auto-login profile return
         const finalPayload = {
           ...userPayload,
           uid: user.uid,
@@ -49,7 +49,7 @@ export const registerUser = createAsyncThunk(
         return { isOwner: true, user: finalPayload, message: "Admin account created & logged in successfully!" };
       }
 
-      // ** সাধারণ ইউজারদের জন্য (অ্যাপ্রুভাল প্রসেস) **
+      // ** Sadharon user-der jonno (Approval Process) **
       const pendingRef = doc(db, "pendingRequests", cleanEmail);
       const pendingSnap = await getDoc(pendingRef);
 
@@ -61,6 +61,7 @@ export const registerUser = createAsyncThunk(
         name: signUpData.name,
         email: cleanEmail,
         password: signUpData.password,
+        role: signUpData.role || "Client", // Form theke asa role save hocche
         status: "Pending",
         requestedAt: new Date().toISOString(),
       };
@@ -77,18 +78,18 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// ২. Async Thunk: Firebase Login Handler
+// 2. Async Thunk: Firebase Login Handler
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const cleanEmail = email.trim().toLowerCase();
 
-      // Firebase Auth সাইন ইন
+      // Firebase Auth Sign In
       const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
       const user = userCredential.user;
 
-      // loginData কালেকশনে স্টেটাস আপডেট
+      // loginData collection-e status update
       const loginRef = doc(db, "loginData", cleanEmail);
       const loginPayload = {
         email: cleanEmail,
@@ -98,11 +99,11 @@ export const loginUser = createAsyncThunk(
       };
       await setDoc(loginRef, { data: loginPayload });
 
-      // signUpData কালেকশন থেকে প্রোফাইল ডাটা রিড করা
+      // signUpData collection theke profile data read
       const userSnap = await getDoc(doc(db, "signUpData", cleanEmail));
       const registeredData = userSnap.exists() ? userSnap.data().data : {};
 
-      // employees কালেকশন থেকে Profile ম্যাচ করা
+      // employees collection theke Profile match kora
       let employeeProfile = null;
       const employeesRef = collection(db, "employees");
       const q = query(employeesRef, where("data.email", "==", cleanEmail));
@@ -136,7 +137,7 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// ৩. Async Thunk: Firebase Logout Handler
+// 3. Async Thunk: Firebase Logout Handler
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
@@ -175,7 +176,7 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         if (action.payload.isOwner) {
-          state.user = action.payload.user; // ওনার হলে স্টেট-এ সরাসরি সেভ হবে
+          state.user = action.payload.user;
         }
         state.successMessage = action.payload.message;
       })

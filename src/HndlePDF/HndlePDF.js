@@ -1,4 +1,6 @@
+import html2canvas from "html2canvas";
 import html2pdf from 'html2pdf.js';
+import jsPDF from "jspdf";
 
 /**
  * Generates and downloads a PDF from a given React ref element.
@@ -41,4 +43,48 @@ export const downloadInvoicePDF = ({ elementRef, fileName = 'Invoice_Bill', setI
         if (setIsPdfPrinting) setIsPdfPrinting(false);
       });
   }, 150);
+};
+
+export const TechnicalSupportHandlePDF = async ({ elementRef, fileName }) => {
+  if (!elementRef || !elementRef.current) return;
+
+  const element = elementRef.current;
+
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff", // PDF download-e white opacity fix
+      onclone: (clonedDoc) => {
+        // Force printable area to have crisp dark text & white bg
+        const clonedElement = clonedDoc.querySelector(`[data-pdf-content="true"]`) || clonedDoc.body;
+        clonedElement.style.color = "#0f172a";
+        clonedElement.style.backgroundColor = "#ffffff";
+      },
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save(`${fileName || "Support_Request"}.pdf`);
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+  }
 };

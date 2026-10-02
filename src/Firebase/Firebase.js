@@ -1,6 +1,13 @@
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  getFirestore,
+  serverTimestamp,
+  Timestamp
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -15,5 +22,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Services.jsx বা অন্যান্য কম্পোনেন্টে সরাসরি ব্যবহার করার জন্য Re-export
+export { addDoc, collection, serverTimestamp, Timestamp };
 
 export default app;

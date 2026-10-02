@@ -147,3 +147,24 @@
   font-size: 0.85rem;
   text-align: center;
 }
+/* AuthForm.module.css - e slass jog korun */
+
+.selectField {
+  padding: 11px 14px;
+  background-color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.selectField:focus {
+  border-color: #38bdf8;
+}
+
+.selectField option {
+  background-color: #0f172a;
+  color: #fff;
+}

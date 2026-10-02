@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router"; // useNavigate ইমপোর্ট করা হয়েছে
+import { useNavigate } from "react-router";
 import { clearAuthMessages, loginUser, registerUser } from "../../Fetures/Inventory/authSlice";
 import styles from "./AuthForm.module.css";
 
 const AuthForm = ({ initialMode = "signup" }) => {
   const [isSignUp, setIsSignUp] = useState(initialMode === "signup");
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // Hook ইনিশিয়ালাইজ করা হয়েছে
+  const navigate = useNavigate();
   const { loading, error, successMessage, user } = useSelector((state) => state.auth);
 
   const initialFormState = {
     name: "",
     email: "",
     password: "",
+    role: "Client", // Default value
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -25,46 +26,42 @@ const AuthForm = ({ initialMode = "signup" }) => {
     });
   };
 
-  // সাবমিট হ্যান্ডলার
-  // AuthForm.jsx এর handleSubmit অংশ:
-const handleSubmit = (e) => {
-  e.preventDefault();
-  dispatch(clearAuthMessages());
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(clearAuthMessages());
 
-  if (isSignUp) {
-    if (!formData.name || !formData.email || !formData.password) {
-      alert("Please fill in all fields!");
-      return;
-    }
-    dispatch(registerUser(formData)).then((res) => {
-      if (!res.error) {
-        // ওনার হলে সরাসরি হোম পেজে যাবে, সাধারণ ইউজার হলে অ্যালার্ট দেখাবে
-        if (formData.email.trim().toLowerCase() === "osanlift@gmail.com") {
-          navigate("/");
-        } else {
-          alert("Registration request submitted! Please wait for Admin approval.");
-          setIsSignUp(false);
-          setFormData({ name: "", email: formData.email, password: "" });
+    if (isSignUp) {
+      if (!formData.name || !formData.email || !formData.password || !formData.role) {
+        alert("Please fill in all fields!");
+        return;
+      }
+      dispatch(registerUser(formData)).then((res) => {
+        if (!res.error) {
+          if (formData.email.trim().toLowerCase() === "osanlift@gmail.com") {
+            navigate("/");
+          } else {
+            alert("Registration request submitted! Please wait for Admin approval.");
+            setIsSignUp(false);
+            setFormData({ name: "", email: formData.email, password: "", role: "Client" });
+          }
         }
+      });
+    } else {
+      if (!formData.email || !formData.password) {
+        alert("Please enter email and password!");
+        return;
       }
-    });
-  } else {
-    if (!formData.email || !formData.password) {
-      alert("Please enter email and password!");
-      return;
+      dispatch(
+        loginUser({ email: formData.email, password: formData.password })
+      ).then((res) => {
+        if (!res.error) {
+          setFormData(initialFormState);
+          navigate("/");
+        }
+      });
     }
-    dispatch(
-      loginUser({ email: formData.email, password: formData.password })
-    ).then((res) => {
-      if (!res.error) {
-        setFormData(initialFormState);
-        navigate("/");
-      }
-    });
-  }
-};
+  };
 
-  // মোড সুইচিং (Signup ↔ Login)
   const toggleMode = (mode) => {
     dispatch(clearAuthMessages());
     setIsSignUp(mode === "signup");
@@ -74,7 +71,6 @@ const handleSubmit = (e) => {
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
-        {/* হেডারের টগল বাটন */}
         <div className={styles.tabHeader}>
           <button
             type="button"
@@ -94,7 +90,6 @@ const handleSubmit = (e) => {
 
         <h2>{isSignUp ? "Create New Account" : "Welcome Back"}</h2>
 
-        {/* এলার্ট মেসেজ */}
         {error && <div className={styles.errorAlert}>{error}</div>}
         {successMessage && (
           <div className={styles.successAlert}>{successMessage}</div>
@@ -108,17 +103,35 @@ const handleSubmit = (e) => {
 
         <form onSubmit={handleSubmit} className={styles.formGroup}>
           {isSignUp && (
-            <div className={styles.inputField}>
-              <label>Full Name *</label>
-              <input
-                type="text"
-                name="name"
-                placeholder="Your Name"
-                value={formData.name}
-                onChange={handleChange}
-                required={isSignUp}
-              />
-            </div>
+            <>
+              <div className={styles.inputField}>
+                <label>Full Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your Name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required={isSignUp}
+                />
+              </div>
+
+              {/* Role Selection Field */}
+              <div className={styles.inputField}>
+                <label>Signup As *</label>
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  required={isSignUp}
+                  className={styles.selectField}
+                >
+                  <option value="Client">Client</option>
+                  <option value="Seller">Seller</option>
+                  <option value="Employee">Employee</option>
+                </select>
+              </div>
+            </>
           )}
 
           <div className={styles.inputField}>

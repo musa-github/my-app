@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
   collection,
@@ -8,15 +9,29 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { auth, db } from "../Firebase/Firebase";
 import styles from "./AdminPanel.module.css";
+
+// Redux Actions
+import { fetchSupportRequests } from "../Fetures/Inventory/technicalSupportSlice";
+import SupportResponseModal from "../Services/SupportResponseModal";
 
 const OWNER_EMAIL = "osanlift@gmail.com";
 
 function AdminPanel() {
+  const dispatch = useDispatch();
+
   const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
   const currentUserEmail = (reduxUserEmail || auth.currentUser?.email || "").toLowerCase().trim();
+
+  // Technical Support Requests from Redux
+  const supportRequests = useSelector((state) => state.technicalSupport?.requests || []);
+
+  // Filter ONLY Pending / Active requests
+  const pendingTechRequests = supportRequests.filter(
+    (req) => req.status !== "Completed" && req.status !== "Processed"
+  );
 
   const [activeTab, setActiveTab] = useState("permissions");
   const [employees, setEmployees] = useState([]);
@@ -27,9 +42,10 @@ function AdminPanel() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Screen-based Hierarchical Access Control Features
+  // Tech Support Modal State
+  const [selectedTechRequest, setSelectedTechRequest] = useState(null);
+
   const availableFeatures = [
-    // 1. Header Navigation Control
     { key: "nav_home", label: "Header -> Home Navigation", category: "Header Menu" },
     { key: "nav_clients", label: "Header -> Clients Navigation", category: "Header Menu" },
     { key: "nav_projects", label: "Header -> Projects Navigation", category: "Header Menu" },
@@ -37,7 +53,6 @@ function AdminPanel() {
     { key: "nav_employee", label: "Header -> Employee's Data Navigation", category: "Header Menu" },
     { key: "nav_admin", label: "Header -> Admin Panel Navigation", category: "Header Menu" },
 
-    // 2. Clients Portal (Sidebar & Actions)
     { key: "clients_tab_list", label: "Clients -> Sidebar: Client List Page", category: "Clients Portal" },
     { key: "clients_tab_offer", label: "Clients -> Sidebar: Offer Page", category: "Clients Portal" },
     { key: "clients_tab_challan", label: "Clients -> Sidebar: Challan Page", category: "Clients Portal" },
@@ -47,7 +62,6 @@ function AdminPanel() {
     { key: "clients_action_delete", label: "Clients -> Action: Delete Offer/Challan", category: "Clients Actions" },
     { key: "clients_action_pdf", label: "Clients -> Action: Download PDF", category: "Clients Actions" },
 
-    // 3. Projects Portal (Sidebar & Actions)
     { key: "projects_tab_summary", label: "Projects -> Sidebar: Summary Page", category: "Projects Portal" },
     { key: "projects_tab_serviced", label: "Projects -> Sidebar: Serviced & Schedule Page", category: "Projects Portal" },
     { key: "projects_action_add", label: "Projects -> Action: Add New Project", category: "Projects Actions" },
@@ -56,7 +70,6 @@ function AdminPanel() {
     { key: "projects_action_update", label: "Projects -> Action: Update Servicing Schedule", category: "Projects Actions" },
     { key: "projects_action_delete", label: "Projects -> Action: Delete Project", category: "Projects Actions" },
 
-    // 4. Employee Portal (Sidebar & Actions)
     { key: "emp_tab_profile", label: "Employee -> Sidebar: Your Profile Page", category: "Employee Portal" },
     { key: "emp_tab_attendance", label: "Employee -> Sidebar: Attendance Page", category: "Employee Portal" },
     { key: "emp_tab_list", label: "Employee -> Sidebar: Employee List Page", category: "Employee Portal" },
@@ -68,6 +81,8 @@ function AdminPanel() {
   const fetchData = async () => {
     try {
       setLoading(true);
+
+      dispatch(fetchSupportRequests());
 
       const empSnap = await getDocs(collection(db, "employees"));
       const empList = [];
@@ -120,11 +135,9 @@ function AdminPanel() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
-  // Check current user is Admin or Owner
   const isAdmin = currentUserEmail === OWNER_EMAIL || adminList.includes(currentUserEmail);
 
   const handleAddAdmin = async (e) => {
@@ -300,7 +313,6 @@ function AdminPanel() {
       const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, req.password);
       const uid = userCredential.user.uid;
 
-      // eslint-disable-next-line no-unused-vars
       const { password, ...safeData } = req;
       const approvedPayload = {
         ...safeData,
@@ -381,6 +393,12 @@ function AdminPanel() {
             Access Control
           </button>
           <button
+            className={`${styles.tabBtn} ${activeTab === "techSupport" ? styles.activeTab : ""}`}
+            onClick={() => setActiveTab("techSupport")}
+          >
+            Technical Support ({pendingTechRequests.length})
+          </button>
+          <button
             className={`${styles.tabBtn} ${activeTab === "signupRequests" ? styles.activeTab : ""}`}
             onClick={() => setActiveTab("signupRequests")}
           >
@@ -400,6 +418,57 @@ function AdminPanel() {
           </button>
         </div>
       </div>
+
+      {/* Technical Support Tab */}
+      {activeTab === "techSupport" && (
+        <div className={styles.cardGrid}>
+          {pendingTechRequests.length === 0 ? (
+            <p className={styles.emptyText}>No pending Technical Support requests found.</p>
+          ) : (
+            pendingTechRequests.map((req) => (
+              <div key={req.id} className={styles.card}>
+                <div className={styles.cardHeader}>
+                  <h4 className={styles.userName}>{req.userName || "N/A"}</h4>
+                  <p className={styles.userEmail}>{req.email}</p>
+                  <p className={styles.userEmail}>Phone: {req.phone}</p>
+                </div>
+
+                <div style={{ marginBottom: "12px" }}>
+                  <p className={styles.requestDetail}>
+                    <strong>Category:</strong> {req.serviceCategory}
+                  </p>
+                  <p className={styles.requestDetail}>
+                    <strong>Title:</strong> {req.serviceTitle}
+                  </p>
+                  <p className={styles.requestDetail}>
+                    <strong>Problem:</strong> {req.problemDescription}
+                  </p>
+                  <p className={styles.requestDetail}>
+                    <strong>Status:</strong> <span className={styles.typeBadge}>{req.status || "Pending"}</span>
+                  </p>
+                </div>
+
+                <div className={styles.actionBtns}>
+                  <button
+                    className={styles.approveBtn}
+                    onClick={() => setSelectedTechRequest(req)}
+                  >
+                    Process Request
+                  </button>
+                  {req.adminResponse && (
+                    <button
+                      className={styles.addBtn}
+                      onClick={() => setSelectedTechRequest(req)}
+                    >
+                      View Modal
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Access Control / Permissions Tab */}
       {activeTab === "permissions" && (
@@ -516,8 +585,7 @@ function AdminPanel() {
                   <div className={styles.actionBtns}>
                     <button
                       className={styles.approveBtn}
-                      // eslint-disable-next-line no-undef
-                      onClick={() => handleApproveRequest(request)}
+                      onClick={() => handleApproveRequest(req)}
                     >
                       Approve
                     </button>
@@ -562,6 +630,15 @@ function AdminPanel() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Single Unified Support Response Modal */}
+      {selectedTechRequest && (
+        <SupportResponseModal
+          request={selectedTechRequest}
+          onClose={() => setSelectedTechRequest(null)}
+          onRefresh={fetchData}
+        />
       )}
     </div>
   );
