@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router';
+import { NavLink } from 'react-router-dom';
 import styles from '../Serviced_and_Schedule.module.css';
 
 const ProjectTableRow = ({ proj, idx, selectedMonth, monthsList, getLastServicingDateFromProj, handleEdit }) => {

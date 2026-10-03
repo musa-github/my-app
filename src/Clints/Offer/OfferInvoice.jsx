@@ -21,7 +21,7 @@ const OfferInvoice = () => {
 
   // Logged in user info ebong admin list Redux/Auth state theke retrieve
   const currentUserEmail = useSelector((state) => state.auth?.user?.email || state.auth?.email || '');
-  const adminList = useSelector((state) => state.auth?.appAdmins || state.auth?.adminList || []); // Firestore 'app_admins' list
+  const adminList = useSelector((state) => state.auth?.appAdmins || state.auth?.adminLists); // Firestore 'app_admins' list
 
   // Owner Email declaration
   const OWNER_EMAIL = 'osanlift@gmail.com';

@@ -1,7 +1,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink } from "react-router-dom";
 import logo from "../assets/main-logo.png";
 import { logoutUser } from "../Fetures/Inventory/authSlice";
 import { auth, db } from "../Firebase/Firebase";
@@ -17,14 +17,16 @@ export const Header = () => {
   const [permissions, setPermissions] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [employeeProfile, setEmployeeProfile] = useState(null);
 
   const currentUserEmail = (user?.email || auth.currentUser?.email || "").toLowerCase();
 
   useEffect(() => {
-    const fetchUserRoleAndPermissions = async () => {
+    const fetchUserData = async () => {
       if (!currentUserEmail) {
         setPermissions({});
         setIsAdmin(false);
+        setEmployeeProfile(null);
         return;
       }
 
@@ -43,12 +45,20 @@ export const Header = () => {
         } else {
           setPermissions({});
         }
+
+        // ৩. Employee Data লোড করা (Firestore employees collection)
+        const empDoc = await getDoc(doc(db, "employees", cleanEmail));
+        if (empDoc.exists()) {
+          setEmployeeProfile(empDoc.data());
+        } else {
+          setEmployeeProfile(null);
+        }
       } catch (error) {
-        console.error("Error fetching header permissions:", error);
+        console.error("Error fetching header user data:", error);
       }
     };
 
-    fetchUserRoleAndPermissions();
+    fetchUserData();
   }, [currentUserEmail]);
 
   const handleLogout = () => {
@@ -64,11 +74,13 @@ export const Header = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // এডমিন অথবা নির্দিষ্ট পারমিশন থাকলে নেভিগেশন লিংক দেখাবে
   const hasAccess = (newKey, legacyKey) => {
     if (isAdmin) return true;
     return Boolean(permissions[newKey] || permissions[legacyKey]);
   };
+
+  // Google User / Logged-in Auth User + Firestore Employee Profile merge
+  const activeProfile = employeeProfile || user || auth.currentUser;
 
   return (
     <header className={Style.headerWrapper}>
@@ -91,7 +103,6 @@ export const Header = () => {
 
         {/* Nav Links Container */}
         <div className={`${Style.menu} ${isMobileMenuOpen ? Style.menuOpen : ""}`}>
-          {/* Home Navigation */}
           <NavLink
             className={({ isActive }) => (isActive ? Style.active : Style.link)}
             to="/"
@@ -108,7 +119,6 @@ export const Header = () => {
             Our Services
           </NavLink>
 
-          {/* Clients Navigation */}
           {hasAccess("nav_clients", "canAccessClients") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
@@ -119,7 +129,6 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Projects Navigation */}
           {hasAccess("nav_projects", "canAccessProjects") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
@@ -130,7 +139,6 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Inventory & Billing Navigation */}
           {hasAccess("nav_inventory", "canAccessInventory") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
@@ -141,7 +149,6 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Employee's Data Navigation */}
           {hasAccess("nav_employee", "canAccessEmployees") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
@@ -152,7 +159,6 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Admin Panel Navigation */}
           {hasAccess("nav_admin") && (
             <NavLink
               className={({ isActive }) => (isActive ? Style.active : Style.link)}
@@ -163,11 +169,11 @@ export const Header = () => {
             </NavLink>
           )}
 
-          {/* Mobile Auth Buttons (Inside Dropdown) */}
+          {/* Mobile Auth Buttons */}
           <div className={Style.mobileAuthContainer}>
-            {user ? (
+            {user || auth.currentUser ? (
               <div className={Style.userProfileGroup}>
-                {user.employeeProfile && <Avatar profile={user.employeeProfile} />}
+                <Avatar profile={activeProfile} />
                 <button onClick={handleLogout} className={Style.logoutBtn}>
                   Logout
                 </button>
@@ -187,9 +193,9 @@ export const Header = () => {
 
         {/* Desktop Auth Buttons */}
         <div className={Style.desktopAuthContainer}>
-          {user ? (
+          {user || auth.currentUser ? (
             <div className={Style.userProfileGroup}>
-              {user.employeeProfile && <Avatar profile={user.employeeProfile} />}
+              <Avatar profile={activeProfile} />
               <button onClick={handleLogout} className={Style.logoutBtn}>
                 Logout
               </button>

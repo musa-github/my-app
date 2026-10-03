@@ -1,27 +1,26 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../Firebase/Firebase";
 
 const savedUser = JSON.parse(localStorage.getItem("authUser")) || null;
-
-// ওনার বা এডমিনের ইমেইল
 const OWNER_EMAIL = "osanlift@gmail.com";
 
-// ১. Async Thunk: Sign Up Request Handler
+// 1. Sign Up
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (signUpData, { rejectWithValue }) => {
     try {
       const cleanEmail = signUpData.email.trim().toLowerCase();
 
-      // ** যদি ওনার বা এডমিন অ্যাকাউন্ট ক্রিয়েট করে **
       if (cleanEmail === OWNER_EMAIL) {
-        // ১. সরাসরি Firebase Auth এ অ্যাকাউন্ট তৈরি
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           cleanEmail,
@@ -29,7 +28,6 @@ export const registerUser = createAsyncThunk(
         );
         const user = userCredential.user;
 
-        // ২. signUpData কালেকশনে ইউজারের প্রোফাইল ডাটা সেভ
         const userPayload = {
           name: signUpData.name,
           email: cleanEmail,
@@ -39,17 +37,11 @@ export const registerUser = createAsyncThunk(
 
         await setDoc(doc(db, "signUpData", cleanEmail), { data: userPayload });
 
-        // ৩. সরাসরি অটো-লগইন প্রোফাইল রিটার্ন
-        const finalPayload = {
-          ...userPayload,
-          uid: user.uid,
-        };
-
+        const finalPayload = { ...userPayload, uid: user.uid };
         localStorage.setItem("authUser", JSON.stringify(finalPayload));
         return { isOwner: true, user: finalPayload, message: "Admin account created & logged in successfully!" };
       }
 
-      // ** সাধারণ ইউজারদের জন্য (অ্যাপ্রুভাল প্রসেস) **
       const pendingRef = doc(db, "pendingRequests", cleanEmail);
       const pendingSnap = await getDoc(pendingRef);
 
@@ -77,66 +69,74 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// ২. Async Thunk: Firebase Login Handler
+// 2. Login
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const cleanEmail = email.trim().toLowerCase();
-
-      // Firebase Auth সাইন ইন
       const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
       const user = userCredential.user;
 
-      // loginData কালেকশনে স্টেটাস আপডেট
-      const loginRef = doc(db, "loginData", cleanEmail);
-      const loginPayload = {
-        email: cleanEmail,
-        uid: user.uid,
-        loggedInAt: new Date().toISOString(),
-        status: "Active",
-      };
-      await setDoc(loginRef, { data: loginPayload });
-
-      // signUpData কালেকশন থেকে প্রোফাইল ডাটা রিড করা
       const userSnap = await getDoc(doc(db, "signUpData", cleanEmail));
       const registeredData = userSnap.exists() ? userSnap.data().data : {};
-
-      // employees কালেকশন থেকে Profile ম্যাচ করা
-      let employeeProfile = null;
-      const employeesRef = collection(db, "employees");
-      const q = query(employeesRef, where("data.email", "==", cleanEmail));
-      const querySnapshot = await getDocs(q);
-
-      querySnapshot.forEach((docSnap) => {
-        if (docSnap.exists()) {
-          employeeProfile = docSnap.data().data;
-        }
-      });
 
       const userPayload = {
         ...registeredData,
         email: cleanEmail,
         uid: user.uid,
-        employeeProfile: employeeProfile,
       };
 
       localStorage.setItem("authUser", JSON.stringify(userPayload));
       return userPayload;
     } catch (error) {
-      if (
-        error.code === "auth/user-not-found" ||
-        error.code === "auth/wrong-password" ||
-        error.code === "auth/invalid-credential"
-      ) {
-        return rejectWithValue("Invalid email or password or account not approved yet!");
-      }
+      return rejectWithValue("Invalid email/password or account not approved yet!");
+    }
+  }
+);
+
+// 3. Google Login
+export const googleLoginUser = createAsyncThunk(
+  "auth/googleLoginUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const cleanEmail = user.email.trim().toLowerCase();
+
+      const userPayload = {
+        name: user.displayName || "Google User",
+        email: cleanEmail,
+        uid: user.uid,
+        photoURL: user.photoURL,
+        role: cleanEmail === OWNER_EMAIL ? "Admin" : "User",
+      };
+
+      await setDoc(doc(db, "signUpData", cleanEmail), { data: userPayload }, { merge: true });
+      localStorage.setItem("authUser", JSON.stringify(userPayload));
+      return userPayload;
+    } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
 
-// ৩. Async Thunk: Firebase Logout Handler
+// 4. Reset Password
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async (email, { rejectWithValue }) => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      await sendPasswordResetEmail(auth, cleanEmail);
+      return `Password reset link sent to ${cleanEmail}. Please check your email inbox/spam folder.`;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// 5. Logout
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
@@ -166,30 +166,20 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Sign Up
-      .addCase(registerUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.successMessage = null;
-      })
+      // Register
+      .addCase(registerUser.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload.isOwner) {
-          state.user = action.payload.user; // ওনার হলে স্টেট-এ সরাসরি সেভ হবে
-        }
+        if (action.payload.isOwner) state.user = action.payload.user;
         state.successMessage = action.payload.message;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Registration failed!";
+        state.error = action.payload;
       })
 
       // Login
-      .addCase(loginUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.successMessage = null;
-      })
+      .addCase(loginUser.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
@@ -197,7 +187,30 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Login failed!";
+        state.error = action.payload;
+      })
+
+      // Google Login
+      .addCase(googleLoginUser.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(googleLoginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.successMessage = "Logged in with Google!";
+      })
+      .addCase(googleLoginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Reset Password
+      .addCase(resetPassword.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(resetPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.successMessage = action.payload;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
       // Logout

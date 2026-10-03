@@ -87,14 +87,7 @@ const ServiceBill = () => {
   const handleRemoveRow = (index) => setEditableItems(editableItems.filter((_, i) => i !== index));
 
   // Notes & Payment Handlers
-  const handleNoteChange = (index, value) => {
-    const updated = [...notes];
-    updated[index] = value;
-    setNotes(updated);
-  };
-  const handleAddNote = () => setNotes([...notes, 'New condition note...']);
-  const handleRemoveNote = (index) => setNotes(notes.filter((_, i) => i !== index));
-
+ 
   // Grand Total Calculation
   const grandTotal = editableItems.reduce(
     (sum, item) => sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0),
@@ -332,22 +325,8 @@ const ServiceBill = () => {
             </div>
 
             <div className="notes-section">
-              {notes.map((note, index) => (
-                <div key={index} className="note-row">
-                  <span className="note-label"><strong>Note {String(index + 1).padStart(2, '0')}- </strong></span>
-                  {isPdfPrinting ? <span className="note-text">{note}</span> : (
-                    <input type="text" className="inline-input note-input" value={note} onChange={(e) => handleNoteChange(index, e.target.value)} />
-                  )}
-                  {!isPdfPrinting && (
-                    <button className="btn-delete no-print inline-delete" onClick={() => handleRemoveNote(index)}>✕</button>
-                  )}
-                </div>
-              ))}
-              {!isPdfPrinting && (
-                <div className="no-print add-note-box">
-                  <button className="btn-add-note" onClick={handleAddNote}>+ Add Note</button>
-                </div>
-              )}
+              
+              
 
               <div className="payment-mode">
                 <div className="payment-line">
@@ -365,7 +344,7 @@ const ServiceBill = () => {
         <div className="page-break-avoid footer-section-wrap">
           <div className="invoice-footer">
             <div className="footer-left">
-              <div className="seal-circle">MM</div>
+              <div className="seal-circle">osan lift</div>
               <p>Thanking You. Yours Truly</p>
             </div>
             <div className="footer-center">

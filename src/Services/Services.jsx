@@ -1,9 +1,9 @@
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import {
   ArrowRight,
   Clock,
   Cpu,
-  MessageSquare,
-  PhoneCall,
+  Send,
   Settings,
   ShieldCheck,
   Wrench,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { db } from '../Firebase/Firebase';
 import styles from './Services.module.css';
 
 const servicesData = [
@@ -70,8 +71,16 @@ const WHATSAPP_NUMBER = "8801610989538";
 
 function Services() {
   const [selectedService, setSelectedService] = useState(null);
+  const [formData, setFormData] = useState({
+    userName: '',
+    email: '',
+    whatsapp: '',
+    problemDetails: '',
+    refPic1: '',
+    refPic2: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Prevent background scrolling when modal is open on mobile
   useEffect(() => {
     if (selectedService) {
       document.body.style.overflow = 'hidden';
@@ -83,127 +92,194 @@ function Services() {
     };
   }, [selectedService]);
 
-  const handleOpenWhatsApp = (serviceTitle) => {
-    const text = encodeURIComponent(`Hello! I need information regarding: ${serviceTitle || "Engineering Services"}`);
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank');
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCall = () => {
-    window.location.href = `tel:${PHONE_NUMBER}`;
+  // Convert File to Base64 String for storing in Firestore
+  const handleFileChange = (e, fieldName) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, [fieldName]: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmitRequest = async (e) => {
+    e.preventDefault();
+    if (!formData.userName || !formData.whatsapp || !formData.problemDetails) {
+      alert("Please fill in all required fields (Name, WhatsApp, and Problem Details).");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, "technicalSupportRequests"), {
+        serviceId: selectedService.id,
+        serviceTitle: selectedService.title,
+        serviceTag: selectedService.tag,
+        userName: formData.userName,
+        email: formData.email,
+        whatsapp: formData.whatsapp,
+        problemDetails: formData.problemDetails,
+        refPic1: formData.refPic1,
+        refPic2: formData.refPic2,
+        status: "pending",
+        hasUnreadNotification: true,
+        createdAt: serverTimestamp()
+      });
+
+      alert("Your technical support request has been submitted successfully!");
+      setFormData({ userName: '', email: '', whatsapp: '', problemDetails: '', refPic1: '', refPic2: '' });
+      setSelectedService(null);
+    } catch (error) {
+      console.error("Error submitting support request:", error);
+      alert("Failed to submit request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <section className={styles.servicesSection}>
       <Helmet>
         <title>Engineering & Elevator Services | Osan Lift</title>
-        <meta 
-          name="description" 
-          content="Explore Osan Lift's services including new lift installation, Automatic Rescue Devices (ARD), generator setup, controller spare parts, and 24/7 emergency support." 
-        />
-        <meta name="keywords" content="Elevator Installation, ARD System, Generator Backup, Fuji Inverter, Monarch Controller, Yaskawa, Lift Spare Parts" />
-        <meta property="og:title" content="Engineering & Elevator Services - Osan Lift" />
-        <meta property="og:description" content="High-grade elevator setup, ARD solutions, spare parts supply, and AMC maintenance contracts." />
       </Helmet>
 
       <div className={styles.container}>
-        
-        {/* Header Section */}
         <div className={styles.header}>
           <span className={styles.badge}>Our Expertise</span>
           <h2 className={styles.title}>Engineering & Power Solutions Services</h2>
-          <p className={styles.subtitle}>
-            We deliver top-tier elevator setup, automatic rescue devices, generator integration, and specialized technical support for uninterrupted reliability.
-          </p>
         </div>
 
-        {/* Services Grid */}
         <div className={styles.grid}>
           {servicesData.map((service) => (
             <div key={service.id} className={styles.card}>
               <div>
                 <div className={styles.cardTop}>
-                  <div className={styles.iconWrapper}>
-                    {service.icon}
-                  </div>
+                  <div className={styles.iconWrapper}>{service.icon}</div>
                   <span className={styles.tag}>{service.tag}</span>
                 </div>
-
                 <h3 className={styles.cardTitle}>{service.title}</h3>
                 <p className={styles.cardDescription}>{service.description}</p>
               </div>
 
-              {/* Card Footer */}
               <div 
                 className={styles.cardFooter} 
                 onClick={() => setSelectedService(service)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedService(service); }}
                 role="button"
                 tabIndex={0}
               >
-                <span>Learn More</span>
+                <span>Request Support</span>
                 <ArrowRight className={styles.arrowIcon} />
               </div>
             </div>
           ))}
         </div>
 
-        {/* CTA Banner */}
-        <div className={styles.ctaBanner}>
-          <h3 className={styles.ctaTitle}>Need Custom Elevator Parts or Emergency Service?</h3>
-          <p className={styles.ctaText}>
-            Get in touch with our operations team for immediate assistance or technical consultation.
-          </p>
-          <div className={styles.ctaActionGroup}>
-            <button className={styles.ctaBtn} onClick={() => handleOpenWhatsApp("Emergency Consultation")}>
-              <MessageSquare size={18} /> WhatsApp Chat
-            </button>
-            <button className={styles.ctaCallBtn} onClick={handleCall}>
-              <PhoneCall size={18} /> Call Us ({PHONE_NUMBER})
-            </button>
-          </div>
-        </div>
-
-        {/* Details Modal / Popup */}
+        {/* Modal Window with Two Columns */}
         {selectedService && (
-          <div className={styles.modalOverlay} onClick={() => setSelectedService(null)} role="presentation">
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="service-modal-title">
+          <div className={styles.modalOverlay} onClick={() => setSelectedService(null)}>
+            <div className={styles.modalContentTwoCol} onClick={(e) => e.stopPropagation()}>
               <button className={styles.closeBtn} onClick={() => setSelectedService(null)}>
                 <X size={20} />
               </button>
-              
-              <div className={styles.modalHeader}>
-                <div className={styles.iconWrapper}>
-                  {selectedService.icon}
+
+              {/* Left Column: Service Details */}
+              <div className={styles.leftColumn}>
+                <div className={styles.modalHeader}>
+                  <div className={styles.iconWrapper}>{selectedService.icon}</div>
+                  <div>
+                    <span className={styles.tag}>{selectedService.tag}</span>
+                    <h3 className={styles.modalTitle}>{selectedService.title}</h3>
+                  </div>
                 </div>
-                <div>
-                  <span className={styles.tag}>{selectedService.tag}</span>
-                  <h3 id="service-modal-title" className={styles.modalTitle}>{selectedService.title}</h3>
+
+                <div className={styles.modalBody}>
+                  <h4>Service Overview</h4>
+                  <p>{selectedService.description}</p>
+                  
+                  <h4>Key Technical Specifications</h4>
+                  <p>{selectedService.details}</p>
                 </div>
               </div>
 
-              <div className={styles.modalBody}>
-                <h4>Service Overview</h4>
-                <p>{selectedService.description}</p>
-                
-                <h4>Key Technical Details</h4>
-                <p>{selectedService.details}</p>
+              {/* Right Column: Technical Support Request Form */}
+              <div className={styles.rightColumn}>
+                <h3 className={styles.formTitle}>Request Technical Support</h3>
+                <form onSubmit={handleSubmitRequest} className={styles.supportForm}>
+                  <div className={styles.inputGroup}>
+                    <label>Full Name *</label>
+                    <input 
+                      type="text" 
+                      name="userName" 
+                      required 
+                      value={formData.userName} 
+                      onChange={handleInputChange} 
+                      placeholder="Your Name" 
+                    />
+                  </div>
+
+                  <div className={styles.inputRow}>
+                    <div className={styles.inputGroup}>
+                      <label>Email</label>
+                      <input 
+                        type="email" 
+                        name="email" 
+                        value={formData.email} 
+                        onChange={handleInputChange} 
+                        placeholder="email@example.com" 
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>WhatsApp Number *</label>
+                      <input 
+                        type="text" 
+                        name="whatsapp" 
+                        required 
+                        value={formData.whatsapp} 
+                        onChange={handleInputChange} 
+                        placeholder="017XXXXXXXX" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label>Problem / Requirement Details *</label>
+                    <textarea 
+                      name="problemDetails" 
+                      rows="3" 
+                      required 
+                      value={formData.problemDetails} 
+                      onChange={handleInputChange} 
+                      placeholder="Describe issue or required service..." 
+                    />
+                  </div>
+
+                  <div className={styles.inputRow}>
+                    <div className={styles.inputGroup}>
+                      <label>Ref Picture 1</label>
+                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'refPic1')} />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>Ref Picture 2</label>
+                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'refPic2')} />
+                    </div>
+                  </div>
+
+                  <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+                    <Send size={16} /> {isSubmitting ? "Submitting..." : "Submit Support Request"}
+                  </button>
+                </form>
               </div>
 
-              <div className={styles.modalFooter}>
-                <button 
-                  className={styles.whatsappBtn} 
-                  onClick={() => handleOpenWhatsApp(selectedService.title)}
-                >
-                  <MessageSquare size={18} /> Contact on WhatsApp
-                </button>
-                <button className={styles.phoneBtn} onClick={handleCall}>
-                  <PhoneCall size={18} /> Direct Call
-                </button>
-              </div>
             </div>
           </div>
         )}
-
       </div>
     </section>
   );

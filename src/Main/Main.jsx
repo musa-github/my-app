@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router";
+import { Navigate, Route, Routes } from "react-router-dom";
 import AdminPanel from "../AdminPannel/AdminPanel";
 import Challan from "../Clints/Challan/Challan";
 import ClientDetails from "../Clints/ClintDetails/ClintDetails";
@@ -25,6 +25,8 @@ import Serviced_and_Schedule from "../Projects/Project/Serviced_and_Schedule";
 import Projects from "../Projects/Projects";
 import Summery from "../Projects/Summery";
 import Services from "../Services/Services";
+import TechnicalSupportQuotation from "../Services/SupportRequest/TechnicalSupportQuotation";
+import TechnicalSupportResponse from "../Services/SupportRequest/TechnicalSupportResponse";
 import "./Main.css";
 
 export const Main = () => {
@@ -33,6 +35,8 @@ export const Main = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/Services" element={<Services />} />
+        <Route path="/technical-support-response" element={<TechnicalSupportResponse />} />
+        <Route path="/technical-support-quotation/:requestId" element={<TechnicalSupportQuotation />} />
 
         {/* Authentication Routes */}
         <Route path="/Login" element={<Login />} />
@@ -76,7 +80,7 @@ export const Main = () => {
           <Route path="Attendance" element={<Attendance />} />
           <Route path="Payroll" element={<Payroll_Salary />} />
         </Route>
-        
+
         <Route path="/AdminPanel" element={<AdminPanel />} />
       </Routes>
     </div>

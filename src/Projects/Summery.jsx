@@ -262,22 +262,24 @@ const Summery = () => {
     return acc;
   }, {});
 
-  const approverSummary = filteredProjects.reduce((acc, proj) => {
+  const collectorDetailedSummary = filteredProjects.reduce((acc, proj) => {
     const filteredBills = (proj.billList || []).filter(
       b => selectedMonth === 'All' || b.month === selectedMonth
     );
 
     filteredBills.forEach(bill => {
-      const sBill = Number(bill.servicingBill) || 0;
-      const pBill = Number(bill.sparePartsBill) || 0;
-      const lDue = Number(bill.lastMonthDue) || 0;
-      const totalApprovedAmount = sBill + pBill + lDue;
+      const collector = (bill.collectedBy && bill.collectedBy.trim()) ? bill.collectedBy.trim() : 'Unspecified';
+      const collectedAmount = Number(bill.collectedBill) || 0;
+      
+      const isApproved = bill.approvedBy && bill.approvedBy.trim() !== '' && bill.approvedBy.trim() !== '-';
+      const approvedAmount = isApproved ? collectedAmount : 0;
 
-      const approver = (bill.approvedBy && bill.approvedBy.trim()) ? bill.approvedBy.trim() : 'Unapproved/Pending';
-
-      if (totalApprovedAmount > 0) {
-        acc[approver] = (acc[approver] || 0) + totalApprovedAmount;
+      if (!acc[collector]) {
+        acc[collector] = { collected: 0, approved: 0 };
       }
+
+      acc[collector].collected += collectedAmount;
+      acc[collector].approved += approvedAmount;
     });
 
     return acc;

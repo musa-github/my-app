@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 const HeroSection = ({ Style, onWhatsAppClick }) => (
   <section className={Style.heroSection}>

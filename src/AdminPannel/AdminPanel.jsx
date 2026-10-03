@@ -1,22 +1,30 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
   collection,
   deleteDoc,
   doc,
   getDocs,
+  onSnapshot,
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { setSelectedRequest, setSupportRequests } from "../Fetures/Inventory/supportSlice";
 import { auth, db } from "../Firebase/Firebase";
 import styles from "./AdminPanel.module.css";
 
 const OWNER_EMAIL = "osanlift@gmail.com";
 
 function AdminPanel() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const reduxUserEmail = useSelector((state) => state.auth?.user?.email);
   const currentUserEmail = (reduxUserEmail || auth.currentUser?.email || "").toLowerCase().trim();
+
+  // Redux Toolkit state for support requests
+  const supportRequests = useSelector((state) => state.support?.supportRequests || []);
 
   const [activeTab, setActiveTab] = useState("permissions");
   const [employees, setEmployees] = useState([]);
@@ -27,17 +35,13 @@ function AdminPanel() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Screen-based Hierarchical Access Control Features
   const availableFeatures = [
-    // 1. Header Navigation Control
     { key: "nav_home", label: "Header -> Home Navigation", category: "Header Menu" },
     { key: "nav_clients", label: "Header -> Clients Navigation", category: "Header Menu" },
     { key: "nav_projects", label: "Header -> Projects Navigation", category: "Header Menu" },
     { key: "nav_inventory", label: "Header -> Inventory & Billing Navigation", category: "Header Menu" },
     { key: "nav_employee", label: "Header -> Employee's Data Navigation", category: "Header Menu" },
     { key: "nav_admin", label: "Header -> Admin Panel Navigation", category: "Header Menu" },
-
-    // 2. Clients Portal (Sidebar & Actions)
     { key: "clients_tab_list", label: "Clients -> Sidebar: Client List Page", category: "Clients Portal" },
     { key: "clients_tab_offer", label: "Clients -> Sidebar: Offer Page", category: "Clients Portal" },
     { key: "clients_tab_challan", label: "Clients -> Sidebar: Challan Page", category: "Clients Portal" },
@@ -46,8 +50,6 @@ function AdminPanel() {
     { key: "clients_action_update", label: "Clients -> Action: Update Offer/Challan", category: "Clients Actions" },
     { key: "clients_action_delete", label: "Clients -> Action: Delete Offer/Challan", category: "Clients Actions" },
     { key: "clients_action_pdf", label: "Clients -> Action: Download PDF", category: "Clients Actions" },
-
-    // 3. Projects Portal (Sidebar & Actions)
     { key: "projects_tab_summary", label: "Projects -> Sidebar: Summary Page", category: "Projects Portal" },
     { key: "projects_tab_serviced", label: "Projects -> Sidebar: Serviced & Schedule Page", category: "Projects Portal" },
     { key: "projects_action_add", label: "Projects -> Action: Add New Project", category: "Projects Actions" },
@@ -55,8 +57,6 @@ function AdminPanel() {
     { key: "projects_action_edit", label: "Projects -> Action: Edit Project Info", category: "Projects Actions" },
     { key: "projects_action_update", label: "Projects -> Action: Update Servicing Schedule", category: "Projects Actions" },
     { key: "projects_action_delete", label: "Projects -> Action: Delete Project", category: "Projects Actions" },
-
-    // 4. Employee Portal (Sidebar & Actions)
     { key: "emp_tab_profile", label: "Employee -> Sidebar: Your Profile Page", category: "Employee Portal" },
     { key: "emp_tab_attendance", label: "Employee -> Sidebar: Attendance Page", category: "Employee Portal" },
     { key: "emp_tab_list", label: "Employee -> Sidebar: Employee List Page", category: "Employee Portal" },
@@ -120,12 +120,34 @@ function AdminPanel() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
-  }, []);
 
-  // Check current user is Admin or Owner
+    // Listen to Real-time Technical Support Requests and Dispatch to Redux
+    const unsubSupport = onSnapshot(
+      collection(db, "technicalSupportRequests"),
+      (snapshot) => {
+        const activeSupport = snapshot.docs
+          .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+          .filter((item) => item.status !== "complete");
+
+        // Save requests to Redux Store
+        dispatch(setSupportRequests(activeSupport));
+      },
+      (error) => {
+        console.error("Support listener error:", error);
+      }
+    );
+
+    return () => unsubSupport();
+  }, [dispatch]);
+
   const isAdmin = currentUserEmail === OWNER_EMAIL || adminList.includes(currentUserEmail);
+
+  // Handle Redirect to Response Page
+  const handleOpenResponsePage = (req) => {
+    dispatch(setSelectedRequest(req));
+    navigate("/technical-support-response");
+  };
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
@@ -210,144 +232,6 @@ function AdminPanel() {
     }
   };
 
-  const handleApproveRequest = async (request) => {
-    try {
-      const cleanEmpName = (request.employeeName || "Unknown").replace(/[^a-zA-Z0-9]/g, "_");
-      const cleanEmail = (request.employeeEmail || "").replace(/[^a-zA-Z0-9]/g, "_");
-
-      if (request.type === "IN" || request.type === "OUT") {
-        const docRef = doc(
-          db,
-          "attendance",
-          cleanEmpName,
-          request.monthYear || "General",
-          request.date
-        );
-
-        const updateField = request.type === "IN"
-          ? { inTime: request.time, statusIn: "Approved" }
-          : { outTime: request.time, statusOut: "Approved" };
-
-        await setDoc(
-          docRef,
-          {
-            employeeName: request.employeeName,
-            employeeEmail: request.employeeEmail,
-            date: request.date,
-            monthYear: request.monthYear || "",
-            ...updateField,
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
-      } else if (request.type === "LEAVE") {
-        const docRef = doc(
-          db,
-          "attendance",
-          cleanEmpName,
-          request.monthYear || "General",
-          request.date
-        );
-
-        await setDoc(
-          docRef,
-          {
-            employeeName: request.employeeName,
-            employeeEmail: request.employeeEmail,
-            date: request.date,
-            status: "Leave",
-            reason: request.reason || "",
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
-      } else if (request.type === "ADVANCE") {
-        const empRef = doc(db, "employees", cleanEmail);
-        await setDoc(
-          empRef,
-          {
-            data: {
-              advanceDeduction: Number(request.amount || 0),
-            },
-          },
-          { merge: true }
-        );
-      }
-
-      await deleteDoc(doc(db, "attendance_requests", request.id));
-      setRequests((prev) => prev.filter((item) => item.id !== request.id));
-      alert(`${request.type} request approved for ${request.employeeName}`);
-    } catch (err) {
-      console.error("Approve Error:", err);
-      alert("Failed to approve request");
-    }
-  };
-
-  const handleRejectRequest = async (requestId) => {
-    try {
-      await deleteDoc(doc(db, "attendance_requests", requestId));
-      setRequests((prev) => prev.filter((item) => item.id !== requestId));
-    } catch (err) {
-      console.error("Reject Error:", err);
-      alert("Failed to reject request");
-    }
-  };
-
-  const handleApproveSignup = async (req) => {
-    try {
-      const cleanEmail = req.email.trim().toLowerCase();
-
-      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, req.password);
-      const uid = userCredential.user.uid;
-
-      // eslint-disable-next-line no-unused-vars
-      const { password, ...safeData } = req;
-      const approvedPayload = {
-        ...safeData,
-        uid: uid,
-        email: cleanEmail,
-        approvedAt: new Date().toISOString(),
-      };
-
-      await setDoc(doc(db, "signUpData", cleanEmail), { data: approvedPayload });
-
-      const empDocId = cleanEmail.replace(/[^a-zA-Z0-9]/g, "_");
-      await setDoc(
-        doc(db, "employees", empDocId),
-        {
-          data: {
-            name: req.name || "",
-            email: cleanEmail,
-            uid: uid,
-            createdAt: new Date().toISOString(),
-          },
-        },
-        { merge: true }
-      );
-
-      await deleteDoc(doc(db, "pendingRequests", cleanEmail));
-
-      setSignupRequests((prev) => prev.filter((item) => item.email !== req.email));
-      alert(`Approved signup request for: ${req.email}`);
-      fetchData();
-    } catch (err) {
-      console.error("Signup Approve Error:", err);
-      alert("Failed to approve signup: " + err.message);
-    }
-  };
-
-  const handleRejectSignup = async (email) => {
-    try {
-      const cleanEmail = email.toLowerCase();
-      await deleteDoc(doc(db, "pendingRequests", cleanEmail));
-      setSignupRequests((prev) => prev.filter((item) => item.email !== email));
-      alert(`Rejected signup request for: ${email}`);
-    } catch (err) {
-      console.error("Signup Reject Error:", err);
-      alert("Failed to reject signup request");
-    }
-  };
-
   if (loading) {
     return <div className={styles.loader}>Loading Admin Panel...</div>;
   }
@@ -390,7 +274,13 @@ function AdminPanel() {
             className={`${styles.tabBtn} ${activeTab === "requests" ? styles.activeTab : ""}`}
             onClick={() => setActiveTab("requests")}
           >
-            Requests ({requests.length})
+            Attendance Requests ({requests.length})
+          </button>
+          <button
+            className={`${styles.tabBtn} ${activeTab === "supportRequests" ? styles.activeTab : ""}`}
+            onClick={() => setActiveTab("supportRequests")}
+          >
+            Technical Support ({supportRequests.length})
           </button>
           <button
             className={`${styles.tabBtn} ${activeTab === "admins" ? styles.activeTab : ""}`}
@@ -441,91 +331,36 @@ function AdminPanel() {
         </div>
       )}
 
-      {/* Signup Requests Tab */}
-      {activeTab === "signupRequests" && (
+      {/* Technical Support Requests Tab */}
+      {activeTab === "supportRequests" && (
         <div>
-          {signupRequests.length === 0 ? (
-            <p className={styles.emptyText}>No pending signup requests found.</p>
+          {supportRequests.length === 0 ? (
+            <p className={styles.emptyText}>No pending technical support requests.</p>
           ) : (
             <div className={styles.cardGrid}>
-              {signupRequests.map((req) => (
-                <div key={req.email} className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <h4 className={styles.userName}>{req.name || "N/A"}</h4>
-                    <p className={styles.userEmail}>{req.email}</p>
-                  </div>
-
-                  <div className={styles.actionBtns}>
-                    <button
-                      className={styles.approveBtn}
-                      onClick={() => handleApproveSignup(req)}
-                    >
-                      Approve User
-                    </button>
-                    <button
-                      className={styles.rejectBtn}
-                      onClick={() => handleRejectSignup(req.email)}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Attendance & Other Requests Tab */}
-      {activeTab === "requests" && (
-        <div>
-          {requests.length === 0 ? (
-            <p className={styles.emptyText}>No pending requests found.</p>
-          ) : (
-            <div className={styles.cardGrid}>
-              {requests.map((req) => (
+              {supportRequests.map((req) => (
                 <div key={req.id} className={styles.card}>
                   <div className={styles.cardHeader}>
-                    <h4 className={styles.userName}>{req.employeeName}</h4>
-                    <p className={styles.userEmail}>{req.employeeEmail}</p>
+                    <h4 className={styles.userName}>{req.userName || "Unknown User"}</h4>
+                    <p className={styles.userEmail}>{req.email}</p>
                   </div>
-
                   <p className={styles.requestDetail}>
-                    <strong>Type:</strong> <span className={styles.typeBadge}>{req.type}</span>
+                    <strong>Service:</strong> {req.serviceTitle}
                   </p>
-
-                  {req.type === "ADVANCE" ? (
-                    <p className={styles.requestDetail}>
-                      <strong>Amount:</strong> ৳ {req.amount} ({req.reason})
-                    </p>
-                  ) : req.type === "LEAVE" ? (
-                    <p className={styles.requestDetail}>
-                      <strong>Reason:</strong> {req.reason} ({req.date})
-                    </p>
-                  ) : (
-                    <>
-                      <p className={styles.requestDetail}>
-                        <strong>Time:</strong> {req.time}
-                      </p>
-                      <p className={styles.requestDetail}>
-                        <strong>Date:</strong> {req.date}
-                      </p>
-                    </>
-                  )}
+                  <p className={styles.requestDetail}>
+                    <strong>WhatsApp:</strong> {req.whatsapp}
+                  </p>
+                  <p className={styles.requestDetail}>
+                    <strong>Status:</strong>{" "}
+                    <span className={styles.typeBadge}>{req.status || "Pending"}</span>
+                  </p>
 
                   <div className={styles.actionBtns}>
                     <button
                       className={styles.approveBtn}
-                      // eslint-disable-next-line no-undef
-                      onClick={() => handleApproveRequest(request)}
+                      onClick={() => handleOpenResponsePage(req)}
                     >
-                      Approve
-                    </button>
-                    <button
-                      className={styles.rejectBtn}
-                      onClick={() => handleRejectRequest(req.id)}
-                    >
-                      Reject
+                      Respond Request
                     </button>
                   </div>
                 </div>
@@ -546,7 +381,9 @@ function AdminPanel() {
               onChange={(e) => setNewAdminEmail(e.target.value)}
               required
             />
-            <button type="submit" className={styles.addBtn}>Add Admin</button>
+            <button type="submit" className={styles.addBtn}>
+              Add Admin
+            </button>
           </form>
 
           <div className={styles.adminList}>

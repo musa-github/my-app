@@ -1,7 +1,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet } from "react-router-dom";
 import { auth, db } from "../Firebase/Firebase";
 import Style from "./Projects.module.css";
 
