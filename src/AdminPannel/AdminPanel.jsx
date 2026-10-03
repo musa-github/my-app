@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
@@ -13,9 +14,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { auth, db } from "../Firebase/Firebase";
 import styles from "./AdminPanel.module.css";
 
-// Redux Actions
-import { fetchSupportRequests } from "../Fetures/Inventory/technicalSupportSlice";
-import SupportResponseModal from "../Services/SupportResponseModal";
+
+
 
 const OWNER_EMAIL = "osanlift@gmail.com";
 
@@ -28,9 +28,9 @@ function AdminPanel() {
   // Technical Support Requests from Redux
   const supportRequests = useSelector((state) => state.technicalSupport?.requests || []);
 
-  // Filter ONLY Pending / Active requests
+  // Filter Active Requests (Keeping requests available with EXACT Firestore IDs)
   const pendingTechRequests = supportRequests.filter(
-    (req) => req.status !== "Completed" && req.status !== "Processed"
+    (req) => req.status !== "Completed"
   );
 
   const [activeTab, setActiveTab] = useState("permissions");
@@ -82,7 +82,7 @@ function AdminPanel() {
     try {
       setLoading(true);
 
-      dispatch(fetchSupportRequests());
+
 
       const empSnap = await getDocs(collection(db, "employees"));
       const empList = [];
@@ -392,12 +392,7 @@ function AdminPanel() {
           >
             Access Control
           </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "techSupport" ? styles.activeTab : ""}`}
-            onClick={() => setActiveTab("techSupport")}
-          >
-            Technical Support ({pendingTechRequests.length})
-          </button>
+         
           <button
             className={`${styles.tabBtn} ${activeTab === "signupRequests" ? styles.activeTab : ""}`}
             onClick={() => setActiveTab("signupRequests")}
@@ -431,6 +426,7 @@ function AdminPanel() {
                   <h4 className={styles.userName}>{req.userName || "N/A"}</h4>
                   <p className={styles.userEmail}>{req.email}</p>
                   <p className={styles.userEmail}>Phone: {req.phone}</p>
+                  <p style={{ fontSize: "0.8rem", color: "#64748b" }}>ID: {req.id}</p>
                 </div>
 
                 <div style={{ marginBottom: "12px" }}>
@@ -460,7 +456,7 @@ function AdminPanel() {
                       className={styles.addBtn}
                       onClick={() => setSelectedTechRequest(req)}
                     >
-                      View Modal
+                      View Link & Modal
                     </button>
                   )}
                 </div>
@@ -633,13 +629,7 @@ function AdminPanel() {
       )}
 
       {/* Single Unified Support Response Modal */}
-      {selectedTechRequest && (
-        <SupportResponseModal
-          request={selectedTechRequest}
-          onClose={() => setSelectedTechRequest(null)}
-          onRefresh={fetchData}
-        />
-      )}
+      
     </div>
   );
 }

@@ -10,7 +10,6 @@ import attendanceReducer from '../Fetures/Inventory/attendanceSlice';
 import { default as authReducer } from '../Fetures/Inventory/authSlice';
 import clientReducer from '../Fetures/Inventory/clientSlice';
 import payrollReducer from '../Fetures/Inventory/payrollSlice';
-import technicalSupportReducer from "../Fetures/Inventory/technicalSupportSlice";
 
 export const store = configureStore({
   reducer: {
@@ -25,7 +24,7 @@ export const store = configureStore({
   payroll: payrollReducer,
     auth: authReducer,
    attendance: attendanceReducer,
-    technicalSupport: technicalSupportReducer,
+  
     
   }
 });
