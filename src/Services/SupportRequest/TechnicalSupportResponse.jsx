@@ -57,8 +57,9 @@ export default function TechnicalSupportResponse() {
   };
 
   const handleItemChange = (index, field, value) => {
-    const updated = [...items];
-    updated[index][field] = value;
+    const updated = items.map((item, itemIndex) =>
+      itemIndex === index ? { ...item, [field]: value } : item
+    );
 
     if (field === 'qty' || field === 'price') {
       const qty = Number(updated[index].qty) || 0;
@@ -108,7 +109,7 @@ export default function TechnicalSupportResponse() {
   };
 
   return (
-    <div className={styles.adminResponseContainer}>
+    <div className={styles.adminResponseContainer} onClick={(event) => event.stopPropagation()}>
       {/* Sidebar Request List */}
       <div className={styles.requestsSidebar}>
         <h3>Support Requests</h3>

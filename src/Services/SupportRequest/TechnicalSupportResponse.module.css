@@ -412,3 +412,34 @@
     min-width: auto;
   }
 }
+
+
+/* Ensure form controls remain interactive inside parent dialogs */
+.adminResponseContainer,
+.adminResponseContainer * {
+  pointer-events: auto;
+}
+
+.inputField,
+.suggestionBox textarea,
+.statusSelect {
+  position: relative;
+  z-index: 2;
+  color: #0f172a;
+  background-color: #ffffff;
+  opacity: 1;
+  user-select: text;
+  -webkit-user-select: text;
+  pointer-events: auto;
+  cursor: text;
+}
+
+.statusSelect { cursor: pointer; }
+
+.inputField:disabled,
+.suggestionBox textarea:disabled,
+.statusSelect:disabled {
+  opacity: 1;
+  color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
+}
