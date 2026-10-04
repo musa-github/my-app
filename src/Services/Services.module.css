@@ -613,6 +613,7 @@
   .modalContentTwoCol {
     grid-template-columns: 1fr;
     padding: 20px;
+    margin-top: 50px;
   }
 }
 
@@ -681,4 +682,119 @@
 
 .submitBtn:hover {
   background-color: #1d4ed8;
+}
+
+/* Responsive modal layout: keeps every dialog usable on narrow screens. */
+.modalOverlay {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.modalContent,
+.modalContentTwoCol {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.modalContentTwoCol {
+  width: min(950px, 100%);
+  max-width: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+.leftColumn,
+.rightColumn {
+  min-width: 0;
+}
+
+.inputGroup input,
+.inputGroup textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.inputGroup textarea {
+  resize: vertical;
+}
+
+@media (max-width: 768px) {
+  .modalOverlay {
+    align-items: flex-start;
+    justify-content: center;
+    padding: max(12px, env(safe-area-inset-top)) 12px
+      max(12px, env(safe-area-inset-bottom));
+  }
+
+  .modalContentTwoCol {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 18px;
+    gap: 18px;
+    border-radius: 14px;
+    margin-top: 50px;
+  }
+
+  .leftColumn {
+    border-right: 0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 0 16px;
+  }
+
+  .rightColumn {
+    padding: 0;
+  }
+
+  .closeBtn {
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+  }
+
+  .modalHeader {
+    padding-right: 42px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalContent {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .modalContentTwoCol {
+    padding: 15px;
+    gap: 15px;
+    margin-top: 50px;
+  }
+
+  .inputRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .modalFooter {
+    gap: 10px;
+  }
+
+  .whatsappBtn,
+  .phoneBtn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .modalTitle {
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
+  }
+
+  .formTitle {
+    font-size: 1.05rem;
+  }
 }

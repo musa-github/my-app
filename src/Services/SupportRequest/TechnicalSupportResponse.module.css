@@ -5,6 +5,8 @@
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #1e293b;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .requestsSidebar {
@@ -14,6 +16,8 @@
   padding: 24px 16px;
   overflow-y: auto;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .requestsSidebar h3 {
@@ -59,6 +63,41 @@
   color: #475569;
 }
 
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.statusBadge.pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.statusBadge.responded {
+  background-color: #e0e7ff;
+  color: #4338ca;
+}
+
+.statusBadge.in_progress {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.statusBadge.complete {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
 .requestCard small {
   font-size: 0.8rem;
   color: #64748b;
@@ -71,6 +110,8 @@
   flex: 1;
   padding: 32px;
   overflow-y: auto;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .emptySelection {
@@ -80,12 +121,14 @@
   font-size: 1.05rem;
 }
 
+/* Grid Layout Fix */
 .twoColLayout {
   display: grid;
-  grid-template-columns: 1fr 1.25fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
   gap: 24px;
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .userRequestDetails,
@@ -95,6 +138,9 @@
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
   border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
 }
 
 .userRequestDetails h2,
@@ -112,6 +158,7 @@
   font-size: 0.95rem;
   color: #334155;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .detailRow strong {
@@ -120,10 +167,23 @@
   min-width: 110px;
 }
 
+.statusSelect {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.9rem;
+  outline: none;
+  background-color: #fff;
+  cursor: pointer;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .picPreview {
   display: flex;
   gap: 12px;
   margin-top: 20px;
+  flex-wrap: wrap;
 }
 
 .picPreview img {
@@ -138,6 +198,12 @@
 
 .picPreview img:hover {
   transform: scale(1.04);
+}
+
+.itemsTableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 16px;
 }
 
 .itemsTable {
@@ -161,6 +227,11 @@
   text-transform: uppercase;
 }
 
+.itemsTable th:nth-child(2),
+.itemsTable td:nth-child(2) {
+  width: 75px;
+}
+
 .inputField {
   width: 100%;
   padding: 8px 12px;
@@ -170,6 +241,12 @@
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
+  max-width: 100%;
+}
+
+.inputField[type="number"] {
+  padding: 8px 4px;
+  text-align: center;
 }
 
 .inputField:focus {
@@ -236,6 +313,7 @@
   resize: vertical;
   box-sizing: border-box;
   transition: border-color 0.2s;
+  max-width: 100%;
 }
 
 .suggestionBox textarea:focus {
@@ -258,6 +336,7 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
   transition: background-color 0.2s ease;
+  box-sizing: border-box;
 }
 
 .sendBtn:hover {
@@ -293,14 +372,43 @@
 .linkBox a:hover {
   text-decoration: underline;
 }
-/* Quantity ইনপুট ফিল্ড পেডিং এডজাস্ট এবং Spinners ছোট করা */
-.itemsTable th:nth-child(2),
-.itemsTable td:nth-child(2) {
-  width: 75px; /* ৬০ পিক্সেল বাড়িয়ে ৭৫ পিক্সেল করা হলো */
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .twoColLayout {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* Number Input Arrows/Spinners কমানো */
-.inputField[type="number"] {
-  padding: 8px 4px;
-  text-align: center;
+@media (max-width: 768px) {
+  .adminResponseContainer {
+    flex-direction: column;
+  }
+
+  .requestsSidebar {
+    width: 100%;
+    max-height: 250px;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .responseMain {
+    padding: 16px;
+    margin-top: 0;
+  }
+
+  .userRequestDetails,
+  .adminAnswerForm {
+    padding: 16px;
+  }
+
+  .detailRow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .detailRow strong {
+    min-width: auto;
+  }
 }

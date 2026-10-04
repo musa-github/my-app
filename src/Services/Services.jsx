@@ -262,11 +262,11 @@ function Services() {
 
                   <div className={styles.inputRow}>
                     <div className={styles.inputGroup}>
-                      <label>Ref Picture 1</label>
+                      <label>Ref Picture 1 / আপনার সমস্যার ছবি দেন ।</label>
                       <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'refPic1')} />
                     </div>
                     <div className={styles.inputGroup}>
-                      <label>Ref Picture 2</label>
+                      <label>Ref Picture 2 / আপনার সমস্যার ছবি দেন ।</label>
                       <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'refPic2')} />
                     </div>
                   </div>

@@ -45,6 +45,7 @@
     0 10px 25px -5px rgba(0, 0, 0, 0.05),
     0 8px 10px -6px rgba(0, 0, 0, 0.01);
   border: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
 .headerBrand {
@@ -95,6 +96,7 @@
   margin: 6px 0;
   font-size: 0.92rem;
   color: #475569;
+  word-break: break-word;
 }
 
 .infoBlock strong {
@@ -113,7 +115,6 @@
 }
 
 .problemText {
-  background-color: #fff;
   border-left: 4px solid #94a3b8;
   padding: 12px 16px;
   margin: 0;
@@ -122,6 +123,12 @@
   line-height: 1.6;
   background-color: #f8fafc;
   border-radius: 0 8px 8px 0;
+  word-break: break-word;
+}
+
+.quotationTableWrapper {
+  width: 100%;
+  overflow-x: auto;
 }
 
 .quotationTable {
@@ -181,6 +188,7 @@
   color: #1e3a8a;
   font-size: 0.95rem;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .loading {
@@ -189,4 +197,40 @@
   font-size: 1.1rem;
   color: #64748b;
   font-weight: 500;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .quotationWrapper {
+    padding: 16px 10px;
+  }
+
+  .pdfContainer {
+    padding: 20px 16px;
+  }
+
+  .clientInfoGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .downloadBar {
+    justify-content: center;
+  }
+
+  .downloadBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .quotationTable th,
+  .quotationTable td {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .grandTotal {
+    font-size: 1.1rem;
+  }
 }

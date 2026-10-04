@@ -19,6 +19,7 @@ export default function TechnicalSupportResponse() {
 
   useEffect(() => {
     if (selectedReq) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestion(selectedReq.suggestion || '');
       setStatus(selectedReq.status || 'pending');
       if (selectedReq.quotationItems && selectedReq.quotationItems.length > 0) {
