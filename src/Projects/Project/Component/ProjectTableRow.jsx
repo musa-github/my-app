@@ -17,30 +17,36 @@ const ProjectTableRow = ({ proj, idx, selectedMonth, monthsList, getLastServicin
 
   return (
     <tr>
-      <td className={styles.textCenter}>{idx + 1}</td>
-      <td>
+      <td style={{ width: '4%' }} className={styles.textCenter}>{idx + 1}</td>
+      <td style={{ width: '16%' }}>
         <NavLink className={styles.projectLink} to={`/Projects/project-details/${proj.id}`}>
           {proj.projectName}
         </NavLink>
       </td>
-      <td className={styles.textCenter}>{proj.whoseProjects || '-'}</td>
-      <td className={styles.textCenter}>{proj.liftQty}</td>
-      <td className={styles.textCenter}>{servicingDateDisplay}</td>
-      <td className={styles.textCenter}>
+      <td style={{ width: '7%' }} className={styles.textCenter}>{proj.whoseProjects || '-'}</td>
+      <td style={{ width: '5%' }} className={styles.textCenter}>{proj.liftQty}</td>
+      <td style={{ width: '9%' }} className={styles.textCenter}>{servicingDateDisplay}</td>
+      <td style={{ width: '8%' }} className={styles.textCenter}>
         <span className={currentStatus.toLowerCase() === 'complete' ? styles.badgeComplete : styles.badgePending}>
           {currentStatus}
         </span>
       </td>
-      <td className={styles.textCenter}>{servicingBill.toLocaleString()}</td>
-      <td className={styles.textCenter}>{sparePartsBill.toLocaleString()}</td>
-      <td className={styles.textCenter}>{lastMonthDue.toLocaleString()}</td>
-      <td className={`${styles.textCenter} ${styles.bold}`}>{totalBill.toLocaleString()}</td>
-      <td className={styles.textCenter}>{collectedBill.toLocaleString()}</td>
-      <td className={`${styles.textCenter} ${styles.bold} ${styles.textDanger}`}>{totalDue.toLocaleString()}</td>
-      <td className={styles.textCenter}>{bill.collectedBy || '-'}</td>
-      <td className={styles.textCenter}>{bill.approvedBy || '-'}</td>
-      <td className={`${styles.textCenter} ${styles.actionButtons}`}>
-        <button className={styles.btnEdit} onClick={() => handleEdit(proj)}>Edit Info</button>
+      <td style={{ width: '7%' }} className={styles.textCenter}>{servicingBill.toLocaleString()}</td>
+      <td style={{ width: '7%' }} className={styles.textCenter}>{sparePartsBill.toLocaleString()}</td>
+      <td style={{ width: '7%' }} className={styles.textCenter}>{lastMonthDue.toLocaleString()}</td>
+      <td style={{ width: '7%' }} className={`${styles.textCenter} ${styles.bold}`}>{totalBill.toLocaleString()}</td>
+      <td style={{ width: '7%' }} className={styles.textCenter}>{collectedBill.toLocaleString()}</td>
+      <td style={{ width: '7%' }} className={`${styles.textCenter} ${styles.bold} ${styles.textDanger}`}>{totalDue.toLocaleString()}</td>
+      <td style={{ width: '6%' }} className={styles.textCenter}>{bill.collectedBy || '-'}</td>
+      <td style={{ width: '6%' }} className={styles.textCenter}>{bill.approvedBy || '-'}</td>
+      <td style={{ width: '7%' }} className={`${styles.textCenter} ${styles.actionButtons}`} data-pdf-hide="true">
+        <button 
+          className={styles.btnEdit} 
+          onClick={() => handleEdit(proj)}
+          style={{ whiteSpace: 'nowrap', padding: '4px 8px', fontSize: '12px' }}
+        >
+          Edit Info
+        </button>
       </td>
     </tr>
   );

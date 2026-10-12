@@ -27,7 +27,7 @@ export const store = configureStore({
   payroll: payrollReducer,
     auth: authReducer,
    attendance: attendanceReducer,
-   support: supportReducer,
+   support: supportReducer, 
     
   }
 });

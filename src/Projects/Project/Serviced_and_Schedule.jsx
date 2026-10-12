@@ -34,6 +34,7 @@ const Serviced_and_Schedule = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [dueFilter, setDueFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Permission & Admin States
   const [permissions, setPermissions] = useState({});
@@ -231,9 +232,18 @@ const Serviced_and_Schedule = () => {
   const upcomingSchedules = getUpcomingSchedules();
 
   // ==================== [ মূল প্রজেক্ট ফিল্টারিং ] ====================
+  const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredProjects = projects.filter((proj) => {
     const matchesWhose = selectedWhoseProject === 'All' || proj.whoseProjects === selectedWhoseProject;
     if (!matchesWhose) return false;
+
+    const matchesSearch = !normalizedQuery || [
+      proj.projectName,
+      proj.whoseProjects,
+      proj.address,
+      proj.phoneNo
+    ].some(value => String(value || '').toLowerCase().includes(normalizedQuery));
+    if (!matchesSearch) return false;
 
     const targetMonth = selectedMonth === 'All' ? monthsList[new Date().getMonth() + 1] : selectedMonth;
     const bill = (proj.billList || []).find(b => b.month === targetMonth) || {};
@@ -379,6 +389,8 @@ const Serviced_and_Schedule = () => {
         handleEdit={handleEdit}
         totals={totals}
         hasEditPermission={hasPermission('projects_action_edit')}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
 
       <EditModal
