@@ -1,14 +1,14 @@
 export const DEFAULT_NOTES = [
   'This offer excludes VAT, Tax, and AIT.',
   'One-year warranty on all electrical equipment (excluding high voltage, earthquake, water damage).',
-  'There is no warranty for the door motor.'
+  'The offer is valid for 15 days from the date of issuance.',
 ];
 
-export const DEFAULT_PAYMENT_MODE = {
-  mode: 'Payment by cash.',
-  advance: '80% advance.',
-  handover: '20% handover date.'
-};
+export const DEFAULT_PAYMENT_MODE = [
+  'Payment by cash.',
+  '80% advance.',
+  '20% handover date.'
+];
 
 export const convertToWords = (num) => {
   const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];

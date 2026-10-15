@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import footer from "../../assets/Footer.png";
 import header from "../../assets/header.png";
+import seal from "../../assets/Seal.png";
+import signature from "../../assets/signature.png";
 import {
   deleteOfferFromFirebase,
   fetchAllSavedOffers,
@@ -768,7 +770,11 @@ const OfferInvoice = () => {
         {/* Footer Section */}
         <div className="invoice-footer page-break-avoid">
           <div>
-            <div className="seal-circle">osan</div>
+            
+            <div className="seal-circle">
+              <img src={seal} alt="Seal" />
+              <img className="seal-signature" src={signature} alt="Signature" />
+            </div>
             <p className="no-margin bold" style={{ fontSize: '11px' }}>Thanking You. Yours Truly</p>
           </div>
           <div>

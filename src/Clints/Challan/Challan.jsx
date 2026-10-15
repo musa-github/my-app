@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import footer from "../../assets/Footer.png";
 import header from "../../assets/header.png";
+import seal from "../../assets/Seal.png";
+import signature from "../../assets/signature.png";
 
 import {
   clearOffersList,
@@ -463,7 +465,10 @@ const Challan = () => {
           <div className="page-break-avoid footer-section-wrap">
             <div className="invoice-footer">
               <div>
-            <div className="seal-circle">osan</div>
+            <div className="seal-circle">
+              <img src={seal} alt="Seal" />
+               <img className="seal-signature" src={signature} alt="Signature" />
+            </div>
             <p className="no-margin bold" style={{ fontSize: '11px' }}>Thanking You. Yours Truly</p>
           </div>
               <div className="footer-center">
