@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import footerImg from "../../assets/Footer.png";
 import headerImg from "../../assets/header.png";
+import seal from "../../assets/seal.png";
+import signature from "../../assets/signature.png";
 
 
 const ServiceBill = () => {
@@ -369,7 +371,10 @@ const ServiceBill = () => {
         <div className="page-break-avoid footer-section-wrap">
           <div className="invoice-footer">
             <div className="footer-left">
-              <div className="seal-circle">osan lift</div>
+              <div className="seal-circle">
+                            <img src={seal} alt="Seal" />
+                            <img className="seal-signature" src={signature} alt="Signature" />
+                          </div>
               <p>Thanking You. Yours Truly</p>
             </div>
             <div className="footer-center">
