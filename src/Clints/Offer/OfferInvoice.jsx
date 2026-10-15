@@ -68,9 +68,9 @@ const OfferInvoice = () => {
   const [headerData, setHeaderData] = useState(defaultHeader);
 
   const [notes, setNotes] = useState([
-    'This offers excluding vat, tax, and ait.',
-    'One-year Warranty all electrical equipment.',
-    'There is no warranty for the door motor.'
+    'This offers excluding vat, tax.',
+    'One-year Warranty. Without high voltage, earthquake, water fall. .',
+    
   ]);
 
   const [paymentMode, setPaymentMode] = useState({
@@ -380,7 +380,14 @@ const OfferInvoice = () => {
   };
 
   const numberToWords = (num) => {
-    if (!num) return 'Zero Taka Only';
+    if (!num && num !== 0) return 'Zero Taka Only';
+    
+    // Sonkhake string ba float e convert kore integer ebong decimal alada kora
+    const numStr = Number(num).toFixed(2);
+    const [takaStr, paisaStr] = numStr.split('.');
+    const taka = parseInt(takaStr, 10);
+    const paisa = parseInt(paisaStr, 10);
+
     const a = [
       '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
       'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
@@ -396,7 +403,13 @@ const OfferInvoice = () => {
       return inWords(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 !== 0 ? ' ' + inWords(n % 10000000) : '');
     };
 
-    return `${inWords(num)} Taka Only`;
+    let result = taka === 0 ? 'Zero Taka' : `${inWords(taka)} Taka`;
+
+    if (paisa > 0) {
+      result += ` and ${inWords(paisa)} Paisa`;
+    }
+
+    return `${result} Only`;
   };
 
   return (

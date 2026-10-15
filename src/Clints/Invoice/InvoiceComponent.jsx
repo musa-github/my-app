@@ -141,7 +141,15 @@ const InvoiceComponent = () => {
     }
 
     if (targetData.paymentMode) {
-      setPaymentMode(targetData.paymentMode);
+      if (Array.isArray(targetData.paymentMode)) {
+        setPaymentMode(targetData.paymentMode);
+      } else {
+        setPaymentMode([
+          targetData.paymentMode.mode,
+          targetData.paymentMode.advance,
+          targetData.paymentMode.handover
+        ].filter(Boolean));
+      }
     } else {
       setPaymentMode(DEFAULT_PAYMENT_MODE);
     }
@@ -299,7 +307,17 @@ const InvoiceComponent = () => {
   };
   const handleAddNote = () => setNotes((prev) => [...prev, 'New condition note...']);
   const handleRemoveNote = (index) => setNotes((prev) => prev.filter((_, i) => i !== index));
-  const handlePaymentChange = (e) => setPaymentMode((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handlePaymentChange = (index, value) => {
+    setPaymentMode((prev) => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  };
+
+  const handleAddPaymentRow = () => setPaymentMode((prev) => [...prev, 'New payment condition...']);
+  const handleRemovePaymentRow = (index) => setPaymentMode((prev) => prev.filter((_, i) => i !== index));
 
   const grandTotal = useMemo(() => {
     return editableItems.reduce(
@@ -395,7 +413,6 @@ const InvoiceComponent = () => {
     }
   }, [saveSuccess, updateSuccess, deleteSuccess, dispatch, handleReset]);
 
-  // --- PDF Generat Function Fix for Header & Footer ---
   const handleDownloadPDF = () => {
     setIsPdfPrinting(true);
     window.scrollTo(0, 0);
@@ -868,25 +885,34 @@ const InvoiceComponent = () => {
                   </div>
                 )}
 
+                {/* Dynamic Payment Mode Section */}
                 <div className="payment-mode">
                   <div className="payment-line">
-                    <strong>Mode: </strong>
-                    {isPdfPrinting ? <span>{paymentMode.mode}</span> : (
-                      <input type="text" name="mode" value={paymentMode.mode} onChange={handlePaymentChange} className="inline-input" />
-                    )}
+                    <strong>Mode of Payment:</strong>
                   </div>
-                  <div className="payment-line">
-                    <span>1st payment: </span>
-                    {isPdfPrinting ? <span>{paymentMode.advance}</span> : (
-                      <input type="text" name="advance" value={paymentMode.advance} onChange={handlePaymentChange} className="inline-input" />
-                    )}
-                  </div>
-                  <div className="payment-line">
-                    <span>2nd payment: </span>
-                    {isPdfPrinting ? <span>{paymentMode.handover}</span> : (
-                      <input type="text" name="handover" value={paymentMode.handover} onChange={handlePaymentChange} className="inline-input" />
-                    )}
-                  </div>
+                  {Array.isArray(paymentMode) && paymentMode.map((payment, index) => (
+                    <div key={index} className="note-row" style={{ marginTop: '3px' }}>
+                      <span className="note-label"><strong>{index + 1}. </strong></span>
+                      {isPdfPrinting ? (
+                        <span className="note-text">{payment}</span>
+                      ) : (
+                        <input 
+                          type="text" 
+                          className="inline-input note-input" 
+                          value={payment} 
+                          onChange={(e) => handlePaymentChange(index, e.target.value)} 
+                        />
+                      )}
+                      {!isPdfPrinting && (
+                        <button className="btn-delete no-print inline-delete" onClick={() => handleRemovePaymentRow(index)}>✕</button>
+                      )}
+                    </div>
+                  ))}
+                  {!isPdfPrinting && (
+                    <div className="no-print add-note-box" style={{ marginTop: '4px' }}>
+                      <button className="btn-add-note" onClick={handleAddPaymentRow}>+ Add Payment Mode</button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

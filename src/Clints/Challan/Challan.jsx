@@ -462,11 +462,10 @@ const Challan = () => {
           {/* Footer Section */}
           <div className="page-break-avoid footer-section-wrap">
             <div className="invoice-footer">
-              <div className="footer-left">
-                <div className="signature-title">
-                  <p><strong>Prepared By / Authorized Signature</strong></p>
-                </div>
-              </div>
+              <div>
+            <div className="seal-circle">osan</div>
+            <p className="no-margin bold" style={{ fontSize: '11px' }}>Thanking You. Yours Truly</p>
+          </div>
               <div className="footer-center">
                 <div className="signature-title">
                   <p><strong>Receiver's Signature & Seal</strong></p>
