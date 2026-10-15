@@ -29,6 +29,7 @@
 
 .profileMeta {
   flex: 1;
+  min-width: 0;
 }
 
 .profileMeta h3 {
@@ -96,4 +97,24 @@
 .loader {
   text-align: center;
   padding: 40px;
+}
+
+@media (max-width: 600px) {
+  .compactCard {
+    padding: 16px;
+  }
+
+  .profileRow {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .metaInfo span {
+    overflow-wrap: anywhere;
+  }
+
+  .compactEditBtn {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }

@@ -100,7 +100,7 @@ function PurchaseInput() {
             <tbody>
               {items.map((item, index) => (
                 <tr key={index}>
-                  <td className={Style.narrow}>
+                  <td className={Style.narrow} data-label="Sl">
                     <input
                       type="text"
                       name="SlNo"
@@ -109,7 +109,7 @@ function PurchaseInput() {
                       className={Style.readOnlyInput}
                     />
                   </td>
-                  <td>
+                  <td data-label="Item Name">
                     <input
                       type="text"
                       name="ItemsName"
@@ -119,7 +119,7 @@ function PurchaseInput() {
                       required
                     />
                   </td>
-                  <td className={Style.medium}>
+                  <td className={Style.medium} data-label="QTY">
                     <input
                       type="number"
                       name="QTY"
@@ -129,7 +129,7 @@ function PurchaseInput() {
                       required
                     />
                   </td>
-                  <td className={Style.medium}>
+                  <td className={Style.medium} data-label="Unit Price">
                     <input
                       type="number"
                       name="UnitPrice"
@@ -139,7 +139,7 @@ function PurchaseInput() {
                       required
                     />
                   </td>
-                  <td className={Style.medium}>
+                  <td className={Style.medium} data-label="Total Price">
                     <input
                       type="text"
                       name="TotalPrice"
@@ -149,7 +149,7 @@ function PurchaseInput() {
                       className={Style.readOnlyInput}
                     />
                   </td>
-                  <td className={Style.medium}>
+                  <td className={Style.medium} data-label="Selling Price">
                     <input
                       type="number"
                       name="SalingPrice"
@@ -158,7 +158,7 @@ function PurchaseInput() {
                       onChange={(e) => handleInput(index, e)}
                     />
                   </td>
-                  <td className={Style.narrow}>
+                  <td className={Style.narrow} data-label="Action">
                     <button
                       type="button"
                       className={Style.deleteBtn}

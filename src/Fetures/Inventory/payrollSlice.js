@@ -2,6 +2,11 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { collection, doc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "../../Firebase/Firebase";
 
+const currentMonth = new Date().toLocaleString("en-US", {
+  month: "long",
+  year: "numeric",
+});
+
 export const fetchPayrollData = createAsyncThunk(
   "payroll/fetchPayrollData",
   async (selectedMonth) => {
@@ -23,23 +28,35 @@ export const fetchPayrollData = createAsyncThunk(
       const cleanEmailKey = rawEmail.replace(/[^a-zA-Z0-9]/g, "_");
       const cleanNameKey = rawName.replace(/[^a-zA-Z0-9]/g, "_");
 
-      let attSnap = null;
+      const attendanceKeys = [...new Set([cleanEmailKey, cleanNameKey].filter(Boolean))];
+      const attendanceSnapshots = await Promise.all(
+        attendanceKeys.map((key) =>
+          getDocs(collection(db, "attendance", key, selectedMonth))
+        )
+      );
+      const attendanceByDate = new Map();
 
-      if (cleanEmailKey) {
-        const emailAttRef = collection(db, "attendance", cleanEmailKey, selectedMonth);
-        const snap = await getDocs(emailAttRef);
-        if (!snap.empty) {
-          attSnap = snap;
-        }
-      }
+      attendanceSnapshots.forEach((snapshot) => {
+        snapshot.forEach((docSnap) => {
+          const incoming = docSnap.data();
+          const dateKey = incoming.date || docSnap.id;
+          const existing = attendanceByDate.get(dateKey);
 
-      if ((!attSnap || attSnap.empty) && cleanNameKey) {
-        const nameAttRef = collection(db, "attendance", cleanNameKey, selectedMonth);
-        const snap = await getDocs(nameAttRef);
-        if (!snap.empty) {
-          attSnap = snap;
-        }
-      }
+          if (!existing) {
+            attendanceByDate.set(dateKey, { ...incoming, date: dateKey });
+            return;
+          }
+
+          const existingAdvance = Number(existing.advanceDeduction || 0);
+          const incomingAdvance = Number(incoming.advanceDeduction || 0);
+          attendanceByDate.set(dateKey, {
+            ...incoming,
+            ...existing,
+            date: dateKey,
+            advanceDeduction: existingAdvance || incomingAdvance,
+          });
+        });
+      });
 
       let totalPresentDays = 0;
       let workedFridays = 0;
@@ -47,16 +64,15 @@ export const fetchPayrollData = createAsyncThunk(
       let fridayAbsents = 0;
       let totalAttendanceAdvance = 0; // Sum of all daily advance entries in attendance collection
 
-      if (attSnap && !attSnap.empty) {
-        attSnap.forEach((docSnap) => {
-          const att = docSnap.data();
-          const attDateStr = att.date || docSnap.id;
+      if (attendanceByDate.size > 0) {
+        attendanceByDate.forEach((att, attDateStr) => {
           const statusText = att.status || "Present";
           const isApproved = att.statusIn === "Approved" || att.statusOut === "Approved";
 
           // Accumulate daily advance deductions
-          if (att.advanceDeduction) {
-            totalAttendanceAdvance += Number(att.advanceDeduction || 0);
+          const dailyAdvance = Number(att.advanceDeduction || 0);
+          if (Number.isFinite(dailyAdvance)) {
+            totalAttendanceAdvance += dailyAdvance;
           }
 
           const attDate = new Date(attDateStr);
@@ -191,7 +207,7 @@ export const updateEmployeeSalaryDetails = createAsyncThunk(
 const payrollSlice = createSlice({
   name: "payroll",
   initialState: {
-    selectedMonth: "September 2026",
+    selectedMonth: currentMonth,
     payrollData: [],
     loading: false,
     error: null,

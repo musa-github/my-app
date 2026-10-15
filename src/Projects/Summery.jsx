@@ -15,7 +15,7 @@ import { auth, db } from '../Firebase/Firebase';
 import './Summery.css';
 
 const monthsList = ['All', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const OWNER_EMAIL = "smabumusa98@gmail.com";
+const OWNER_EMAIL = "osanlift@gmail.com";
 
 const Summery = () => {
   const dispatch = useDispatch();
@@ -52,9 +52,9 @@ const Summery = () => {
   const [permissions, setPermissions] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const currentUserEmail = (user?.email || auth.currentUser?.email || "").toLowerCase();
+  const currentUserEmail = (user?.email || auth.currentUser?.email || "").toLowerCase().trim();
 
-  // Fetch Permissions from Firebase
+  // Fetch Permissions & Admin List from Firebase
   useEffect(() => {
     const fetchPermissions = async () => {
       if (!currentUserEmail) {
@@ -66,7 +66,7 @@ const Summery = () => {
       try {
         const cleanEmail = currentUserEmail.replace(/[^a-zA-Z0-9]/g, "_");
 
-        // Admin status check
+        // Admin status check (Owner email or exists in app_admins)
         const adminDoc = await getDoc(doc(db, "app_admins", cleanEmail));
         const adminAccess = currentUserEmail === OWNER_EMAIL || adminDoc.exists();
         setIsAdmin(adminAccess);
@@ -86,9 +86,9 @@ const Summery = () => {
     fetchPermissions();
   }, [currentUserEmail]);
 
-  // Flexible Permission Checker Helper Function
+  // Flexible Permission Checker Helper Function (Owner & Admins get full access)
   const hasPermission = (featureKey, fallbackKey = "") => {
-    if (isAdmin) return true; 
+    if (currentUserEmail === OWNER_EMAIL || isAdmin) return true; 
     if (permissions[featureKey]) return true;
     if (fallbackKey && permissions[fallbackKey]) return true;
     return false;
@@ -435,12 +435,12 @@ const Summery = () => {
             {isPdfPrinting ? 'Generating PDF...' : '📄 Download PDF'}
           </button>
 
-          {/* Add Project Button */}
+          {/* Add Project Button (Visible for Owner, Admins or permitted users) */}
           {hasPermission('projects_action_add', 'canAddProjects') && (
             <button className="btn btn-add" onClick={handleOpenAddModal}>+ Add New Project</button>
           )}
 
-          {/* Save to Firebase Button */}
+          {/* Save to Firebase Button (Visible for Owner, Admins or permitted users) */}
           {hasPermission('projects_action_save', 'canSaveProjects') && (
             <button className="btn btn-save" onClick={handleSaveToFirebase} disabled={loading}>
               {loading ? 'Saving...' : '💾 Save to Firebase'}

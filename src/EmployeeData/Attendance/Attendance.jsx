@@ -1,6 +1,16 @@
 
 
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { auth, db } from "../../Firebase/Firebase";
@@ -14,6 +24,8 @@ function Attendance() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [notifications, setNotifications] = useState([]);
+  const [notificationError, setNotificationError] = useState("");
 
   const [todayRequests, setTodayRequests] = useState({ in: null, out: null });
 
@@ -28,6 +40,38 @@ function Attendance() {
   const now = new Date();
   const todayDate = now.toISOString().split("T")[0];
   const currentMonth = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+
+  useEffect(() => {
+    const email = currentUserEmail.toLowerCase().trim();
+    if (!email) {
+      setNotifications([]);
+      return undefined;
+    }
+
+    const notificationsQuery = query(
+      collection(db, "notifications"),
+      where("recipientEmail", "==", email)
+    );
+
+    return onSnapshot(
+      notificationsQuery,
+      (snapshot) => {
+        const userNotifications = snapshot.docs
+          .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+          .sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || 0;
+            const bTime = b.createdAt?.toMillis?.() || 0;
+            return bTime - aTime;
+          });
+        setNotifications(userNotifications);
+        setNotificationError("");
+      },
+      (error) => {
+        console.error("Notifications listener error:", error);
+        setNotificationError("Could not load notifications.");
+      }
+    );
+  }, [currentUserEmail]);
 
   useEffect(() => {
     const fetchEmployeeAndStatus = async () => {
@@ -84,6 +128,15 @@ function Attendance() {
 
     fetchEmployeeAndStatus();
   }, [currentUserEmail, todayDate]);
+
+  const handleNotificationRead = async (notificationId) => {
+    try {
+      await updateDoc(doc(db, "notifications", notificationId), { read: true });
+    } catch (err) {
+      console.error("Mark notification as read error:", err);
+      setNotificationError("Could not mark notification as read.");
+    }
+  };
 
   // Attendance (IN / OUT) Submit
   const handleAttendanceSubmit = async (type) => {
@@ -216,6 +269,33 @@ function Attendance() {
   return (
     <div className={styles.container}>
       <h2 className={styles.heading}>Employee Self Portal</h2>
+
+      {(notifications.length > 0 || notificationError) && (
+        <section className={styles.notificationSection} aria-label="Notifications">
+          <h3 className={styles.notificationHeading}>Notifications</h3>
+          {notificationError && <p className={styles.notificationError}>{notificationError}</p>}
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`${styles.notification} ${notification.read ? "" : styles.unreadNotification}`}
+            >
+              <div>
+                <strong>{notification.title}</strong>
+                <p>{notification.message}</p>
+              </div>
+              {!notification.read && (
+                <button
+                  type="button"
+                  className={styles.markReadBtn}
+                  onClick={() => handleNotificationRead(notification.id)}
+                >
+                  Mark as read
+                </button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
 
       {message.text && (
         <div className={`${styles.alert} ${styles[message.type]}`}>

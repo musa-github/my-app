@@ -1,6 +1,8 @@
 import html2pdf from "html2pdf.js";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { collection, getDocs } from "firebase/firestore";
+import { auth, db } from "../../Firebase/Firebase";
 import {
   fetchPayrollData,
   setSelectedMonth,
@@ -16,13 +18,13 @@ const Payroll_Salary = () => {
 
   const currentUserEmail = useSelector(
     (state) => state.auth?.user?.email || ""
-  ).toLowerCase();
+  ).toLowerCase().trim() || auth.currentUser?.email?.toLowerCase().trim() || "";
 
   const { selectedMonth, payrollData, loading } = useSelector(
     (state) => state.payroll
   );
 
-  const isAdmin = currentUserEmail === OWNER_EMAIL;
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
   const [editBaseSalary, setEditBaseSalary] = useState(0);
@@ -30,6 +32,44 @@ const Payroll_Salary = () => {
   const [editDate, setEditDate] = useState(new Date().toISOString().split("T")[0]); // New State for Date
   const [editEmail, setEditEmail] = useState(""); // New State for Email
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const checkAdminAccess = async () => {
+      if (!currentUserEmail) {
+        setIsAdmin(false);
+        return;
+      }
+
+      if (currentUserEmail === OWNER_EMAIL) {
+        setIsAdmin(true);
+        return;
+      }
+
+      try {
+        const adminSnapshot = await getDocs(collection(db, "app_admins"));
+        const adminEmails = adminSnapshot.docs
+          .map((adminDoc) => (adminDoc.data().email || "").toLowerCase().trim())
+          .filter(Boolean);
+
+        if (isActive) {
+          setIsAdmin(adminEmails.includes(currentUserEmail));
+        }
+      } catch (error) {
+        console.error("Failed to check payroll admin access:", error);
+        if (isActive) {
+          setIsAdmin(false);
+        }
+      }
+    };
+
+    checkAdminAccess();
+
+    return () => {
+      isActive = false;
+    };
+  }, [currentUserEmail]);
 
   useEffect(() => {
     dispatch(fetchPayrollData(selectedMonth));

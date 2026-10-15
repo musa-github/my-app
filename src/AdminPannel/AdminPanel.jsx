@@ -4,6 +4,7 @@ import {
   doc,
   getDocs,
   onSnapshot,
+  runTransaction,
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
@@ -34,6 +35,7 @@ function AdminPanel() {
   const [adminList, setAdminList] = useState([]);
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [processingRequestId, setProcessingRequestId] = useState(null);
 
   const availableFeatures = [
     { key: "nav_home", label: "Header -> Home Navigation", category: "Header Menu" },
@@ -84,13 +86,6 @@ function AdminPanel() {
       });
       setPermissions(permMap);
 
-      const reqSnap = await getDocs(collection(db, "attendance_requests"));
-      const reqList = [];
-      reqSnap.forEach((docSnap) => {
-        reqList.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      setRequests(reqList);
-
       const signupSnap = await getDocs(collection(db, "pendingRequests"));
       const signupList = [];
       signupSnap.forEach((docSnap) => {
@@ -122,6 +117,20 @@ function AdminPanel() {
   useEffect(() => {
     fetchData();
 
+    const unsubAttendance = onSnapshot(
+      collection(db, "attendance_requests"),
+      (snapshot) => {
+        const attendanceRequests = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+        setRequests(attendanceRequests);
+      },
+      (error) => {
+        console.error("Attendance requests listener error:", error);
+      }
+    );
+
     // Listen to Real-time Technical Support Requests and Dispatch to Redux
     const unsubSupport = onSnapshot(
       collection(db, "technicalSupportRequests"),
@@ -138,15 +147,134 @@ function AdminPanel() {
       }
     );
 
-    return () => unsubSupport();
+    return () => {
+      unsubAttendance();
+      unsubSupport();
+    };
   }, [dispatch]);
 
   const isAdmin = currentUserEmail === OWNER_EMAIL || adminList.includes(currentUserEmail);
+  const pendingRequests = requests.filter(
+    (request) => String(request.status || "pending").toLowerCase() === "pending"
+  );
 
   // Handle Redirect to Response Page
   const handleOpenResponsePage = (req) => {
     dispatch(setSelectedRequest(req));
     navigate("/technical-support-response");
+  };
+
+  const handleAttendanceRequest = async (req, decision) => {
+    if (!isAdmin) {
+      alert("Access Denied: Only Admin or Owner can review attendance requests.");
+      return;
+    }
+    if (req.status && req.status.toLowerCase() !== "pending") return;
+
+    setProcessingRequestId(req.id);
+    try {
+      const requestRef = doc(db, "attendance_requests", req.id);
+      const notificationRef = doc(collection(db, "notifications"));
+
+      await runTransaction(db, async (transaction) => {
+        const requestSnapshot = await transaction.get(requestRef);
+        if (!requestSnapshot.exists()) {
+          throw new Error("This attendance request no longer exists.");
+        }
+        const requestData = requestSnapshot.data();
+        if (requestData.status && requestData.status.toLowerCase() !== "pending") return;
+
+        const reviewedAt = serverTimestamp();
+        if (decision === "reject") {
+          transaction.update(requestRef, {
+            status: "Rejected",
+            reviewedAt,
+            reviewedBy: currentUserEmail,
+          });
+          return;
+        }
+
+        const employeeEmail = (requestData.employeeEmail || "").trim().toLowerCase();
+        if (!employeeEmail || !requestData.date) {
+          throw new Error("The request is missing the employee email or date.");
+        }
+
+        const attendanceKey = employeeEmail.replace(/[^a-zA-Z0-9]/g, "_");
+        const requestDate = new Date(`${requestData.date}T00:00:00`);
+        const monthYear = requestData.monthYear || requestDate.toLocaleString(
+          "en-US",
+          { month: "long", year: "numeric" }
+        );
+        const attendanceRef = doc(
+          db,
+          "attendance",
+          attendanceKey,
+          monthYear,
+          requestData.date
+        );
+        const attendanceSnapshot = await transaction.get(attendanceRef);
+        const existingAttendance = attendanceSnapshot.exists()
+          ? attendanceSnapshot.data()
+          : {};
+
+        const attendanceRecord = {
+          date: requestData.date,
+          monthYear,
+          employeeEmail,
+          employeeName: requestData.employeeName || "N/A",
+          updatedAt: reviewedAt,
+          updatedByAdmin: true,
+        };
+
+        switch (requestData.type) {
+          case "IN":
+            attendanceRecord.inTime = requestData.time || "--";
+            attendanceRecord.statusIn = "Approved";
+            attendanceRecord.status = "Present";
+            break;
+          case "OUT":
+            attendanceRecord.outTime = requestData.time || "--";
+            attendanceRecord.statusOut = "Approved";
+            attendanceRecord.status = "Present";
+            break;
+          case "LEAVE":
+            attendanceRecord.status = "Leave";
+            break;
+          case "ADVANCE": {
+            const amount = Number(requestData.amount);
+            if (!Number.isFinite(amount) || amount <= 0) {
+              throw new Error("The advance request has an invalid amount.");
+            }
+            attendanceRecord.advanceDeduction =
+              Number(existingAttendance.advanceDeduction || 0) + amount;
+            break;
+          }
+          default:
+            throw new Error(`Unsupported attendance request type: ${requestData.type || "Unknown"}.`);
+        }
+
+        transaction.set(attendanceRef, attendanceRecord, { merge: true });
+        transaction.update(requestRef, {
+          status: "Approved",
+          reviewedAt,
+          reviewedBy: currentUserEmail,
+        });
+        transaction.set(notificationRef, {
+          recipientEmail: employeeEmail,
+          type: "attendance_request_approved",
+          title: `${requestData.type} request approved`,
+          message: `${requestData.type} request for ${requestData.date} was approved by admin.`,
+          requestId: req.id,
+          read: false,
+          createdAt: reviewedAt,
+        });
+      });
+    } catch (err) {
+      console.error(`Failed to ${decision} attendance request:`, err);
+      alert(err.message || `Failed to ${decision} attendance request.`);
+    } finally {
+      setProcessingRequestId(null);
+    }
   };
 
   const handleAddAdmin = async (e) => {
@@ -274,7 +402,7 @@ function AdminPanel() {
             className={`${styles.tabBtn} ${activeTab === "requests" ? styles.activeTab : ""}`}
             onClick={() => setActiveTab("requests")}
           >
-            Attendance Requests ({requests.length})
+            Attendance Requests ({pendingRequests.length})
           </button>
           <button
             className={`${styles.tabBtn} ${activeTab === "supportRequests" ? styles.activeTab : ""}`}
@@ -328,6 +456,66 @@ function AdminPanel() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {activeTab === "requests" && (
+        <div className={styles.cardGrid}>
+          {pendingRequests.length === 0 ? (
+            <p className={styles.emptyText}>No pending attendance requests.</p>
+          ) : (
+            pendingRequests.map((req) => (
+              <div key={req.id} className={styles.card}>
+                <div className={styles.cardHeader}>
+                  <h4 className={styles.userName}>{req.employeeName || "Unknown Employee"}</h4>
+                  <p className={styles.userEmail}>{req.employeeEmail || "No email provided"}</p>
+                </div>
+                <p className={styles.requestDetail}>
+                  <strong>Request:</strong> {req.type || "Unknown"}
+                </p>
+                <p className={styles.requestDetail}>
+                  <strong>Date:</strong> {req.date || "N/A"}
+                </p>
+                {req.type === "ADVANCE" && (
+                  <p className={styles.requestDetail}>
+                    <strong>Amount:</strong> ৳ {Number(req.amount || 0).toLocaleString()}
+                  </p>
+                )}
+                {(req.type === "ADVANCE" || req.type === "LEAVE") && (
+                  <p className={styles.requestDetail}>
+                    <strong>Reason:</strong> {req.reason || "N/A"}
+                  </p>
+                )}
+                {(req.type === "IN" || req.type === "OUT") && (
+                  <p className={styles.requestDetail}>
+                    <strong>Time:</strong> {req.time || "N/A"}
+                  </p>
+                )}
+                <p className={styles.requestDetail}>
+                  <strong>Status:</strong>{" "}
+                  <span className={styles.typeBadge}>{req.status || "Pending"}</span>
+                </p>
+                {(!req.status || req.status.toLowerCase() === "pending") && (
+                  <div className={styles.actionBtns}>
+                    <button
+                      className={styles.approveBtn}
+                      onClick={() => handleAttendanceRequest(req, "approve")}
+                      disabled={processingRequestId === req.id}
+                    >
+                      {processingRequestId === req.id ? "Please wait..." : "Approve"}
+                    </button>
+                    <button
+                      className={styles.rejectBtn}
+                      onClick={() => handleAttendanceRequest(req, "reject")}
+                      disabled={processingRequestId === req.id}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       )}
 

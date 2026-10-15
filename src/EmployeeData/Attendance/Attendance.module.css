@@ -10,6 +10,54 @@
   margin-bottom: 20px;
 }
 
+.notificationSection {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+}
+
+.notificationHeading {
+  margin: 0 0 10px;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.notification {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.notification p {
+  margin: 4px 0 0;
+}
+
+.unreadNotification {
+  color: #0c4a6e;
+}
+
+.markReadBtn {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid #0284c7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0369a1;
+  cursor: pointer;
+}
+
+.notificationError {
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
 .loader {
   text-align: center;
   padding: 40px;
