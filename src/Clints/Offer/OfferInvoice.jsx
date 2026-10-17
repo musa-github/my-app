@@ -296,45 +296,19 @@ const OfferInvoice = () => {
       const element = invoiceRef.current;
 
       const opt = {
-        margin: [38, 8, 32, 8],
+        margin: [35, 8, 30, 8],
         filename: `Offer_${headerData.toCompany || 'Invoice'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
           scale: 2,
           useCORS: true,
           scrollX: 0,
-          scrollY: 0,
-          onclone: (clonedDoc) => {
-            const pdfElement = clonedDoc.querySelector('.pdf-mode');
-            if (pdfElement) {
-              pdfElement.style.width = '100%';
-              const inputs = pdfElement.querySelectorAll('input, textarea');
-              inputs.forEach((input) => {
-                const span = clonedDoc.createElement('span');
-                span.innerText = input.value || input.placeholder || '';
-                span.style.display = 'inline-block';
-                span.style.fontFamily = 'inherit';
-                span.style.fontSize = window.getComputedStyle(input).fontSize;
-                span.style.fontWeight = window.getComputedStyle(input).fontWeight;
-                span.style.color = window.getComputedStyle(input).color;
-                span.style.lineHeight = '1.4';
-                span.style.paddingBottom = '3px';
-                span.style.marginBottom = '0px';
-                span.style.verticalAlign = 'bottom';
-                span.style.wordBreak = 'break-word';
-                span.style.whiteSpace = 'pre-wrap';
-
-                if (input.parentNode) {
-                  input.parentNode.replaceChild(span, input);
-                }
-              });
-            }
-          }
+          scrollY: 0
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: {
           mode: ['avoid-all', 'css', 'legacy'],
-          avoid: ['.page-break-avoid', '.invoice-footer', '.in-words-section', '.notes-section']
+          avoid: ['.page-break-avoid', '.footer-section-wrap']
         }
       };
 
@@ -503,45 +477,62 @@ const OfferInvoice = () => {
         <div className="info-section">
           <div className="info-row">
             <span className="bold">Date: </span>
-            <input
-              type="text"
-              name="date"
-              className="inline-input"
-              style={{ width: '120px' }}
-              value={headerData.date || ''}
-              onChange={handleHeaderChange}
-            />
+            {isPdfPrinting ? (
+              <span className="inline-input" style={{ width: '120px' }}>{headerData.date || ''}</span>
+            ) : (
+              <input
+                type="text"
+                name="date"
+                className="inline-input"
+                style={{ width: '120px' }}
+                value={headerData.date || ''}
+                onChange={handleHeaderChange}
+              />
+            )}
           </div>
           <div className="to-address">
             <span className="bold">To,</span>
-            <input
-              type="text"
-              name="toCompany"
-              placeholder="Company Name"
-              className="block-input bold"
-              value={headerData.toCompany || ''}
-              onChange={handleHeaderChange}
-            />
-            <input
-              type="text"
-              name="address"
-              placeholder="Company Address"
-              className="block-input"
-              value={headerData.address || ''}
-              onChange={handleHeaderChange}
-            />
+            {isPdfPrinting ? (
+              <>
+                <div className="block-input bold">{headerData.toCompany || ''}</div>
+                <div className="block-input">{headerData.address || ''}</div>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  name="toCompany"
+                  placeholder="Company Name"
+                  className="block-input bold"
+                  value={headerData.toCompany || ''}
+                  onChange={handleHeaderChange}
+                />
+                <input
+                  type="text"
+                  name="address"
+                  placeholder="Company Address"
+                  className="block-input"
+                  value={headerData.address || ''}
+                  onChange={handleHeaderChange}
+                />
+              </>
+            )}
           </div>
           <div className="subject-line">
             <span className="bold">Subject: </span>
-            <input
-              type="text"
-              name="subject"
-              placeholder="Enter subject"
-              className="inline-input bold"
-              style={{ width: '80%' }}
-              value={headerData.subject || ''}
-              onChange={handleHeaderChange}
-            />
+            {isPdfPrinting ? (
+              <span className="inline-input bold" style={{ width: '80%' }}>{headerData.subject || ''}</span>
+            ) : (
+              <input
+                type="text"
+                name="subject"
+                placeholder="Enter subject"
+                className="inline-input bold"
+                style={{ width: '80%' }}
+                value={headerData.subject || ''}
+                onChange={handleHeaderChange}
+              />
+            )}
           </div>
           <p className="no-margin" style={{ marginTop: '6px' }}>Dear Sir,</p>
           <p className="no-margin">We are pleased to submit our best price offer for your consideration:</p>
@@ -577,21 +568,25 @@ const OfferInvoice = () => {
                 <tr key={index}>
                   <td className="text-center">{index + 1}</td>
                   <td style={{ position: 'relative' }}>
-                    <input
-                      type="text"
-                      className="table-input"
-                      placeholder="Item name / description"
-                      value={item.name || ''}
-                      style={{ color: '#000000', fontWeight: 'normal' }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveSuggestionRow(index);
-                      }}
-                      onChange={(e) => {
-                        handleItemChange(index, 'name', e.target.value);
-                        setActiveSuggestionRow(index);
-                      }}
-                    />
+                    {isPdfPrinting ? (
+                      <div className="table-input">{item.name || ''}</div>
+                    ) : (
+                      <input
+                        type="text"
+                        className="table-input"
+                        placeholder="Item name / description"
+                        value={item.name || ''}
+                        style={{ color: '#000000', fontWeight: 'normal' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveSuggestionRow(index);
+                        }}
+                        onChange={(e) => {
+                          handleItemChange(index, 'name', e.target.value);
+                          setActiveSuggestionRow(index);
+                        }}
+                      />
+                    )}
 
                     {activeSuggestionRow === index && searchSearchTerm.length > 0 && (
                       <div
@@ -666,28 +661,40 @@ const OfferInvoice = () => {
                     )}
                   </td>
                   <td>
-                    <input
-                      type="number"
-                      className="table-input text-center"
-                      value={item.quantity ?? ''}
-                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                    />
+                    {isPdfPrinting ? (
+                      <span className="table-input text-center">{item.quantity ?? ''}</span>
+                    ) : (
+                      <input
+                        type="number"
+                        className="table-input text-center"
+                        value={item.quantity ?? ''}
+                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                      />
+                    )}
                   </td>
                   <td>
-                    <input
-                      type="text"
-                      className="table-input text-center"
-                      value={item.unit || ''}
-                      onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                    />
+                    {isPdfPrinting ? (
+                      <span className="table-input text-center">{item.unit || ''}</span>
+                    ) : (
+                      <input
+                        type="text"
+                        className="table-input text-center"
+                        value={item.unit || ''}
+                        onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
+                      />
+                    )}
                   </td>
                   <td>
-                    <input
-                      type="number"
-                      className="table-input text-center"
-                      value={item.price ?? ''}
-                      onChange={(e) => handleItemChange(index, 'price', e.target.value)}
-                    />
+                    {isPdfPrinting ? (
+                      <span className="table-input text-center">{item.price ?? ''}</span>
+                    ) : (
+                      <input
+                        type="number"
+                        className="table-input text-center"
+                        value={item.price ?? ''}
+                        onChange={(e) => handleItemChange(index, 'price', e.target.value)}
+                      />
+                    )}
                   </td>
                   <td className="cell-total text-center bold">{totalItemPrice.toLocaleString()}</td>
                   <td className="no-print text-center">
@@ -722,12 +729,16 @@ const OfferInvoice = () => {
           {notes.map((note, index) => (
             <div key={index} className="note-row">
               <span className="note-label">{index + 1}. </span>
-              <input
-                type="text"
-                className="note-input"
-                value={note || ''}
-                onChange={(e) => handleNoteChange(index, e.target.value)}
-              />
+              {isPdfPrinting ? (
+                <span className="note-input">{note || ''}</span>
+              ) : (
+                <input
+                  type="text"
+                  className="note-input"
+                  value={note || ''}
+                  onChange={(e) => handleNoteChange(index, e.target.value)}
+                />
+              )}
               <button className="btn-delete inline-delete no-print" onClick={() => removeNoteRow(index)}>✕</button>
             </div>
           ))}
@@ -738,31 +749,43 @@ const OfferInvoice = () => {
           <div className="payment-mode">
             <span className="bold">Mode of Payment:</span>
             <div className="payment-line">
-              <input
-                type="text"
-                name="mode"
-                className="block-input"
-                value={paymentMode.mode || ''}
-                onChange={handlePaymentChange}
-              />
+              {isPdfPrinting ? (
+                <div className="block-input">{paymentMode.mode || ''}</div>
+              ) : (
+                <input
+                  type="text"
+                  name="mode"
+                  className="block-input"
+                  value={paymentMode.mode || ''}
+                  onChange={handlePaymentChange}
+                />
+              )}
             </div>
             <div className="payment-line">
-              <input
-                type="text"
-                name="advance"
-                className="block-input"
-                value={paymentMode.advance || ''}
-                onChange={handlePaymentChange}
-              />
+              {isPdfPrinting ? (
+                <div className="block-input">{paymentMode.advance || ''}</div>
+              ) : (
+                <input
+                  type="text"
+                  name="advance"
+                  className="block-input"
+                  value={paymentMode.advance || ''}
+                  onChange={handlePaymentChange}
+                />
+              )}
             </div>
             <div className="payment-line">
-              <input
-                type="text"
-                name="handover"
-                className="block-input"
-                value={paymentMode.handover || ''}
-                onChange={handlePaymentChange}
-              />
+              {isPdfPrinting ? (
+                <div className="block-input">{paymentMode.handover || ''}</div>
+              ) : (
+                <input
+                  type="text"
+                  name="handover"
+                  className="block-input"
+                  value={paymentMode.handover || ''}
+                  onChange={handlePaymentChange}
+                />
+              )}
             </div>
           </div>
         </div>
